@@ -15,26 +15,53 @@ function getExternalRequest(request: NextRequest): NextRequest {
   const forwardedHost = request.headers.get("x-forwarded-host");
   const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
   
+  console.log("[auth] Original request.url:", request.url);
+  console.log("[auth] x-forwarded-host:", forwardedHost);
+  console.log("[auth] x-forwarded-proto:", forwardedProto);
+  
   if (forwardedHost) {
     // Reconstruct the full external URL
-    const url = new URL(request.nextUrl.pathname + request.nextUrl.search, `${forwardedProto}://${forwardedHost}`);
+    const externalUrl = `${forwardedProto}://${forwardedHost}${request.nextUrl.pathname}${request.nextUrl.search}`;
+    console.log("[auth] Reconstructed external URL:", externalUrl);
+    
+    const url = new URL(externalUrl);
     
     // Create new request with correct URL
-    return new NextRequest(url, {
+    const newRequest = new NextRequest(url, {
       method: request.method,
       headers: request.headers,
       body: request.body,
       duplex: "half",
     });
+    
+    console.log("[auth] New request.url:", newRequest.url);
+    return newRequest;
   }
   
+  console.log("[auth] No forwarded host, using original request");
   return request;
 }
 
 export async function GET(request: NextRequest) {
-  return handlers.GET(getExternalRequest(request));
+  console.log("[auth] GET handler called");
+  try {
+    const externalRequest = getExternalRequest(request);
+    console.log("[auth] Calling handlers.GET with URL:", externalRequest.url);
+    return await handlers.GET(externalRequest);
+  } catch (error) {
+    console.error("[auth] GET error:", error);
+    throw error;
+  }
 }
 
 export async function POST(request: NextRequest) {
-  return handlers.POST(getExternalRequest(request));
+  console.log("[auth] POST handler called");
+  try {
+    const externalRequest = getExternalRequest(request);
+    console.log("[auth] Calling handlers.POST with URL:", externalRequest.url);
+    return await handlers.POST(externalRequest);
+  } catch (error) {
+    console.error("[auth] POST error:", error);
+    throw error;
+  }
 }
