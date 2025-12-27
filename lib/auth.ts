@@ -24,45 +24,45 @@ export function createAuthConfig(origin?: string): NextAuthConfig {
   process.env.NEXTAUTH_URL = authUrl;
   
   return {
-    providers: [
-      SpotifyProvider({
-        clientId: process.env.SPOTIFY_CLIENT_ID!,
-        clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
-        authorization: {
-          params: {
-            scope: SPOTIFY_SCOPES,
-          },
+  providers: [
+    SpotifyProvider({
+      clientId: process.env.SPOTIFY_CLIENT_ID!,
+      clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: SPOTIFY_SCOPES,
         },
-      }),
-    ],
+      },
+    }),
+  ],
     secret: process.env.AUTH_SECRET,
-    trustHost: true,
-    callbacks: {
-      async jwt({ token, account }) {
-        if (account) {
-          token.accessToken = account.access_token;
-          token.refreshToken = account.refresh_token;
-          token.expiresAt = account.expires_at;
-          token.provider = account.provider;
-        }
-        return token;
-      },
-      async session({ session, token }) {
-        session.accessToken = token.accessToken as string;
-        session.refreshToken = token.refreshToken as string;
-        session.expiresAt = token.expiresAt as number;
-        session.provider = token.provider as string;
-        return session;
-      },
+  trustHost: true,
+  callbacks: {
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+        token.expiresAt = account.expires_at;
+        token.provider = account.provider;
+      }
+      return token;
     },
-    pages: {
-      signIn: "/",
-      error: "/",
+    async session({ session, token }) {
+      session.accessToken = token.accessToken as string;
+      session.refreshToken = token.refreshToken as string;
+      session.expiresAt = token.expiresAt as number;
+      session.provider = token.provider as string;
+      return session;
     },
-    session: {
-      strategy: "jwt",
-    },
-  };
+  },
+  pages: {
+    signIn: "/",
+    error: "/",
+  },
+  session: {
+    strategy: "jwt",
+  },
+};
 }
 
 // Lazy-initialized singleton for server components (uses AUTH_URL from env)
