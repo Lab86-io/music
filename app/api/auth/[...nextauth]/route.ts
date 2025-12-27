@@ -24,7 +24,6 @@ function getExternalRequest(request: NextRequest): NextRequest {
       method: request.method,
       headers: request.headers,
       body: request.body,
-      // @ts-expect-error - duplex is required for streaming bodies
       duplex: "half",
     });
   }
