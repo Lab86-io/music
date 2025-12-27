@@ -124,3 +124,211 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ===== Service Brand Colors ===== */
+:root {
+  --spotify-green: #1DB954;
+  --spotify-green-dark: #1aa34a;
+  --apple-red: #FC3C44;
+  --apple-red-dark: #F94C57;
+}
+
+/* ===== Glassmorphism Utilities ===== */
+@layer utilities {
+  .glass {
+    background: oklch(1 0 0 / 70%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(0 0 0 / 8%);
+  }
+  
+  .dark .glass {
+    background: oklch(0.2 0.006 56 / 60%);
+    border: 1px solid oklch(1 0 0 / 10%);
+  }
+  
+  .glass-spotify {
+    background: linear-gradient(135deg, oklch(0.68 0.16 145 / 15%) 0%, oklch(1 0 0 / 70%) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .dark .glass-spotify {
+    background: linear-gradient(135deg, oklch(0.68 0.16 145 / 20%) 0%, oklch(0.2 0.006 56 / 60%) 100%);
+  }
+  
+  .glass-apple {
+    background: linear-gradient(135deg, oklch(0.65 0.2 25 / 12%) 0%, oklch(1 0 0 / 70%) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .dark .glass-apple {
+    background: linear-gradient(135deg, oklch(0.65 0.2 25 / 18%) 0%, oklch(0.2 0.006 56 / 60%) 100%);
+  }
+}
+
+/* ===== Glow Effects ===== */
+@layer utilities {
+  .glow-spotify {
+    box-shadow: 0 0 20px oklch(0.68 0.16 145 / 30%),
+                0 0 40px oklch(0.68 0.16 145 / 15%),
+                inset 0 1px 0 oklch(1 0 0 / 20%);
+  }
+  
+  .glow-spotify-subtle {
+    box-shadow: 0 0 15px oklch(0.68 0.16 145 / 20%),
+                0 4px 6px oklch(0 0 0 / 10%);
+  }
+  
+  .glow-apple {
+    box-shadow: 0 0 20px oklch(0.65 0.2 25 / 30%),
+                0 0 40px oklch(0.65 0.2 25 / 15%),
+                inset 0 1px 0 oklch(1 0 0 / 20%);
+  }
+  
+  .glow-apple-subtle {
+    box-shadow: 0 0 15px oklch(0.65 0.2 25 / 20%),
+                0 4px 6px oklch(0 0 0 / 10%);
+  }
+}
+
+/* ===== Animations ===== */
+@keyframes pulse-glow-spotify {
+  0%, 100% {
+    box-shadow: 0 0 15px oklch(0.68 0.16 145 / 25%),
+                0 4px 6px oklch(0 0 0 / 10%);
+  }
+  50% {
+    box-shadow: 0 0 25px oklch(0.68 0.16 145 / 40%),
+                0 4px 10px oklch(0 0 0 / 15%);
+  }
+}
+
+@keyframes pulse-glow-apple {
+  0%, 100% {
+    box-shadow: 0 0 15px oklch(0.65 0.2 25 / 25%),
+                0 4px 6px oklch(0 0 0 / 10%);
+  }
+  50% {
+    box-shadow: 0 0 25px oklch(0.65 0.2 25 / 40%),
+                0 4px 10px oklch(0 0 0 / 15%);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-pulse-spotify {
+    animation: pulse-glow-spotify 2s ease-in-out infinite;
+  }
+  
+  .animate-pulse-apple {
+    animation: pulse-glow-apple 2s ease-in-out infinite;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+  
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s ease-out forwards;
+  }
+}
+
+/* ===== Card Hover Effects ===== */
+@layer utilities {
+  .card-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .card-lift:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* ===== Animated Background ===== */
+.animated-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.animated-bg::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    ellipse at center,
+    oklch(0.68 0.16 145 / 5%) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    ellipse at 80% 20%,
+    oklch(0.65 0.2 25 / 5%) 0%,
+    transparent 40%
+  );
+  animation: gradient-shift 15s ease infinite;
+  pointer-events: none;
+}
+
+.dark .animated-bg::before {
+  background: radial-gradient(
+    ellipse at center,
+    oklch(0.68 0.16 145 / 8%) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    ellipse at 80% 20%,
+    oklch(0.65 0.2 25 / 8%) 0%,
+    transparent 40%
+  );
+}
+
+/* ===== Light Mode Enhancements ===== */
+:root {
+  --card-shadow: 0 1px 3px oklch(0 0 0 / 8%), 0 1px 2px oklch(0 0 0 / 6%);
+  --card-shadow-hover: 0 4px 12px oklch(0 0 0 / 12%), 0 2px 4px oklch(0 0 0 / 8%);
+}
+
+.dark {
+  --card-shadow: 0 1px 3px oklch(0 0 0 / 20%), 0 1px 2px oklch(0 0 0 / 15%);
+  --card-shadow-hover: 0 4px 12px oklch(0 0 0 / 30%), 0 2px 4px oklch(0 0 0 / 20%);
+}

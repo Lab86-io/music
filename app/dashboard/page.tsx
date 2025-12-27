@@ -19,10 +19,9 @@ import {
   IconMusic, 
   IconRefresh, 
   IconLoader2,
-  IconArrowLeft,
   IconArrowsExchange
 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { SpotifyLogo, AppleLogo, MusicNote } from "@/components/icons";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
 
 interface SpotifySession {
@@ -283,43 +282,45 @@ export default function DashboardPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-        <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen animated-bg">
+        {/* Gradient background layer */}
+        <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-muted/30 -z-10" />
+        
+        <div className="container mx-auto px-4 py-6">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
+          <header className="mb-8 flex items-center justify-between py-2">
             <div className="flex items-center gap-4">
-              <Tooltip>
-                <TooltipTrigger
-                  onClick={() => router.push("/")}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <IconArrowLeft size={20} />
-                </TooltipTrigger>
-                <TooltipContent>Back to home</TooltipContent>
-              </Tooltip>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/20 animate-float">
+                <MusicNote className="h-6 w-6" />
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-                <p className="text-muted-foreground">
-                  Convert your playlists between services
+                <h1 className="text-2xl font-bold tracking-tight">
+                  Playlist Converter
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Transfer playlists between services
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              {spotifyConnected && (
-                <Badge variant="outline" className="gap-1.5 py-1.5">
-                  <SpotifyLogo className="h-3.5 w-3.5 text-[#1DB954]" />
-                  Spotify
-                </Badge>
-              )}
-              {appleConnected && (
-                <Badge variant="outline" className="gap-1.5 py-1.5">
-                  <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
-                  Apple Music
-                </Badge>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                {spotifyConnected && (
+                  <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#1DB954]/30 bg-[#1DB954]/10">
+                    <SpotifyLogo className="h-3.5 w-3.5 text-[#1DB954]" />
+                    <span className="text-xs font-medium">Spotify</span>
+                  </Badge>
+                )}
+                {appleConnected && (
+                  <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#FC3C44]/30 bg-[#FC3C44]/10">
+                    <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
+                    <span className="text-xs font-medium">Apple Music</span>
+                  </Badge>
+                )}
+              </div>
+              <div className="h-6 w-px bg-border hidden sm:block" />
               <ThemeToggle />
             </div>
-          </div>
+          </header>
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected || !appleConnected) && (
@@ -358,20 +359,26 @@ export default function DashboardPage() {
 
           {/* Playlists */}
           {spotifyConnected && appleConnected && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 animate-fade-in-up">
               <div className="flex items-center justify-between">
-                <TabsList>
-                  <TabsTrigger value="spotify" className="gap-2">
+                <TabsList className="glass p-1">
+                  <TabsTrigger 
+                    value="spotify" 
+                    className="gap-2 data-[state=active]:bg-[#1DB954]/10 data-[state=active]:text-foreground transition-all"
+                  >
                     <SpotifyLogo className="h-4 w-4" />
-                    Spotify
-                    <Badge variant="secondary" className="ml-1 text-xs">
+                    <span className="hidden sm:inline">Spotify</span>
+                    <Badge variant="secondary" className="ml-1 text-xs bg-muted/60">
                       {spotifyPlaylists.length}
                     </Badge>
                   </TabsTrigger>
-                  <TabsTrigger value="apple" className="gap-2">
+                  <TabsTrigger 
+                    value="apple" 
+                    className="gap-2 data-[state=active]:bg-[#FC3C44]/10 data-[state=active]:text-foreground transition-all"
+                  >
                     <AppleLogo className="h-4 w-4" />
-                    Apple Music
-                    <Badge variant="secondary" className="ml-1 text-xs">
+                    <span className="hidden sm:inline">Apple Music</span>
+                    <Badge variant="secondary" className="ml-1 text-xs bg-muted/60">
                       {applePlaylists.length}
                     </Badge>
                   </TabsTrigger>
@@ -380,7 +387,7 @@ export default function DashboardPage() {
                   <TooltipTrigger
                     onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}
                     disabled={activeTab === "spotify" ? loadingSpotify : loadingApple}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:scale-105"
                   >
                     <IconRefresh
                       size={18}
@@ -398,7 +405,7 @@ export default function DashboardPage() {
                     {loadingSpotify ? (
                       <PlaylistSkeletonList count={5} />
                     ) : spotifyPlaylists.length > 0 ? (
-                      spotifyPlaylists.map((playlist) => (
+                      spotifyPlaylists.map((playlist, index) => (
                         <PlaylistCard
                           key={playlist.id}
                           playlist={playlist}
@@ -406,13 +413,17 @@ export default function DashboardPage() {
                           targetService="apple"
                           onConvert={handleConvert}
                           disabled={isConverting || !appleConnected}
+                          index={index}
                         />
                       ))
                     ) : (
-                      <Card>
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                          <IconMusic size={48} className="mb-4 text-muted-foreground" />
-                          <p className="text-muted-foreground">No playlists found</p>
+                      <Card className="glass border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1DB954]/10 mb-4">
+                            <SpotifyLogo className="h-8 w-8 text-[#1DB954]/60" />
+                          </div>
+                          <p className="text-muted-foreground font-medium">No playlists found</p>
+                          <p className="text-sm text-muted-foreground/70 mt-1">Create a playlist on Spotify to get started</p>
                         </CardContent>
                       </Card>
                     )}
@@ -427,7 +438,7 @@ export default function DashboardPage() {
                     {loadingApple ? (
                       <PlaylistSkeletonList count={5} />
                     ) : applePlaylists.length > 0 ? (
-                      applePlaylists.map((playlist) => (
+                      applePlaylists.map((playlist, index) => (
                         <PlaylistCard
                           key={playlist.id}
                           playlist={playlist}
@@ -435,13 +446,17 @@ export default function DashboardPage() {
                           targetService="spotify"
                           onConvert={handleConvert}
                           disabled={isConverting || !spotifyConnected}
+                          index={index}
                         />
                       ))
                     ) : (
-                      <Card>
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                          <IconMusic size={48} className="mb-4 text-muted-foreground" />
-                          <p className="text-muted-foreground">No playlists found</p>
+                      <Card className="glass border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FC3C44]/10 to-[#F94C57]/10 mb-4">
+                            <AppleLogo className="h-8 w-8 text-[#FC3C44]/60" />
+                          </div>
+                          <p className="text-muted-foreground font-medium">No playlists found</p>
+                          <p className="text-sm text-muted-foreground/70 mt-1">Create a playlist on Apple Music to get started</p>
                         </CardContent>
                       </Card>
                     )}
@@ -451,47 +466,6 @@ export default function DashboardPage() {
             </Tabs>
           )}
 
-          {/* Not both connected message */}
-          {(!spotifyConnected || !appleConnected) && (
-            <Card className="mt-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <IconArrowsExchange size={24} />
-                  Connect Both Services
-                </CardTitle>
-                <CardDescription>
-                  To convert playlists, you need to connect both your Spotify and Apple Music accounts.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center gap-8 py-8">
-                  <div className={`flex flex-col items-center gap-2 ${spotifyConnected ? "opacity-100" : "opacity-40"}`}>
-                    <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${
-                      spotifyConnected ? "bg-[#1DB954]" : "bg-muted"
-                    } text-white`}>
-                      <SpotifyLogo className="h-8 w-8" />
-                    </div>
-                    <span className="text-sm font-medium">
-                      {spotifyConnected ? "Connected" : "Not connected"}
-                    </span>
-                  </div>
-                  <IconArrowsExchange size={24} className="text-muted-foreground" />
-                  <div className={`flex flex-col items-center gap-2 ${appleConnected ? "opacity-100" : "opacity-40"}`}>
-                    <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${
-                      appleConnected 
-                        ? "bg-gradient-to-br from-[#FC3C44] to-[#F94C57]" 
-                        : "bg-muted"
-                    } text-white`}>
-                      <AppleLogo className="h-8 w-8" />
-                    </div>
-                    <span className="text-sm font-medium">
-                      {appleConnected ? "Connected" : "Not connected"}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </TooltipProvider>

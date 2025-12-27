@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { IconCheck, IconLoader2, IconX, IconUser } from "@tabler/icons-react";
+import { IconCheck, IconLoader2, IconX, IconMusic } from "@tabler/icons-react";
 import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { cn } from "@/lib/utils";
 
 interface SpotifySession {
   user: {
@@ -185,39 +186,51 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {/* Spotify Card */}
-      <Card className="relative overflow-hidden border-2 transition-all hover:shadow-lg hover:border-[#1DB954]/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1DB954]/10 to-transparent dark:from-[#1DB954]/5" />
-        <CardHeader className="relative">
+      <Card 
+        className={cn(
+          "relative overflow-hidden border transition-all duration-300 card-lift",
+          "glass-spotify",
+          spotifyConnected 
+            ? "border-[#1DB954]/40 animate-pulse-spotify" 
+            : "border-border/50 hover:border-[#1DB954]/30"
+        )}
+      >
+        <CardHeader className="relative pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#1DB954] text-white">
+              <div className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-xl text-white transition-all duration-300",
+                spotifyConnected 
+                  ? "bg-[#1DB954] shadow-lg shadow-[#1DB954]/30" 
+                  : "bg-[#1DB954]/80"
+              )}>
                 <SpotifyLogo className="h-7 w-7" />
               </div>
               <div>
-                <CardTitle className="text-xl">Spotify</CardTitle>
-                <CardDescription>Connect your Spotify account</CardDescription>
+                <CardTitle className="text-xl font-semibold">Spotify</CardTitle>
+                <CardDescription className="text-sm">Stream your playlists</CardDescription>
               </div>
             </div>
             {spotifyConnected ? (
-              <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">
+              <Badge className="bg-[#1DB954] hover:bg-[#1aa34a] text-white border-0 shadow-sm">
                 <IconCheck size={14} className="mr-1" />
                 Connected
               </Badge>
             ) : (
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="opacity-60">
                 <IconX size={14} className="mr-1" />
                 Not connected
               </Badge>
             )}
           </div>
         </CardHeader>
-        <CardContent className="relative">
+        <CardContent className="relative pt-0">
           {spotifyConnected ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Avatar>
+            <div className="space-y-4 animate-fade-in-up">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border/50">
+                <Avatar className="h-10 w-10 ring-2 ring-[#1DB954]/20">
                   <AvatarImage src={spotifySession?.user?.image || undefined} alt={spotifySession?.user?.name || "User"} />
-                  <AvatarFallback>{userInitials}</AvatarFallback>
+                  <AvatarFallback className="bg-[#1DB954] text-white font-medium">{userInitials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
@@ -231,7 +244,7 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
               <Button
                 variant="outline"
                 onClick={disconnectSpotify}
-                className="w-full"
+                className="w-full border-[#1DB954]/30 hover:border-[#1DB954]/50 hover:bg-[#1DB954]/10 transition-all duration-200"
               >
                 Disconnect
               </Button>
@@ -239,7 +252,7 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
           ) : (
             <Button
               onClick={connectSpotify}
-              className="w-full bg-[#1DB954] hover:bg-[#1aa34a] text-white"
+              className="w-full bg-[#1DB954] hover:bg-[#1aa34a] text-white shadow-md hover:shadow-lg hover:shadow-[#1DB954]/20 transition-all duration-200 hover:-translate-y-0.5"
               disabled={spotifyLoading}
             >
               {spotifyLoading ? (
@@ -254,54 +267,64 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
       </Card>
 
       {/* Apple Music Card */}
-      <Card className="relative overflow-hidden border-2 transition-all hover:shadow-lg hover:border-[#FC3C44]/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FC3C44]/10 to-transparent dark:from-[#FC3C44]/5" />
-        <CardHeader className="relative">
+      <Card 
+        className={cn(
+          "relative overflow-hidden border transition-all duration-300 card-lift",
+          "glass-apple",
+          appleConnected 
+            ? "border-[#FC3C44]/40 animate-pulse-apple" 
+            : "border-border/50 hover:border-[#FC3C44]/30"
+        )}
+      >
+        <CardHeader className="relative pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#FC3C44] to-[#F94C57] text-white">
+              <div className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-xl text-white transition-all duration-300",
+                appleConnected 
+                  ? "bg-gradient-to-br from-[#FC3C44] to-[#F94C57] shadow-lg shadow-[#FC3C44]/30" 
+                  : "bg-gradient-to-br from-[#FC3C44]/80 to-[#F94C57]/80"
+              )}>
                 <AppleLogo className="h-7 w-7" />
               </div>
               <div>
-                <CardTitle className="text-xl">Apple Music</CardTitle>
-                <CardDescription>Connect your Apple Music account</CardDescription>
+                <CardTitle className="text-xl font-semibold">Apple Music</CardTitle>
+                <CardDescription className="text-sm">Access your library</CardDescription>
               </div>
             </div>
             {appleConnected ? (
-              <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">
+              <Badge className="bg-gradient-to-r from-[#FC3C44] to-[#F94C57] hover:from-[#e03540] hover:to-[#e0444d] text-white border-0 shadow-sm">
                 <IconCheck size={14} className="mr-1" />
                 Connected
               </Badge>
             ) : (
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="opacity-60">
                 <IconX size={14} className="mr-1" />
                 Not connected
               </Badge>
             )}
           </div>
         </CardHeader>
-        <CardContent className="relative">
+        <CardContent className="relative pt-0">
           {appleConnected ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarFallback className="bg-gradient-to-br from-[#FC3C44] to-[#F94C57] text-white">
-                    <IconUser size={16} />
-                  </AvatarFallback>
-                </Avatar>
+            <div className="space-y-4 animate-fade-in-up">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border/50">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FC3C44] to-[#F94C57] ring-2 ring-[#FC3C44]/20">
+                  <IconMusic size={18} className="text-white" />
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">
-                    Apple Music User
+                    Apple Music
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Account connected
+                    Ready to transfer playlists
                   </p>
                 </div>
               </div>
               <Button
                 variant="outline"
                 onClick={disconnectApple}
-                className="w-full"
+                className="w-full border-[#FC3C44]/30 hover:border-[#FC3C44]/50 hover:bg-[#FC3C44]/10 transition-all duration-200"
               >
                 Disconnect
               </Button>
@@ -309,7 +332,7 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
           ) : (
             <Button
               onClick={connectApple}
-              className="w-full bg-gradient-to-r from-[#FC3C44] to-[#F94C57] hover:from-[#e03540] hover:to-[#e0444d] text-white"
+              className="w-full bg-gradient-to-r from-[#FC3C44] to-[#F94C57] hover:from-[#e03540] hover:to-[#e0444d] text-white shadow-md hover:shadow-lg hover:shadow-[#FC3C44]/20 transition-all duration-200 hover:-translate-y-0.5"
               disabled={appleLoading || !musicKit}
             >
               {appleLoading ? (
