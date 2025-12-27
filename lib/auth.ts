@@ -25,9 +25,9 @@ export const authConfig: NextAuthConfig = {
   ],
   secret: process.env.AUTH_SECRET,
   trustHost: true,
+  debug: true, // Enable debug logs
   callbacks: {
     async jwt({ token, account }) {
-      // Persist the OAuth access_token to the JWT
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
@@ -37,7 +37,6 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
     async session({ session, token }) {
-      // Make the access token available on the session
       session.accessToken = token.accessToken as string;
       session.refreshToken = token.refreshToken as string;
       session.expiresAt = token.expiresAt as number;
@@ -52,7 +51,6 @@ export const authConfig: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
-  debug: process.env.NODE_ENV === "development",
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
