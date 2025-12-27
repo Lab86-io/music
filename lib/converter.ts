@@ -211,19 +211,35 @@ export function filterMatchesByConfidence(
 
 /**
  * Get conversion statistics
+ * Only counts tracks with confidence >= MIN_CONFIDENCE as "matched"
  */
+export const MIN_MATCH_CONFIDENCE = 70;
+
 export function getConversionStats(matches: TrackMatch[]): {
   total: number;
   matched: number;
   isrcMatches: number;
   fuzzyMatches: number;
   unmatched: number;
+  lowConfidence: number;
   averageConfidence: number;
 } {
-  const matched = matches.filter((m) => m.targetTrack !== null);
+  // Only count as matched if confidence >= threshold
+  const matched = matches.filter(
+    (m) => m.targetTrack !== null && m.matchConfidence >= MIN_MATCH_CONFIDENCE
+  );
   const isrcMatches = matches.filter((m) => m.matchMethod === "isrc");
-  const fuzzyMatches = matches.filter((m) => m.matchMethod === "fuzzy");
-  const unmatched = matches.filter((m) => m.targetTrack === null);
+  const fuzzyMatches = matches.filter(
+    (m) => m.matchMethod === "fuzzy" && m.matchConfidence >= MIN_MATCH_CONFIDENCE
+  );
+  // Low confidence = found a match but below threshold
+  const lowConfidence = matches.filter(
+    (m) => m.targetTrack !== null && m.matchConfidence < MIN_MATCH_CONFIDENCE
+  );
+  // Unmatched = no target found at all OR low confidence
+  const unmatched = matches.filter(
+    (m) => m.targetTrack === null || m.matchConfidence < MIN_MATCH_CONFIDENCE
+  );
 
   const totalConfidence = matched.reduce((sum, m) => sum + m.matchConfidence, 0);
   const averageConfidence = matched.length > 0 ? totalConfidence / matched.length : 0;
@@ -234,6 +250,7 @@ export function getConversionStats(matches: TrackMatch[]): {
     isrcMatches: isrcMatches.length,
     fuzzyMatches: fuzzyMatches.length,
     unmatched: unmatched.length,
+    lowConfidence: lowConfidence.length,
     averageConfidence: Math.round(averageConfidence),
   };
 }

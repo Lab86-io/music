@@ -45,6 +45,7 @@ interface ConversionResult {
     isrcMatches: number;
     fuzzyMatches: number;
     unmatched: number;
+    lowConfidence?: number;
     averageConfidence: number;
   };
   matches: {
@@ -80,6 +81,21 @@ export default function DashboardPage() {
     target: "spotify" | "apple";
   } | null>(null);
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
+  const [conversionProgress, setConversionProgress] = useState<{ current: number; total: number } | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<{
+    name: string;
+    artist: string;
+    status: "searching" | "matched" | "low_confidence" | "not_found";
+    matchedTo?: { name: string; artist: string };
+    confidence?: number;
+  } | null>(null);
+  const [recentTracks, setRecentTracks] = useState<Array<{
+    name: string;
+    artist: string;
+    status: "searching" | "matched" | "low_confidence" | "not_found";
+    matchedTo?: { name: string; artist: string };
+    confidence?: number;
+  }>>([]);
 
   // Active tab
   const [activeTab, setActiveTab] = useState<string>("spotify");
@@ -208,7 +224,9 @@ export default function DashboardPage() {
       target: targetService,
     });
     setConversionResult(null);
-    toast.info(`Starting conversion of "${playlistName}"...`);
+    setConversionProgress(null);
+    setCurrentTrack(null);
+    setRecentTracks([]);
 
     try {
       const token = appleUserToken || sessionStorage.getItem("appleUserToken");
@@ -217,6 +235,7 @@ export default function DashboardPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "text/event-stream",
         },
         body: JSON.stringify({
           sourceService,
@@ -227,31 +246,74 @@ export default function DashboardPage() {
         }),
       });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        setConversionResult({
-          success: true,
-          newPlaylistId: data.data.newPlaylistId,
-          stats: data.data.stats,
-          matches: data.data.matches,
-        });
-        toast.success(`Successfully converted "${playlistName}"!`);
+      if (!response.ok) {
+        throw new Error("Conversion request failed");
+      }
 
-        // Reload target playlists
-        if (targetService === "spotify") {
-          loadSpotifyPlaylists();
-        } else {
-          loadApplePlaylists();
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("No response body");
+      }
+
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            const eventType = line.slice(7);
+            continue;
+          }
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6);
+            try {
+              const data = JSON.parse(dataStr);
+              
+              if (data.total !== undefined && data.current === undefined) {
+                // Init event
+                setConversionProgress({ current: 0, total: data.total });
+              } else if (data.current !== undefined && data.track) {
+                // Progress event
+                setConversionProgress({ current: data.current, total: data.total });
+                setCurrentTrack(data.track);
+                setRecentTracks(prev => [data.track, ...prev].slice(0, 10));
+              } else if (data.success !== undefined) {
+                // Complete event
+                setConversionResult({
+                  success: data.success,
+                  newPlaylistId: data.newPlaylistId,
+                  stats: data.stats,
+                  matches: data.matches,
+                });
+                
+                if (data.success) {
+                  toast.success(`Successfully converted "${playlistName}"!`);
+                  // Reload target playlists
+                  if (targetService === "spotify") {
+                    loadSpotifyPlaylists();
+                  } else {
+                    loadApplePlaylists();
+                  }
+                } else {
+                  toast.error("Conversion failed. Please try again.");
+                }
+              } else if (data.error) {
+                // Error event
+                toast.error(data.error);
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
         }
-      } else {
-        setConversionResult({
-          success: false,
-          newPlaylistId: "",
-          stats: { total: 0, matched: 0, isrcMatches: 0, fuzzyMatches: 0, unmatched: 0, averageConfidence: 0 },
-          matches: [],
-        });
-        toast.error("Conversion failed. Please try again.");
       }
     } catch (error) {
       console.error("Conversion failed:", error);
@@ -264,6 +326,7 @@ export default function DashboardPage() {
       toast.error("Conversion failed. Please try again.");
     } finally {
       setIsConverting(false);
+      setCurrentTrack(null);
     }
   };
 
@@ -345,6 +408,9 @@ export default function DashboardPage() {
                 playlistName={conversionPlaylist.name}
                 sourceService={conversionPlaylist.source}
                 targetService={conversionPlaylist.target}
+                progress={conversionProgress || undefined}
+                currentTrack={currentTrack || undefined}
+                recentTracks={recentTracks}
                 result={conversionResult ? {
                   success: conversionResult.success,
                   stats: conversionResult.stats,
@@ -352,7 +418,12 @@ export default function DashboardPage() {
                 } : undefined}
               />
               {conversionResult?.success && conversionResult.matches.length > 0 && (
-                <TrackMatchReport matches={conversionResult.matches} />
+                <TrackMatchReport 
+                  matches={conversionResult.matches}
+                  targetService={conversionPlaylist.target}
+                  playlistId={conversionResult.newPlaylistId}
+                  appleUserToken={appleUserToken || sessionStorage.getItem("appleUserToken") || undefined}
+                />
               )}
             </div>
           )}

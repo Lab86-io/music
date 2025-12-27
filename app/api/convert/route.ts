@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSpotifyPlaylistTracks, createSpotifyPlaylist, addTracksToSpotifyPlaylist } from "@/lib/spotify";
 import { generateAppleMusicToken, getAppleMusicPlaylistTracks, createAppleMusicPlaylist, addTracksToAppleMusicPlaylist } from "@/lib/apple-music";
-import { convertSpotifyToAppleMusic, convertAppleMusicToSpotify, getConversionStats, filterMatchesByConfidence } from "@/lib/converter";
-import type { SpotifyTrack, AppleMusicTrack } from "@/types";
+import { convertSpotifyToAppleMusic, convertAppleMusicToSpotify, getConversionStats, MIN_MATCH_CONFIDENCE } from "@/lib/converter";
+import type { SpotifyTrack, AppleMusicTrack, TrackMatch } from "@/types";
 
 interface SpotifySession {
   accessToken: string;
@@ -24,7 +24,20 @@ async function getSpotifySession(): Promise<SpotifySession | null> {
   }
 }
 
+function formatTrackForResponse(track: SpotifyTrack | AppleMusicTrack): { name: string; artist: string } {
+  if ("name" in track && "artists" in track) {
+    return { name: (track as SpotifyTrack).name, artist: (track as SpotifyTrack).artists[0]?.name || "" };
+  }
+  return { name: (track as AppleMusicTrack).attributes.name, artist: (track as AppleMusicTrack).attributes.artistName };
+}
+
 export async function POST(request: Request) {
+  const encoder = new TextEncoder();
+  
+  // Check if client wants streaming
+  const acceptHeader = request.headers.get("accept") || "";
+  const wantsStream = acceptHeader.includes("text/event-stream");
+
   try {
     const session = await getSpotifySession();
     const body = await request.json();
@@ -44,7 +57,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate authentication for the services
     if ((sourceService === "spotify" || targetService === "spotify") && !session?.accessToken) {
       return NextResponse.json(
         { success: false, error: "Not authenticated with Spotify" },
@@ -61,15 +73,146 @@ export async function POST(request: Request) {
 
     const appleDevToken = await generateAppleMusicToken();
 
-    let matches;
+    // For streaming response
+    if (wantsStream) {
+      const stream = new ReadableStream({
+        async start(controller) {
+          const sendEvent = (event: string, data: unknown) => {
+            controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          };
+
+          try {
+            let matches: TrackMatch[];
+            let newPlaylistId: string;
+            let sourceTracks: (SpotifyTrack | AppleMusicTrack)[];
+
+            if (sourceService === "spotify" && targetService === "apple") {
+              sourceTracks = await getSpotifyPlaylistTracks(session!.accessToken!, playlistId);
+              sendEvent("init", { total: sourceTracks.length });
+
+              matches = await convertSpotifyToAppleMusic(
+                sourceTracks as SpotifyTrack[],
+                appleDevToken,
+                (current, total, match) => {
+                  const sourceInfo = formatTrackForResponse(match.sourceTrack);
+                  const targetInfo = match.targetTrack ? formatTrackForResponse(match.targetTrack) : null;
+                  
+                  sendEvent("progress", {
+                    current,
+                    total,
+                    track: {
+                      name: sourceInfo.name,
+                      artist: sourceInfo.artist,
+                      status: !match.targetTrack ? "not_found" 
+                        : match.matchConfidence >= MIN_MATCH_CONFIDENCE ? "matched" : "low_confidence",
+                      matchedTo: targetInfo,
+                      confidence: match.matchConfidence,
+                    },
+                  });
+                }
+              );
+
+              newPlaylistId = await createAppleMusicPlaylist(
+                appleDevToken,
+                appleUserToken,
+                `${playlistName} (from Spotify)`,
+                `Converted from Spotify playlist: ${playlistName}`
+              );
+
+              const goodMatches = matches.filter(m => m.targetTrack && m.matchConfidence >= MIN_MATCH_CONFIDENCE);
+              const trackIds = goodMatches.map((m) => {
+                const track = m.targetTrack as AppleMusicTrack;
+                return { id: track.id, type: track.type as "songs" | "library-songs" };
+              });
+
+              if (trackIds.length > 0) {
+                await addTracksToAppleMusicPlaylist(appleDevToken, appleUserToken, newPlaylistId, trackIds);
+              }
+            } else if (sourceService === "apple" && targetService === "spotify") {
+              sourceTracks = await getAppleMusicPlaylistTracks(appleDevToken, appleUserToken, playlistId, true);
+              sendEvent("init", { total: sourceTracks.length });
+
+              matches = await convertAppleMusicToSpotify(
+                sourceTracks as AppleMusicTrack[],
+                session!.accessToken!,
+                (current, total, match) => {
+                  const sourceInfo = formatTrackForResponse(match.sourceTrack);
+                  const targetInfo = match.targetTrack ? formatTrackForResponse(match.targetTrack) : null;
+                  
+                  sendEvent("progress", {
+                    current,
+                    total,
+                    track: {
+                      name: sourceInfo.name,
+                      artist: sourceInfo.artist,
+                      status: !match.targetTrack ? "not_found" 
+                        : match.matchConfidence >= MIN_MATCH_CONFIDENCE ? "matched" : "low_confidence",
+                      matchedTo: targetInfo,
+                      confidence: match.matchConfidence,
+                    },
+                  });
+                }
+              );
+
+              newPlaylistId = await createSpotifyPlaylist(
+                session!.accessToken!,
+                `${playlistName} (from Apple Music)`,
+                `Converted from Apple Music playlist: ${playlistName}`,
+                false
+              );
+
+              const goodMatches = matches.filter(m => m.targetTrack && m.matchConfidence >= MIN_MATCH_CONFIDENCE);
+              const trackUris = goodMatches.map((m) => (m.targetTrack as SpotifyTrack).uri);
+
+              if (trackUris.length > 0) {
+                await addTracksToSpotifyPlaylist(session!.accessToken!, newPlaylistId, trackUris);
+              }
+            } else {
+              sendEvent("error", { error: "Invalid source/target service combination" });
+              controller.close();
+              return;
+            }
+
+            const stats = getConversionStats(matches);
+
+            sendEvent("complete", {
+              success: true,
+              newPlaylistId,
+              stats,
+              matches: matches.map((m) => ({
+                sourceTrack: formatTrackForResponse(m.sourceTrack),
+                targetTrack: m.targetTrack ? formatTrackForResponse(m.targetTrack) : null,
+                matchConfidence: m.matchConfidence,
+                matchMethod: m.matchMethod,
+              })),
+            });
+
+            controller.close();
+          } catch (error) {
+            console.error("Streaming conversion error:", error);
+            sendEvent("error", { error: "Conversion failed" });
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // Non-streaming response (original behavior)
+    let matches: TrackMatch[];
     let newPlaylistId: string;
 
     if (sourceService === "spotify" && targetService === "apple") {
-      // Spotify -> Apple Music
       const sourceTracks = await getSpotifyPlaylistTracks(session!.accessToken!, playlistId);
       matches = await convertSpotifyToAppleMusic(sourceTracks, appleDevToken);
       
-      // Create new playlist in Apple Music
       newPlaylistId = await createAppleMusicPlaylist(
         appleDevToken,
         appleUserToken,
@@ -77,29 +220,19 @@ export async function POST(request: Request) {
         `Converted from Spotify playlist: ${playlistName}`
       );
 
-      // Add matched tracks
-      const goodMatches = filterMatchesByConfidence(matches, 70);
-      const trackIds = goodMatches
-        .filter((m) => m.targetTrack)
-        .map((m) => {
-          const track = m.targetTrack as AppleMusicTrack;
-          return { id: track.id, type: track.type as "songs" | "library-songs" };
-        });
+      const goodMatches = matches.filter(m => m.targetTrack && m.matchConfidence >= MIN_MATCH_CONFIDENCE);
+      const trackIds = goodMatches.map((m) => {
+        const track = m.targetTrack as AppleMusicTrack;
+        return { id: track.id, type: track.type as "songs" | "library-songs" };
+      });
 
       if (trackIds.length > 0) {
         await addTracksToAppleMusicPlaylist(appleDevToken, appleUserToken, newPlaylistId, trackIds);
       }
     } else if (sourceService === "apple" && targetService === "spotify") {
-      // Apple Music -> Spotify
-      const sourceTracks = await getAppleMusicPlaylistTracks(
-        appleDevToken,
-        appleUserToken,
-        playlistId,
-        true
-      );
+      const sourceTracks = await getAppleMusicPlaylistTracks(appleDevToken, appleUserToken, playlistId, true);
       matches = await convertAppleMusicToSpotify(sourceTracks, session!.accessToken!);
 
-      // Create new playlist in Spotify
       newPlaylistId = await createSpotifyPlaylist(
         session!.accessToken!,
         `${playlistName} (from Apple Music)`,
@@ -107,11 +240,8 @@ export async function POST(request: Request) {
         false
       );
 
-      // Add matched tracks
-      const goodMatches = filterMatchesByConfidence(matches, 70);
-      const trackUris = goodMatches
-        .filter((m) => m.targetTrack)
-        .map((m) => (m.targetTrack as SpotifyTrack).uri);
+      const goodMatches = matches.filter(m => m.targetTrack && m.matchConfidence >= MIN_MATCH_CONFIDENCE);
+      const trackUris = goodMatches.map((m) => (m.targetTrack as SpotifyTrack).uri);
 
       if (trackUris.length > 0) {
         await addTracksToSpotifyPlaylist(session!.accessToken!, newPlaylistId, trackUris);
@@ -131,14 +261,8 @@ export async function POST(request: Request) {
         newPlaylistId,
         stats,
         matches: matches.map((m) => ({
-          sourceTrack: "name" in m.sourceTrack 
-            ? { name: (m.sourceTrack as SpotifyTrack).name, artist: (m.sourceTrack as SpotifyTrack).artists[0]?.name }
-            : { name: m.sourceTrack.attributes.name, artist: m.sourceTrack.attributes.artistName },
-          targetTrack: m.targetTrack
-            ? "name" in m.targetTrack
-              ? { name: (m.targetTrack as SpotifyTrack).name, artist: (m.targetTrack as SpotifyTrack).artists[0]?.name }
-              : { name: m.targetTrack.attributes.name, artist: m.targetTrack.attributes.artistName }
-            : null,
+          sourceTrack: formatTrackForResponse(m.sourceTrack),
+          targetTrack: m.targetTrack ? formatTrackForResponse(m.targetTrack) : null,
           matchConfidence: m.matchConfidence,
           matchMethod: m.matchMethod,
         })),
@@ -152,5 +276,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-
