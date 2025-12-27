@@ -1,13 +1,32 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { cookies } from "next/headers";
 import { getSpotifyPlaylistTracks, createSpotifyPlaylist, addTracksToSpotifyPlaylist } from "@/lib/spotify";
 import { generateAppleMusicToken, getAppleMusicPlaylistTracks, createAppleMusicPlaylist, addTracksToAppleMusicPlaylist } from "@/lib/apple-music";
 import { convertSpotifyToAppleMusic, convertAppleMusicToSpotify, getConversionStats, filterMatchesByConfidence } from "@/lib/converter";
 import type { SpotifyTrack, AppleMusicTrack } from "@/types";
 
+interface SpotifySession {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
+
+async function getSpotifySession(): Promise<SpotifySession | null> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("spotify_session")?.value;
+  
+  if (!sessionCookie) return null;
+  
+  try {
+    return JSON.parse(Buffer.from(sessionCookie, "base64").toString("utf-8"));
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   try {
-    const session = await auth();
+    const session = await getSpotifySession();
     const body = await request.json();
     
     const {

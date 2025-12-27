@@ -1,6 +1,5 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
@@ -26,6 +25,18 @@ import {
 import { SpotifyLogo, AppleLogo } from "@/components/icons";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
 
+interface SpotifySession {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string;
+  };
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
+
 interface ConversionResult {
   success: boolean;
   newPlaylistId: string;
@@ -46,8 +57,11 @@ interface ConversionResult {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+
+  // Spotify session state
+  const [spotifySession, setSpotifySession] = useState<SpotifySession | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
 
   // Connection state
   const [appleConnected, setAppleConnected] = useState(false);
@@ -71,14 +85,29 @@ export default function DashboardPage() {
   // Active tab
   const [activeTab, setActiveTab] = useState<string>("spotify");
 
-  const spotifyConnected = status === "authenticated";
+  const spotifyConnected = !!spotifySession;
 
-  // Redirect if not authenticated
+  // Fetch Spotify session on mount
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
+    const fetchSpotifySession = async () => {
+      try {
+        const response = await fetch("/api/spotify/session");
+        const data = await response.json();
+        if (data.session) {
+          setSpotifySession(data.session);
+        } else {
+          // Redirect to home if not authenticated
+          router.push("/");
+        }
+      } catch (error) {
+        console.error("Failed to fetch Spotify session:", error);
+        router.push("/");
+      } finally {
+        setSessionLoading(false);
+      }
+    };
+    fetchSpotifySession();
+  }, [router]);
 
   // Load Spotify playlists
   const loadSpotifyPlaylists = useCallback(async () => {
@@ -244,7 +273,7 @@ export default function DashboardPage() {
     setConversionResult(null);
   };
 
-  if (status === "loading") {
+  if (sessionLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <IconLoader2 className="h-8 w-8 animate-spin text-primary" />

@@ -1,23 +1,33 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ServiceConnect } from "@/components/service-connect";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { IconArrowRight, IconRefresh } from "@tabler/icons-react";
 import { SpotifyLogo, AppleLogo, AppleMusicLogo, MusicNote } from "@/components/icons";
 
 export default function HomePage() {
-  const { status } = useSession();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Redirect to dashboard if already authenticated
+  // Check Spotify session and redirect to dashboard if authenticated
   useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/dashboard");
-    }
-  }, [status, router]);
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/spotify/session");
+        const data = await response.json();
+        if (data.session) {
+          router.push("/dashboard");
+        }
+      } catch (error) {
+        console.error("Failed to check session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkSession();
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
@@ -83,7 +93,7 @@ export default function HomePage() {
           
           <ServiceConnect />
 
-          {status === "loading" && (
+          {isLoading && (
             <div className="mt-8 text-center">
               <div className="inline-flex items-center gap-2 text-muted-foreground">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />

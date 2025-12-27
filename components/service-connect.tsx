@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IconCheck, IconLoader2, IconX, IconUser } from "@tabler/icons-react";
 import { SpotifyLogo, AppleLogo } from "@/components/icons";
+
+interface SpotifySession {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string;
+  };
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
 
 interface MusicKitInstance {
   authorize: () => Promise<string>;
@@ -29,13 +40,32 @@ interface ServiceConnectProps {
 }
 
 export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
-  const { data: session, status } = useSession();
+  const [spotifySession, setSpotifySession] = useState<SpotifySession | null>(null);
+  const [spotifyLoading, setSpotifyLoading] = useState(true);
   const [appleConnected, setAppleConnected] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleUserToken, setAppleUserToken] = useState<string | null>(null);
   const [musicKit, setMusicKit] = useState<MusicKitInstance | null>(null);
 
-  const spotifyConnected = status === "authenticated";
+  const spotifyConnected = !!spotifySession;
+
+  // Fetch Spotify session on mount
+  useEffect(() => {
+    const fetchSpotifySession = async () => {
+      try {
+        const response = await fetch("/api/spotify/session");
+        const data = await response.json();
+        if (data.session) {
+          setSpotifySession(data.session);
+        }
+      } catch (error) {
+        console.error("Failed to fetch Spotify session:", error);
+      } finally {
+        setSpotifyLoading(false);
+      }
+    };
+    fetchSpotifySession();
+  }, []);
 
   // Initialize MusicKit
   useEffect(() => {
@@ -90,8 +120,14 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
     window.location.href = "/api/spotify/auth";
   };
 
-  const disconnectSpotify = () => {
-    signOut({ callbackUrl: "/" });
+  const disconnectSpotify = async () => {
+    try {
+      await fetch("/api/spotify/session", { method: "DELETE" });
+      setSpotifySession(null);
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Failed to disconnect Spotify:", error);
+    }
   };
 
   const connectApple = useCallback(async () => {
@@ -128,10 +164,10 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
 
   // Notify parent of Spotify connection changes
   useEffect(() => {
-    if (spotifyConnected && session?.accessToken) {
-      onConnectionChange?.("spotify", true, session.accessToken);
+    if (spotifyConnected && spotifySession?.accessToken) {
+      onConnectionChange?.("spotify", true, spotifySession.accessToken);
     }
-  }, [spotifyConnected, session?.accessToken, onConnectionChange]);
+  }, [spotifyConnected, spotifySession?.accessToken, onConnectionChange]);
 
   // Store Apple user token in sessionStorage for API calls
   useEffect(() => {
@@ -142,9 +178,9 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
     }
   }, [appleUserToken]);
 
-  const userInitials = session?.user?.name
-    ? session.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
-    : session?.user?.email?.[0]?.toUpperCase() || "U";
+  const userInitials = spotifySession?.user?.name
+    ? spotifySession.user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    : spotifySession?.user?.email?.[0]?.toUpperCase() || "U";
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -180,15 +216,15 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "User"} />
+                  <AvatarImage src={spotifySession?.user?.image || undefined} alt={spotifySession?.user?.name || "User"} />
                   <AvatarFallback>{userInitials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {session?.user?.name || "Spotify User"}
+                    {spotifySession?.user?.name || "Spotify User"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {session?.user?.email}
+                    {spotifySession?.user?.email}
                   </p>
                 </div>
               </div>
@@ -204,9 +240,9 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
             <Button
               onClick={connectSpotify}
               className="w-full bg-[#1DB954] hover:bg-[#1aa34a] text-white"
-              disabled={status === "loading"}
+              disabled={spotifyLoading}
             >
-              {status === "loading" ? (
+              {spotifyLoading ? (
                 <IconLoader2 className="mr-2 animate-spin" size={18} />
               ) : (
                 <SpotifyLogo className="mr-2 h-5 w-5" />
