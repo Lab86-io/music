@@ -3,6 +3,7 @@ import { Figtree } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { auth } from "@/lib/auth";
 import "./globals.css";
 
 const figtree = Figtree({ 
@@ -19,11 +20,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html lang="en" className={figtree.variable} suppressHydrationWarning>
       <head>
@@ -60,7 +63,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">
         <ThemeProvider>
-          <SessionProvider>
+          <SessionProvider session={session}>
             {children}
             <Toaster richColors position="bottom-right" />
           </SessionProvider>
