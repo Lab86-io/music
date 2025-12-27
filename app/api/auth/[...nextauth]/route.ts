@@ -5,48 +5,46 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Sevalla (and similar proxies) pass the real host via x-forwarded-host header,
- * but request.url contains the internal container URL (localhost:8080).
- * Auth.js's trustHost doesn't always rewrite early enough, causing "Invalid URL".
+ * Sevalla proxy passes requests to internal container (localhost:8080).
+ * Auth.js needs the external URL for OAuth callbacks and internal URL parsing.
  * 
- * Fix: Reconstruct the request with the correct external URL.
+ * Fix: Set NEXTAUTH_URL dynamically from forwarded headers before Auth.js runs.
  */
-function getExternalRequest(request: NextRequest): NextRequest {
+function setupAuthUrl(request: NextRequest): string {
   const forwardedHost = request.headers.get("x-forwarded-host");
   const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
   
-  console.log("[auth] Original request.url:", request.url);
-  console.log("[auth] x-forwarded-host:", forwardedHost);
-  console.log("[auth] x-forwarded-proto:", forwardedProto);
-  
   if (forwardedHost) {
-    // Reconstruct the full external URL
-    const externalUrl = `${forwardedProto}://${forwardedHost}${request.nextUrl.pathname}${request.nextUrl.search}`;
-    console.log("[auth] Reconstructed external URL:", externalUrl);
+    const externalOrigin = `${forwardedProto}://${forwardedHost}`;
     
-    const url = new URL(externalUrl);
+    // Set both env vars that Auth.js might read
+    process.env.AUTH_URL = externalOrigin;
+    process.env.NEXTAUTH_URL = externalOrigin;
     
-    // Create new request with correct URL
-    const newRequest = new NextRequest(url, {
-      method: request.method,
-      headers: request.headers,
-      body: request.body,
-      duplex: "half",
-    });
-    
-    console.log("[auth] New request.url:", newRequest.url);
-    return newRequest;
+    console.log("[auth] Set AUTH_URL/NEXTAUTH_URL to:", externalOrigin);
+    return externalOrigin;
   }
   
-  console.log("[auth] No forwarded host, using original request");
-  return request;
+  return process.env.AUTH_URL || "http://localhost:3000";
+}
+
+function getExternalRequest(request: NextRequest, origin: string): NextRequest {
+  const externalUrl = `${origin}${request.nextUrl.pathname}${request.nextUrl.search}`;
+  console.log("[auth] External URL:", externalUrl);
+  
+  return new NextRequest(new URL(externalUrl), {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+    duplex: "half",
+  });
 }
 
 export async function GET(request: NextRequest) {
-  console.log("[auth] GET handler called");
+  const origin = setupAuthUrl(request);
+  const externalRequest = getExternalRequest(request, origin);
+  
   try {
-    const externalRequest = getExternalRequest(request);
-    console.log("[auth] Calling handlers.GET with URL:", externalRequest.url);
     return await handlers.GET(externalRequest);
   } catch (error) {
     console.error("[auth] GET error:", error);
@@ -55,10 +53,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  console.log("[auth] POST handler called");
+  const origin = setupAuthUrl(request);
+  const externalRequest = getExternalRequest(request, origin);
+  
   try {
-    const externalRequest = getExternalRequest(request);
-    console.log("[auth] Calling handlers.POST with URL:", externalRequest.url);
     return await handlers.POST(externalRequest);
   } catch (error) {
     console.error("[auth] POST error:", error);
