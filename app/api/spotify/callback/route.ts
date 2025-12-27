@@ -63,8 +63,7 @@ export async function GET(request: NextRequest) {
     });
     
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
-      console.error("Token exchange failed:", errorData);
+      console.error("Token exchange failed with status:", tokenResponse.status);
       return NextResponse.redirect(`${origin}/?error=token_exchange_failed`);
     }
     
