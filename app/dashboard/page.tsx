@@ -290,8 +290,8 @@ export default function DashboardPage() {
           {/* Header */}
           <header className="mb-8 flex items-center justify-between py-2">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/20 animate-float">
-                <MusicNote className="h-6 w-6" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <MusicNote className="h-5 w-5" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">
@@ -359,26 +359,20 @@ export default function DashboardPage() {
 
           {/* Playlists */}
           {spotifyConnected && appleConnected && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 animate-fade-in-up">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <div className="flex items-center justify-between">
-                <TabsList className="glass p-1">
-                  <TabsTrigger 
-                    value="spotify" 
-                    className="gap-2 data-[state=active]:bg-[#1DB954]/10 data-[state=active]:text-foreground transition-all"
-                  >
+                <TabsList>
+                  <TabsTrigger value="spotify" className="gap-2">
                     <SpotifyLogo className="h-4 w-4" />
-                    <span className="hidden sm:inline">Spotify</span>
-                    <Badge variant="secondary" className="ml-1 text-xs bg-muted/60">
+                    Spotify
+                    <Badge variant="secondary" className="ml-1 text-xs">
                       {spotifyPlaylists.length}
                     </Badge>
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="apple" 
-                    className="gap-2 data-[state=active]:bg-[#FC3C44]/10 data-[state=active]:text-foreground transition-all"
-                  >
+                  <TabsTrigger value="apple" className="gap-2">
                     <AppleLogo className="h-4 w-4" />
-                    <span className="hidden sm:inline">Apple Music</span>
-                    <Badge variant="secondary" className="ml-1 text-xs bg-muted/60">
+                    Apple Music
+                    <Badge variant="secondary" className="ml-1 text-xs">
                       {applePlaylists.length}
                     </Badge>
                   </TabsTrigger>
@@ -387,7 +381,7 @@ export default function DashboardPage() {
                   <TooltipTrigger
                     onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}
                     disabled={activeTab === "spotify" ? loadingSpotify : loadingApple}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:scale-105"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                   >
                     <IconRefresh
                       size={18}
@@ -400,12 +394,12 @@ export default function DashboardPage() {
 
               {/* Spotify Playlists */}
               <TabsContent value="spotify">
-                <ScrollArea className="h-[calc(100vh-350px)]">
-                  <div className="space-y-3 pr-4">
+                <ScrollArea className="h-[calc(100vh-280px)]">
+                  <div className="space-y-3 pr-4 pb-4">
                     {loadingSpotify ? (
                       <PlaylistSkeletonList count={5} />
                     ) : spotifyPlaylists.length > 0 ? (
-                      spotifyPlaylists.map((playlist, index) => (
+                      spotifyPlaylists.map((playlist) => (
                         <PlaylistCard
                           key={playlist.id}
                           playlist={playlist}
@@ -413,17 +407,13 @@ export default function DashboardPage() {
                           targetService="apple"
                           onConvert={handleConvert}
                           disabled={isConverting || !appleConnected}
-                          index={index}
                         />
                       ))
                     ) : (
-                      <Card className="glass border-dashed">
-                        <CardContent className="flex flex-col items-center justify-center py-16">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1DB954]/10 mb-4">
-                            <SpotifyLogo className="h-8 w-8 text-[#1DB954]/60" />
-                          </div>
-                          <p className="text-muted-foreground font-medium">No playlists found</p>
-                          <p className="text-sm text-muted-foreground/70 mt-1">Create a playlist on Spotify to get started</p>
+                      <Card>
+                        <CardContent className="flex flex-col items-center justify-center py-12">
+                          <IconMusic size={48} className="mb-4 text-muted-foreground" />
+                          <p className="text-muted-foreground">No playlists found</p>
                         </CardContent>
                       </Card>
                     )}
@@ -433,12 +423,12 @@ export default function DashboardPage() {
 
               {/* Apple Music Playlists */}
               <TabsContent value="apple">
-                <ScrollArea className="h-[calc(100vh-350px)]">
-                  <div className="space-y-3 pr-4">
+                <ScrollArea className="h-[calc(100vh-280px)]">
+                  <div className="space-y-3 pr-4 pb-4">
                     {loadingApple ? (
                       <PlaylistSkeletonList count={5} />
                     ) : applePlaylists.length > 0 ? (
-                      applePlaylists.map((playlist, index) => (
+                      applePlaylists.map((playlist) => (
                         <PlaylistCard
                           key={playlist.id}
                           playlist={playlist}
@@ -446,17 +436,13 @@ export default function DashboardPage() {
                           targetService="spotify"
                           onConvert={handleConvert}
                           disabled={isConverting || !spotifyConnected}
-                          index={index}
                         />
                       ))
                     ) : (
-                      <Card className="glass border-dashed">
-                        <CardContent className="flex flex-col items-center justify-center py-16">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FC3C44]/10 to-[#F94C57]/10 mb-4">
-                            <AppleLogo className="h-8 w-8 text-[#FC3C44]/60" />
-                          </div>
-                          <p className="text-muted-foreground font-medium">No playlists found</p>
-                          <p className="text-sm text-muted-foreground/70 mt-1">Create a playlist on Apple Music to get started</p>
+                      <Card>
+                        <CardContent className="flex flex-col items-center justify-center py-12">
+                          <IconMusic size={48} className="mb-4 text-muted-foreground" />
+                          <p className="text-muted-foreground">No playlists found</p>
                         </CardContent>
                       </Card>
                     )}

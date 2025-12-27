@@ -15,10 +15,9 @@ interface PlaylistCardProps {
   onConvert: (playlist: SpotifyPlaylist | AppleMusicPlaylist) => void;
   targetService: "spotify" | "apple";
   disabled?: boolean;
-  index?: number;
 }
 
-export function PlaylistCard({ playlist, source, onConvert, targetService, disabled, index = 0 }: PlaylistCardProps) {
+export function PlaylistCard({ playlist, source, onConvert, targetService, disabled }: PlaylistCardProps) {
   const isSpotify = source === "spotify";
   
   // Normalize playlist data
@@ -39,39 +38,32 @@ export function PlaylistCard({ playlist, source, onConvert, targetService, disab
     : (playlist as AppleMusicPlaylist).attributes.description?.standard;
 
   return (
-    <Card 
-      className={cn(
-        "group overflow-hidden transition-all duration-300 card-lift",
-        "glass border-border/50 hover:border-primary/40",
-        "animate-fade-in-up"
-      )}
-      style={{ animationDelay: `${index * 50}ms` }}
-    >
+    <Card className="group overflow-hidden transition-colors hover:bg-muted/50">
       <CardContent className="p-0">
         <div className="flex gap-4 p-4">
           {/* Album Art */}
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted shadow-sm">
+          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
             {imageUrl ? (
               <Image
                 src={imageUrl}
                 alt={name}
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-110"
-                sizes="80px"
+                className="object-cover"
+                sizes="64px"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                <IconMusic size={32} className="text-primary/60" />
+              <div className="flex h-full w-full items-center justify-center bg-muted">
+                <IconMusic size={24} className="text-muted-foreground" />
               </div>
             )}
             {/* Service badge */}
-            <div className="absolute bottom-1.5 right-1.5">
+            <div className="absolute -bottom-1 -right-1">
               {isSpotify ? (
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1DB954] text-white shadow-lg ring-2 ring-background">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1DB954] text-white ring-2 ring-background">
                   <SpotifyLogo className="h-3 w-3" />
                 </div>
               ) : (
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#FC3C44] to-[#F94C57] text-white shadow-lg ring-2 ring-background">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FC3C44] text-white ring-2 ring-background">
                   <AppleLogo className="h-3 w-3" />
                 </div>
               )}
@@ -79,19 +71,17 @@ export function PlaylistCard({ playlist, source, onConvert, targetService, disab
           </div>
 
           {/* Playlist Info */}
-          <div className="flex flex-1 flex-col justify-between min-w-0">
-            <div>
-              <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={name}>
-                {name}
-              </h3>
-              {description && (
-                <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
-                  {description}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center justify-between mt-2">
-              <Badge variant="secondary" className="text-xs bg-muted/80">
+          <div className="flex flex-1 flex-col justify-center min-w-0">
+            <h3 className="font-medium text-foreground truncate" title={name}>
+              {name}
+            </h3>
+            {description && (
+              <p className="text-sm text-muted-foreground line-clamp-1">
+                {description}
+              </p>
+            )}
+            <div className="flex items-center mt-1">
+              <Badge variant="secondary" className="text-xs">
                 <IconMusic size={12} className="mr-1" />
                 {trackCount > 0 ? `${trackCount} tracks` : "Playlist"}
               </Badge>
@@ -105,19 +95,19 @@ export function PlaylistCard({ playlist, source, onConvert, targetService, disab
               onClick={() => onConvert(playlist)}
               disabled={disabled}
               className={cn(
-                "gap-1.5 transition-all duration-200 shadow-sm hover:shadow-md",
+                "gap-1.5",
                 targetService === "spotify" 
-                  ? "bg-[#1DB954] hover:bg-[#1aa34a] hover:shadow-[#1DB954]/20" 
-                  : "bg-gradient-to-r from-[#FC3C44] to-[#F94C57] hover:from-[#e03540] hover:to-[#e0444d] hover:shadow-[#FC3C44]/20"
+                  ? "bg-[#1DB954] hover:bg-[#1aa34a]" 
+                  : "bg-[#FC3C44] hover:bg-[#e03540]"
               )}
             >
-              <span className="hidden sm:inline text-xs">Convert</span>
+              <span className="hidden sm:inline">Convert</span>
               {targetService === "spotify" ? (
                 <SpotifyLogo className="h-4 w-4" />
               ) : (
                 <AppleLogo className="h-4 w-4" />
               )}
-              <IconArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+              <IconArrowRight size={14} />
             </Button>
           </div>
         </div>
