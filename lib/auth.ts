@@ -10,9 +10,6 @@ const SPOTIFY_SCOPES = [
   "playlist-modify-private",
 ].join(" ");
 
-// Get the base URL from environment
-const baseUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
-
 // Create a single NextAuth instance with consistent configuration
 const nextAuth = NextAuth({
   providers: [
@@ -28,8 +25,7 @@ const nextAuth = NextAuth({
   ],
   secret: process.env.AUTH_SECRET,
   trustHost: true,
-  // Use redirectProxyUrl to ensure Auth.js uses the correct external URL
-  redirectProxyUrl: `${baseUrl}/api/auth`,
+  debug: process.env.NODE_ENV === "development",
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
