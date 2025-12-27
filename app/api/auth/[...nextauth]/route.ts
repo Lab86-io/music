@@ -5,10 +5,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Create a standard Web API Request with the correct external URL.
- * NextRequest has extra properties (nextUrl) that might confuse Auth.js.
+ * Create a new NextRequest with the correct external URL.
  */
-function createExternalRequest(request: NextRequest): Request {
+function createExternalRequest(request: NextRequest): NextRequest {
   const forwardedHost = request.headers.get("x-forwarded-host");
   const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
   
@@ -26,12 +25,12 @@ function createExternalRequest(request: NextRequest): Request {
   
   console.log("[auth] External URL:", externalUrl);
   
-  // Create a plain Web API Request (not NextRequest)
-  return new Request(externalUrl, {
+  // Create a new NextRequest with the external URL
+  return new NextRequest(externalUrl, {
     method: request.method,
     headers: request.headers,
     body: request.body,
-    // @ts-expect-error - duplex is required for streaming bodies in Node
+    // @ts-expect-error - duplex is needed for streaming request bodies
     duplex: "half",
   });
 }
