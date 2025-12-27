@@ -34,14 +34,28 @@ function getExternalRequest(request: NextRequest, origin: string): NextRequest {
 
 export async function GET(request: NextRequest) {
   const origin = getExternalOrigin(request);
+  console.log("[auth GET] origin:", origin);
+  console.log("[auth GET] SPOTIFY_CLIENT_ID exists:", !!process.env.SPOTIFY_CLIENT_ID);
+  console.log("[auth GET] SPOTIFY_CLIENT_SECRET exists:", !!process.env.SPOTIFY_CLIENT_SECRET);
+  console.log("[auth GET] AUTH_SECRET exists:", !!process.env.AUTH_SECRET);
+  
   const handlers = createAuthHandlers(origin);
   const externalRequest = getExternalRequest(request, origin);
+  
+  console.log("[auth GET] externalRequest.url:", externalRequest.url);
   return handlers.GET(externalRequest);
 }
 
 export async function POST(request: NextRequest) {
   const origin = getExternalOrigin(request);
+  console.log("[auth POST] origin:", origin);
+  console.log("[auth POST] SPOTIFY_CLIENT_ID exists:", !!process.env.SPOTIFY_CLIENT_ID);
+  console.log("[auth POST] SPOTIFY_CLIENT_SECRET exists:", !!process.env.SPOTIFY_CLIENT_SECRET);
+  console.log("[auth POST] AUTH_SECRET exists:", !!process.env.AUTH_SECRET);
+  
   const handlers = createAuthHandlers(origin);
   const externalRequest = getExternalRequest(request, origin);
+  
+  console.log("[auth POST] externalRequest.url:", externalRequest.url);
   return handlers.POST(externalRequest);
 }
