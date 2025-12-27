@@ -41,7 +41,6 @@ function createExternalRequest(request: NextRequest): { request: NextRequest; or
     method: request.method,
     headers: newHeaders,
     body: request.body,
-    // @ts-expect-error - duplex is needed for streaming request bodies
     duplex: "half",
   });
   
