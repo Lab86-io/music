@@ -1,35 +1,41 @@
 import { handlers } from "@/lib/auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Wrap handlers to log what URL Auth.js receives
-async function wrappedGET(request: NextRequest) {
-  console.log("[auth] GET request.url:", request.url);
-  console.log("[auth] GET request.nextUrl:", request.nextUrl.toString());
-  console.log("[auth] Headers host:", request.headers.get("host"));
-  console.log("[auth] Headers x-forwarded-host:", request.headers.get("x-forwarded-host"));
-  console.log("[auth] Headers x-forwarded-proto:", request.headers.get("x-forwarded-proto"));
+/**
+ * Sevalla (and similar proxies) pass the real host via x-forwarded-host header,
+ * but request.url contains the internal container URL (localhost:8080).
+ * Auth.js's trustHost doesn't always rewrite early enough, causing "Invalid URL".
+ * 
+ * Fix: Reconstruct the request with the correct external URL.
+ */
+function getExternalRequest(request: NextRequest): NextRequest {
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
   
-  try {
-    return await handlers.GET(request);
-  } catch (error) {
-    console.error("[auth] GET error:", error);
-    return NextResponse.json({ error: "Auth error" }, { status: 500 });
+  if (forwardedHost) {
+    // Reconstruct the full external URL
+    const url = new URL(request.nextUrl.pathname + request.nextUrl.search, `${forwardedProto}://${forwardedHost}`);
+    
+    // Create new request with correct URL
+    return new NextRequest(url, {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      // @ts-expect-error - duplex is required for streaming bodies
+      duplex: "half",
+    });
   }
+  
+  return request;
 }
 
-async function wrappedPOST(request: NextRequest) {
-  console.log("[auth] POST request.url:", request.url);
-  console.log("[auth] POST request.nextUrl:", request.nextUrl.toString());
-  
-  try {
-    return await handlers.POST(request);
-  } catch (error) {
-    console.error("[auth] POST error:", error);
-    return NextResponse.json({ error: "Auth error" }, { status: 500 });
-  }
+export async function GET(request: NextRequest) {
+  return handlers.GET(getExternalRequest(request));
 }
 
-export { wrappedGET as GET, wrappedPOST as POST };
+export async function POST(request: NextRequest) {
+  return handlers.POST(getExternalRequest(request));
+}
