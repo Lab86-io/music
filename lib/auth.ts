@@ -76,14 +76,17 @@ function getAuth() {
 }
 
 // Export functions that use the lazy singleton
-export const auth = (...args: Parameters<ReturnType<typeof NextAuth>["auth"]>) => 
-  getAuth().auth(...args);
+export async function auth() {
+  return getAuth().auth();
+}
 
-export const signIn = (...args: Parameters<ReturnType<typeof NextAuth>["signIn"]>) => 
-  getAuth().signIn(...args);
+export async function signIn(...args: Parameters<ReturnType<typeof NextAuth>["signIn"]>) {
+  return getAuth().signIn(...args);
+}
 
-export const signOut = (...args: Parameters<ReturnType<typeof NextAuth>["signOut"]>) => 
-  getAuth().signOut(...args);
+export async function signOut(...args: Parameters<ReturnType<typeof NextAuth>["signOut"]>) {
+  return getAuth().signOut(...args);
+}
 
 // For API routes that need to create handlers with a specific origin
 export function createAuthHandlers(origin: string) {
