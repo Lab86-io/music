@@ -25,7 +25,6 @@ const nextAuth = NextAuth({
   ],
   secret: process.env.AUTH_SECRET,
   trustHost: true,
-  debug: process.env.NODE_ENV === "development",
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
