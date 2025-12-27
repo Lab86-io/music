@@ -11,13 +11,6 @@ const SPOTIFY_SCOPES = [
   "playlist-modify-private",
 ].join(" ");
 
-// Get the base URL for callbacks
-const getBaseUrl = () => {
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  if (process.env.AUTH_URL) return process.env.AUTH_URL;
-  return "http://localhost:3000";
-};
-
 export const authConfig: NextAuthConfig = {
   providers: [
     SpotifyProvider({
@@ -30,6 +23,7 @@ export const authConfig: NextAuthConfig = {
       },
     }),
   ],
+  secret: process.env.AUTH_SECRET,
   trustHost: true,
   callbacks: {
     async jwt({ token, account }) {
@@ -58,7 +52,7 @@ export const authConfig: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
+  debug: process.env.NODE_ENV === "development",
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
-
