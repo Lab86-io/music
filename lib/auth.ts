@@ -11,6 +11,9 @@ const SPOTIFY_SCOPES = [
   "playlist-modify-private",
 ].join(" ");
 
+// Ensure we have a valid base URL
+const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
+
 export const authConfig: NextAuthConfig = {
   providers: [
     SpotifyProvider({
@@ -25,7 +28,8 @@ export const authConfig: NextAuthConfig = {
   ],
   secret: process.env.AUTH_SECRET,
   trustHost: true,
-  debug: true, // Enable debug logs
+  debug: true,
+  basePath: "/api/auth", // Explicitly set base path
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
