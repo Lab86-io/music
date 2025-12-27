@@ -2,25 +2,6 @@ import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 
-/**
- * Sevalla/CDN/proxy environments sometimes expose subtle env-var issues:
- * - Leading/trailing whitespace in URLs/secrets
- * - Some auth internals still read NEXTAUTH_URL/NEXTAUTH_SECRET
- *
- * Normalize + alias to avoid `new URL(undefined)` / `new URL(" https://...")`.
- */
-const normalizedAuthUrl = process.env.AUTH_URL?.trim();
-if (normalizedAuthUrl) {
-  process.env.AUTH_URL = normalizedAuthUrl;
-  process.env.NEXTAUTH_URL ??= normalizedAuthUrl;
-}
-
-const normalizedAuthSecret = process.env.AUTH_SECRET?.trim();
-if (normalizedAuthSecret) {
-  process.env.AUTH_SECRET = normalizedAuthSecret;
-  process.env.NEXTAUTH_SECRET ??= normalizedAuthSecret;
-}
-
 const SPOTIFY_SCOPES = [
   "user-read-email",
   "user-read-private",
@@ -30,46 +11,81 @@ const SPOTIFY_SCOPES = [
   "playlist-modify-private",
 ].join(" ");
 
-export const authConfig: NextAuthConfig = {
-  providers: [
-    SpotifyProvider({
-      clientId: process.env.SPOTIFY_CLIENT_ID?.trim(),
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET?.trim(),
-      authorization: {
-        params: {
-          scope: SPOTIFY_SCOPES,
+/**
+ * Create Auth.js config with the correct URL.
+ * Called lazily to ensure env vars are properly set.
+ */
+export function createAuthConfig(origin?: string): NextAuthConfig {
+  // Use provided origin or fall back to env var
+  const authUrl = origin || process.env.AUTH_URL || "http://localhost:3000";
+  
+  // Set env vars for any internal Auth.js reads
+  process.env.AUTH_URL = authUrl;
+  process.env.NEXTAUTH_URL = authUrl;
+  
+  return {
+    providers: [
+      SpotifyProvider({
+        clientId: process.env.SPOTIFY_CLIENT_ID!,
+        clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
+        authorization: {
+          params: {
+            scope: SPOTIFY_SCOPES,
+          },
         },
+      }),
+    ],
+    secret: process.env.AUTH_SECRET,
+    trustHost: true,
+    callbacks: {
+      async jwt({ token, account }) {
+        if (account) {
+          token.accessToken = account.access_token;
+          token.refreshToken = account.refresh_token;
+          token.expiresAt = account.expires_at;
+          token.provider = account.provider;
+        }
+        return token;
       },
-    }),
-  ],
-  secret: process.env.AUTH_SECRET,
-  trustHost: true,
-  debug: true,
-  callbacks: {
-    async jwt({ token, account }) {
-      if (account) {
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
-        token.expiresAt = account.expires_at;
-        token.provider = account.provider;
-      }
-      return token;
+      async session({ session, token }) {
+        session.accessToken = token.accessToken as string;
+        session.refreshToken = token.refreshToken as string;
+        session.expiresAt = token.expiresAt as number;
+        session.provider = token.provider as string;
+        return session;
+      },
     },
-    async session({ session, token }) {
-      session.accessToken = token.accessToken as string;
-      session.refreshToken = token.refreshToken as string;
-      session.expiresAt = token.expiresAt as number;
-      session.provider = token.provider as string;
-      return session;
+    pages: {
+      signIn: "/",
+      error: "/",
     },
-  },
-  pages: {
-    signIn: "/",
-    error: "/",
-  },
-  session: {
-    strategy: "jwt",
-  },
-};
+    session: {
+      strategy: "jwt",
+    },
+  };
+}
 
-export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
+// Lazy-initialized singleton for server components (uses AUTH_URL from env)
+let _auth: ReturnType<typeof NextAuth> | null = null;
+
+function getAuth() {
+  if (!_auth) {
+    _auth = NextAuth(createAuthConfig());
+  }
+  return _auth;
+}
+
+// Export functions that use the lazy singleton
+export const auth = (...args: Parameters<ReturnType<typeof NextAuth>["auth"]>) => 
+  getAuth().auth(...args);
+
+export const signIn = (...args: Parameters<ReturnType<typeof NextAuth>["signIn"]>) => 
+  getAuth().signIn(...args);
+
+export const signOut = (...args: Parameters<ReturnType<typeof NextAuth>["signOut"]>) => 
+  getAuth().signOut(...args);
+
+// For API routes that need to create handlers with a specific origin
+export function createAuthHandlers(origin: string) {
+  return NextAuth(createAuthConfig(origin)).handlers;
+}
