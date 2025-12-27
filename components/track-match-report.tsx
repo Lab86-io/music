@@ -59,20 +59,23 @@ export function TrackMatchReport({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [addingTrack, setAddingTrack] = useState<string | null>(null);
+  const [manuallyAdded, setManuallyAdded] = useState<Set<number>>(new Set());
 
-  // A track is truly matched only if confidence >= MIN_CONFIDENCE
-  const isMatched = (m: TrackMatchData) => 
-    m.targetTrack !== null && m.matchConfidence >= MIN_CONFIDENCE;
+  // A track is truly matched only if confidence >= MIN_CONFIDENCE or manually added
+  const isMatched = (m: TrackMatchData, index: number) => 
+    manuallyAdded.has(index) || (m.targetTrack !== null && m.matchConfidence >= MIN_CONFIDENCE);
 
-  const filteredMatches = matches.filter((m) => {
-    if (filter === "matched") return isMatched(m);
-    if (filter === "unmatched") return !isMatched(m);
-    return true;
-  });
+  const filteredMatches = matches
+    .map((m, i) => ({ match: m, originalIndex: i }))
+    .filter(({ match, originalIndex }) => {
+      if (filter === "matched") return isMatched(match, originalIndex);
+      if (filter === "unmatched") return !isMatched(match, originalIndex);
+      return true;
+    });
 
   const displayedMatches = showAll ? filteredMatches : filteredMatches.slice(0, 10);
-  const matchedCount = matches.filter(isMatched).length;
-  const unmatchedCount = matches.filter(m => !isMatched(m)).length;
+  const matchedCount = matches.filter((m, i) => isMatched(m, i)).length;
+  const unmatchedCount = matches.filter((m, i) => !isMatched(m, i)).length;
 
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 90) return "text-emerald-600 dark:text-emerald-400";
@@ -160,6 +163,10 @@ export function TrackMatchReport({
       const data = await response.json();
       if (data.success) {
         toast.success(`Added "${track.name}" to playlist`);
+        // Mark this track as manually added so it disappears from unmatched
+        if (searchingIndex !== null) {
+          setManuallyAdded(prev => new Set(prev).add(searchingIndex));
+        }
         setSearchingIndex(null);
         setSearchResults([]);
         onTrackAdded?.();
@@ -220,13 +227,12 @@ export function TrackMatchReport({
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {displayedMatches.map((match, index) => {
-            const matched = isMatched(match);
-            const isSearching = searchingIndex === index;
-            const actualIndex = showAll ? index : filteredMatches.indexOf(match);
+          {displayedMatches.map(({ match, originalIndex }) => {
+            const matched = isMatched(match, originalIndex);
+            const isSearching = searchingIndex === originalIndex;
 
             return (
-              <div key={index}>
+              <div key={originalIndex}>
                 <div
                   className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
                     isSearching ? "border-primary bg-primary/5" : "hover:bg-muted/50"
@@ -237,15 +243,11 @@ export function TrackMatchReport({
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                       matched
                         ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                        : match.targetTrack && match.matchConfidence < MIN_CONFIDENCE
-                        ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
                         : "bg-red-500/20 text-red-600 dark:text-red-400"
                     }`}
                   >
                     {matched ? (
                       <IconCheck size={16} />
-                    ) : match.targetTrack && match.matchConfidence < MIN_CONFIDENCE ? (
-                      <IconAlertTriangle size={16} />
                     ) : (
                       <IconX size={16} />
                     )}
@@ -264,8 +266,8 @@ export function TrackMatchReport({
                     <p className="text-sm text-muted-foreground truncate">
                       {match.sourceTrack.artist}
                     </p>
-                    {match.targetTrack && match.matchConfidence < MIN_CONFIDENCE && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                    {!matched && match.targetTrack && match.matchConfidence < MIN_CONFIDENCE && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
                         Found: {match.targetTrack.name} - not added (low confidence)
                       </p>
                     )}
@@ -287,7 +289,7 @@ export function TrackMatchReport({
                         onClick={() =>
                           isSearching
                             ? closeSearch()
-                            : handleSearch(match.sourceTrack.name, match.sourceTrack.artist, actualIndex)
+                            : handleSearch(match.sourceTrack.name, match.sourceTrack.artist, originalIndex)
                         }
                       >
                         {isSearching ? (

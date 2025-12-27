@@ -82,8 +82,8 @@ export function ConversionProgress({
   };
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="bg-muted/50 pb-4">
+    <Card>
+      <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
             sourceService === "spotify" ? "bg-[#1DB954]" : "bg-[#FC3C44]"

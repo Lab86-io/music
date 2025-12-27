@@ -38,26 +38,28 @@ export function PlaylistCard({ playlist, source, onConvert, targetService, disab
     : (playlist as AppleMusicPlaylist).attributes.description?.standard;
 
   return (
-    <Card className="group overflow-hidden transition-colors hover:bg-muted/50">
+    <Card className="group overflow-visible transition-colors hover:bg-muted/50">
       <CardContent className="p-0">
         <div className="flex gap-4 p-4">
           {/* Album Art */}
-          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
-                alt={name}
-                fill
-                className="object-cover"
-                sizes="64px"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-muted">
-                <IconMusic size={24} className="text-muted-foreground" />
-              </div>
-            )}
-            {/* Service badge */}
-            <div className="absolute -bottom-1 -right-1">
+          <div className="relative h-16 w-16 shrink-0">
+            <div className="h-full w-full overflow-hidden rounded-md bg-muted">
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt={name}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-muted">
+                  <IconMusic size={24} className="text-muted-foreground" />
+                </div>
+              )}
+            </div>
+            {/* Service badge - positioned outside image bounds */}
+            <div className="absolute -bottom-1.5 -right-1.5 z-10">
               {isSpotify ? (
                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1DB954] text-white ring-2 ring-background">
                   <SpotifyLogo className="h-3 w-3" />

@@ -466,7 +466,7 @@ export default function DashboardPage() {
               {/* Spotify Playlists */}
               <TabsContent value="spotify">
                 <ScrollArea className="h-[calc(100vh-280px)]">
-                  <div className="space-y-3 pr-4 pb-4">
+                  <div className="space-y-3 pr-4 pb-4 pt-1 pl-1">
                     {loadingSpotify ? (
                       <PlaylistSkeletonList count={5} />
                     ) : spotifyPlaylists.length > 0 ? (
@@ -495,7 +495,7 @@ export default function DashboardPage() {
               {/* Apple Music Playlists */}
               <TabsContent value="apple">
                 <ScrollArea className="h-[calc(100vh-280px)]">
-                  <div className="space-y-3 pr-4 pb-4">
+                  <div className="space-y-3 pr-4 pb-4 pt-1 pl-1">
                     {loadingApple ? (
                       <PlaylistSkeletonList count={5} />
                     ) : applePlaylists.length > 0 ? (
