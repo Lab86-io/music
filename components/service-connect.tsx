@@ -86,7 +86,11 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
   }, []);
 
   const connectSpotify = () => {
-    signIn("spotify", { callbackUrl: "/dashboard" });
+    // Use the current origin for the callback URL to ensure proper redirect
+    const callbackUrl = typeof window !== "undefined" 
+      ? `${window.location.origin}/dashboard` 
+      : "/dashboard";
+    signIn("spotify", { callbackUrl });
   };
 
   const disconnectSpotify = () => {

@@ -1,5 +1,4 @@
 import NextAuth from "next-auth";
-import type { NextAuthConfig } from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 
 const SPOTIFY_SCOPES = [
@@ -11,19 +10,8 @@ const SPOTIFY_SCOPES = [
   "playlist-modify-private",
 ].join(" ");
 
-/**
- * Create Auth.js config with the correct URL.
- * Called lazily to ensure env vars are properly set.
- */
-export function createAuthConfig(origin?: string): NextAuthConfig {
-  // Use provided origin or fall back to env var
-  const authUrl = origin || process.env.AUTH_URL || "http://localhost:3000";
-  
-  // Set env vars for any internal Auth.js reads
-  process.env.AUTH_URL = authUrl;
-  process.env.NEXTAUTH_URL = authUrl;
-  
-  return {
+// Create a single NextAuth instance with consistent configuration
+const nextAuth = NextAuth({
   providers: [
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID!,
@@ -35,7 +23,7 @@ export function createAuthConfig(origin?: string): NextAuthConfig {
       },
     }),
   ],
-    secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
   trustHost: true,
   callbacks: {
     async jwt({ token, account }) {
@@ -62,33 +50,14 @@ export function createAuthConfig(origin?: string): NextAuthConfig {
   session: {
     strategy: "jwt",
   },
-};
-}
+});
 
-// Lazy-initialized singleton for server components (uses AUTH_URL from env)
-let _auth: ReturnType<typeof NextAuth> | null = null;
+// Export auth function for server components
+export const auth = nextAuth.auth;
 
-function getAuth() {
-  if (!_auth) {
-    _auth = NextAuth(createAuthConfig());
-  }
-  return _auth;
-}
+// Export signIn and signOut for server actions
+export const signIn = nextAuth.signIn;
+export const signOut = nextAuth.signOut;
 
-// Export functions that use the lazy singleton
-export async function auth() {
-  return getAuth().auth();
-}
-
-export async function signIn(...args: Parameters<ReturnType<typeof NextAuth>["signIn"]>) {
-  return getAuth().signIn(...args);
-}
-
-export async function signOut(...args: Parameters<ReturnType<typeof NextAuth>["signOut"]>) {
-  return getAuth().signOut(...args);
-}
-
-// For API routes that need to create handlers with a specific origin
-export function createAuthHandlers(origin: string) {
-  return NextAuth(createAuthConfig(origin)).handlers;
-}
+// Export handlers for API routes
+export const handlers = nextAuth.handlers;
