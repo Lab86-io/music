@@ -90,7 +90,8 @@ export async function POST(request: Request) {
           { status: 403 }
         );
       }
-    } else if (parsed.service === "apple") {
+    } else {
+      // Apple Music
       try {
         const playlist = await getPublicAppleMusicPlaylist(
           parsed.playlistId,
