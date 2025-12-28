@@ -68,12 +68,26 @@ function getArtistName(track: SpotifyTrack | AppleMusicTrack): string {
  * Calculate artist similarity between two tracks
  * Returns a score from 0-1
  */
-function calculateArtistSimilarity(
+function calculateArtistSimilarityInternal(
   sourceTrack: SpotifyTrack | AppleMusicTrack,
   targetTrack: SpotifyTrack | AppleMusicTrack
 ): number {
   const sourceArtist = normalizeString(getArtistName(sourceTrack));
   const targetArtist = normalizeString(getArtistName(targetTrack));
+  return stringSimilarity.compareTwoStrings(sourceArtist, targetArtist);
+}
+
+/**
+ * Calculate artist similarity between two simple track objects
+ * Exported for use in share claim route
+ * Returns a score from 0-1
+ */
+export function calculateArtistSimilarity(
+  source: { name: string; artist: string },
+  target: { name: string; artist: string }
+): number {
+  const sourceArtist = normalizeString(source.artist);
+  const targetArtist = normalizeString(target.artist);
   return stringSimilarity.compareTwoStrings(sourceArtist, targetArtist);
 }
 
@@ -124,7 +138,7 @@ export async function convertSpotifyToAppleMusic(
       const isrcResult = await searchAppleMusicTrack(appleMusicDevToken, query, isrc);
       if (isrcResult) {
         // Verify artist matches to avoid cover → original mismatches
-        const artistSimilarity = calculateArtistSimilarity(track, isrcResult);
+        const artistSimilarity = calculateArtistSimilarityInternal(track, isrcResult);
         if (artistSimilarity >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
           targetTrack = isrcResult;
           matchMethod = "isrc";
@@ -188,7 +202,7 @@ export async function convertAppleMusicToSpotify(
       const isrcResult = await searchSpotifyTrack(spotifyAccessToken, query, isrc);
       if (isrcResult) {
         // Verify artist matches to avoid cover → original mismatches
-        const artistSimilarity = calculateArtistSimilarity(track, isrcResult);
+        const artistSimilarity = calculateArtistSimilarityInternal(track, isrcResult);
         if (artistSimilarity >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
           targetTrack = isrcResult;
           matchMethod = "isrc";

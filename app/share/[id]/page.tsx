@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ConversionProgress } from "@/components/conversion-progress";
 import { 
   IconMusic, 
   IconLoader2, 
@@ -47,6 +48,27 @@ interface SpotifySession {
   accessToken: string;
 }
 
+interface CurrentTrack {
+  name: string;
+  artist: string;
+  status: "matched" | "not_found" | "low_confidence";
+  matchedTo?: { name: string; artist: string };
+  confidence?: number;
+}
+
+interface ConversionResult {
+  success: boolean;
+  stats: {
+    total: number;
+    matched: number;
+    isrcMatches: number;
+    fuzzyMatches: number;
+    unmatched: number;
+    averageConfidence: number;
+  };
+  newPlaylistId: string;
+}
+
 export default function SharePage() {
   const params = useParams();
   const router = useRouter();
@@ -67,11 +89,12 @@ export default function SharePage() {
   // Import states
   const [importing, setImporting] = useState(false);
   const [importTarget, setImportTarget] = useState<"spotify" | "apple" | null>(null);
-  const [importResult, setImportResult] = useState<{
-    success: boolean;
-    matchedTracks: number;
-    totalTracks: number;
-  } | null>(null);
+  
+  // Streaming progress states
+  const [conversionProgress, setConversionProgress] = useState<{ current: number; total: number } | undefined>();
+  const [currentTrack, setCurrentTrack] = useState<CurrentTrack | undefined>();
+  const [recentTracks, setRecentTracks] = useState<CurrentTrack[]>([]);
+  const [conversionResult, setConversionResult] = useState<ConversionResult | undefined>();
 
   // Fetch shared playlist data
   useEffect(() => {
@@ -184,34 +207,87 @@ export default function SharePage() {
   const handleImport = async (target: "spotify" | "apple") => {
     setImporting(true);
     setImportTarget(target);
+    setConversionProgress(undefined);
+    setCurrentTrack(undefined);
+    setRecentTracks([]);
+    setConversionResult(undefined);
 
     try {
       const response = await fetch(`/api/share/${shareId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "text/event-stream",
+        },
         body: JSON.stringify({
           targetService: target,
           appleUserToken: target === "apple" ? (appleUserToken || sessionStorage.getItem("appleUserToken")) : undefined,
         }),
       });
 
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Import failed");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Import failed");
       }
 
-      setImportResult({
-        success: true,
-        matchedTracks: data.data.matchedTracks,
-        totalTracks: data.data.totalTracks,
-      });
+      // Handle SSE streaming
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Failed to get response reader");
+      }
 
-      toast.success(`Playlist imported! ${data.data.matchedTracks}/${data.data.totalTracks} tracks matched.`);
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6);
+            try {
+              const data = JSON.parse(dataStr);
+              
+              if (data.total !== undefined && data.current === undefined) {
+                // Init event
+                setConversionProgress({ current: 0, total: data.total });
+              } else if (data.current !== undefined && data.track) {
+                // Progress event
+                setConversionProgress({ current: data.current, total: data.total });
+                setCurrentTrack(data.track);
+                setRecentTracks(prev => [data.track, ...prev].slice(0, 10));
+              } else if (data.success !== undefined) {
+                // Complete event
+                setConversionResult({
+                  success: data.success,
+                  newPlaylistId: data.newPlaylistId,
+                  stats: data.stats,
+                });
+                
+                if (data.success) {
+                  toast.success(`Successfully imported "${sharedPlaylist?.playlistName}"!`);
+                } else {
+                  toast.error("Import failed. Please try again.");
+                }
+              } else if (data.error) {
+                // Error event
+                toast.error(data.error);
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error("Import error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to import playlist");
-      setImportResult(null);
+      setConversionResult(undefined);
     } finally {
       setImporting(false);
     }
@@ -244,26 +320,40 @@ export default function SharePage() {
     );
   }
 
-  if (importResult?.success) {
+  // Show conversion progress during import
+  if (importing || conversionResult) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="flex flex-col items-center py-12">
-            <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-6">
-              <IconCheck className="h-8 w-8 text-emerald-500" />
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="border-b border-border">
+          <div className="container mx-auto px-4 py-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <MusicNote className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">Playlist Imported!</h2>
-            <p className="text-muted-foreground text-center mb-2">
-              <span className="font-medium text-foreground">{sharedPlaylist.playlistName}</span>
-            </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              {importResult.matchedTracks} of {importResult.totalTracks} tracks added to your {importTarget === "spotify" ? "Spotify" : "Apple Music"} library
-            </p>
-            <Button onClick={() => router.push("/dashboard")}>
-              Go to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
+            <span className="font-semibold">Playlist Converter</span>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8 max-w-2xl">
+          <ConversionProgress
+            isConverting={importing}
+            playlistName={sharedPlaylist.playlistName}
+            sourceService={sharedPlaylist.sourceService}
+            targetService={importTarget || "spotify"}
+            progress={conversionProgress}
+            currentTrack={currentTrack}
+            recentTracks={recentTracks}
+            result={conversionResult}
+          />
+          
+          {conversionResult?.success && (
+            <div className="mt-6 flex justify-center">
+              <Button onClick={() => router.push("/dashboard")}>
+                Go to Dashboard
+              </Button>
+            </div>
+          )}
+        </main>
       </div>
     );
   }
@@ -419,4 +509,3 @@ export default function SharePage() {
     </div>
   );
 }
-
