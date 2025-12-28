@@ -221,10 +221,10 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
         <CardHeader className="relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1DB954] text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1DB954] text-white">
                 <SpotifyLogo className="h-6 w-6" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <CardTitle>Spotify</CardTitle>
                 <CardDescription>Connect your Spotify account</CardDescription>
               </div>
@@ -286,10 +286,10 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
         <CardHeader className="relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FC3C44] text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FC3C44] text-white">
                 <AppleLogo className="h-6 w-6" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <CardTitle>Apple Music</CardTitle>
                 <CardDescription>Connect your Apple Music account</CardDescription>
               </div>
