@@ -23,7 +23,8 @@ import {
   IconLoader2,
   IconArrowsExchange
 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo, MusicNote } from "@/components/icons";
+import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { Header } from "@/components/header";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
 
 interface SpotifySession {
@@ -366,45 +367,25 @@ export default function DashboardPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen animated-bg">
-        {/* Gradient background layer */}
-        <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-muted/30 -z-10" />
+      <div className="min-h-screen bg-background">
+        <Header>
+          <div className="hidden sm:flex items-center gap-2">
+            {spotifyConnected && (
+              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#1DB954]/30 bg-[#1DB954]/10">
+                <SpotifyLogo className="h-3.5 w-3.5 text-[#1DB954]" />
+                <span className="text-xs font-medium">Spotify</span>
+              </Badge>
+            )}
+            {appleConnected && (
+              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#FC3C44]/30 bg-[#FC3C44]/10">
+                <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
+                <span className="text-xs font-medium">Apple Music</span>
+              </Badge>
+            )}
+          </div>
+        </Header>
         
         <div className="container mx-auto px-4 py-6">
-          {/* Header */}
-          <header className="mb-8 flex items-center justify-between py-2">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <MusicNote className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                  Playlist Converter
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Transfer playlists between services
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2">
-                {spotifyConnected && (
-                  <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#1DB954]/30 bg-[#1DB954]/10">
-                    <SpotifyLogo className="h-3.5 w-3.5 text-[#1DB954]" />
-                    <span className="text-xs font-medium">Spotify</span>
-                  </Badge>
-                )}
-                {appleConnected && (
-                  <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#FC3C44]/30 bg-[#FC3C44]/10">
-                    <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
-                    <span className="text-xs font-medium">Apple Music</span>
-                  </Badge>
-                )}
-              </div>
-              <div className="h-6 w-px bg-border hidden sm:block" />
-              <ThemeToggle />
-            </div>
-          </header>
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected || !appleConnected) && (

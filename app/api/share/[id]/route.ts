@@ -76,6 +76,7 @@ export async function GET(
       data: {
         id: shared.id,
         playlistName: shared.playlistName,
+        playlistImage: shared.playlistImage,
         sourceService: shared.sourceService,
         trackCount: shared.trackCount,
         tracks: tracks.map((t) => ({

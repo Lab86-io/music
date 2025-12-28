@@ -29,6 +29,15 @@ export function ShareDialog({ playlist, source, appleUserToken, onClose }: Share
 
   const playlistId = playlist?.id || "";
 
+  // Get playlist cover image
+  const playlistImage = playlist
+    ? source === "spotify"
+      ? (playlist as SpotifyPlaylist).images?.[0]?.url
+      : (playlist as AppleMusicPlaylist).attributes.artwork?.url
+          ?.replace("{w}", "300")
+          .replace("{h}", "300")
+    : undefined;
+
   useEffect(() => {
     if (!playlist) return;
 
@@ -44,6 +53,7 @@ export function ShareDialog({ playlist, source, appleUserToken, onClose }: Share
             sourceService: source,
             playlistId,
             playlistName,
+            playlistImage,
             appleUserToken: source === "apple" ? appleUserToken : undefined,
           }),
         });
@@ -64,7 +74,7 @@ export function ShareDialog({ playlist, source, appleUserToken, onClose }: Share
     };
 
     createShareLink();
-  }, [playlist, source, playlistId, playlistName, appleUserToken]);
+  }, [playlist, source, playlistId, playlistName, playlistImage, appleUserToken]);
 
   const handleCopy = async () => {
     if (!shareUrl) return;

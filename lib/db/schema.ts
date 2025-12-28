@@ -52,6 +52,7 @@ export const sharedPlaylists = pgTable("shared_playlists", {
   id: text("id").primaryKey(), // nanoid for URL-safe short IDs
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   playlistName: varchar("playlist_name", { length: 500 }).notNull(),
+  playlistImage: text("playlist_image"), // URL to playlist cover image
   sourceService: varchar("source_service", { length: 20 }).notNull(), // "spotify" or "apple"
   tracks: text("tracks").notNull(), // JSON array of track data
   trackCount: integer("track_count").notNull(),

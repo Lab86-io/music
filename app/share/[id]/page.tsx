@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConversionProgress } from "@/components/conversion-progress";
+import { TrackMatchReport } from "@/components/track-match-report";
 import { 
   IconMusic, 
   IconLoader2, 
@@ -16,12 +17,14 @@ import {
   IconPlayerPlay,
   IconShare
 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo, MusicNote } from "@/components/icons";
+import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { Header } from "@/components/header";
 import { cn } from "@/lib/utils";
 
 interface SharedPlaylist {
   id: string;
   playlistName: string;
+  playlistImage?: string;
   sourceService: "spotify" | "apple";
   trackCount: number;
   tracks: { 
@@ -69,6 +72,13 @@ interface CurrentTrack {
   confidence?: number;
 }
 
+interface TrackMatchData {
+  sourceTrack: { name: string; artist: string };
+  targetTrack: { name: string; artist: string } | null;
+  matchConfidence: number;
+  matchMethod: "isrc" | "fuzzy" | "none";
+}
+
 interface ConversionResult {
   success: boolean;
   stats: {
@@ -80,6 +90,7 @@ interface ConversionResult {
     averageConfidence: number;
   };
   newPlaylistId: string;
+  matches: TrackMatchData[];
 }
 
 export default function SharePage() {
@@ -280,6 +291,7 @@ export default function SharePage() {
                   success: data.success,
                   newPlaylistId: data.newPlaylistId,
                   stats: data.stats,
+                  matches: data.matches || [],
                 });
                 
                 if (data.success) {
@@ -335,19 +347,13 @@ export default function SharePage() {
 
   // Show conversion progress during import
   if (importing || conversionResult) {
+    const hasUnmatched = conversionResult?.stats && conversionResult.stats.unmatched > 0;
+    
     return (
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="border-b border-border">
-          <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <MusicNote className="h-5 w-5" />
-            </div>
-            <span className="font-semibold">Playlist Converter</span>
-          </div>
-        </header>
+        <Header />
 
-        <main className="container mx-auto px-4 py-8 max-w-2xl">
+        <main className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
           <ConversionProgress
             isConverting={importing}
             playlistName={sharedPlaylist.playlistName}
@@ -359,8 +365,18 @@ export default function SharePage() {
             result={conversionResult}
           />
           
+          {/* Track Match Report for manual matching */}
+          {conversionResult?.success && conversionResult.matches && conversionResult.matches.length > 0 && (
+            <TrackMatchReport
+              matches={conversionResult.matches}
+              targetService={importTarget || "spotify"}
+              playlistId={conversionResult.newPlaylistId}
+              appleUserToken={importTarget === "apple" ? (appleUserToken || sessionStorage.getItem("appleUserToken") || undefined) : undefined}
+            />
+          )}
+          
           {conversionResult?.success && (
-            <div className="mt-6 flex justify-center">
+            <div className="flex justify-center">
               <Button onClick={() => router.push("/dashboard")}>
                 Go to Dashboard
               </Button>
@@ -375,24 +391,24 @@ export default function SharePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <MusicNote className="h-5 w-5" />
-          </div>
-          <span className="font-semibold">Playlist Converter</span>
-        </div>
-      </header>
+      <Header />
 
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Shared Playlist Card */}
         <Card className="mb-6">
           <CardHeader className="pb-4">
             <div className="flex items-start gap-4">
-              <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <IconMusic className="h-8 w-8 text-muted-foreground" />
-              </div>
+              {sharedPlaylist.playlistImage ? (
+                <img 
+                  src={sharedPlaylist.playlistImage} 
+                  alt={sharedPlaylist.playlistName}
+                  className="h-16 w-16 rounded-lg object-cover shrink-0"
+                />
+              ) : (
+                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <IconMusic className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <IconShare className="h-4 w-4 text-muted-foreground" />

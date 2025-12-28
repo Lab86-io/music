@@ -70,7 +70,7 @@ function extractTrackData(track: SpotifyTrack | AppleMusicTrack): SharedTrack {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { sourceService, playlistId, playlistName, appleUserToken } = body;
+    const { sourceService, playlistId, playlistName, playlistImage, appleUserToken } = body;
 
     if (!sourceService || !playlistId || !playlistName) {
       return NextResponse.json(
@@ -117,6 +117,7 @@ export async function POST(request: Request) {
     await db.insert(sharedPlaylists).values({
       id: shareId,
       playlistName,
+      playlistImage: playlistImage || null,
       sourceService,
       tracks: JSON.stringify(tracks),
       trackCount: tracks.length,
