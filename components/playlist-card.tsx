@@ -16,9 +16,10 @@ interface PlaylistCardProps {
   onShare?: (playlist: SpotifyPlaylist | AppleMusicPlaylist) => void;
   targetService: "spotify" | "apple";
   disabled?: boolean;
+  shareDisabled?: boolean;
 }
 
-export function PlaylistCard({ playlist, source, onConvert, onShare, targetService, disabled }: PlaylistCardProps) {
+export function PlaylistCard({ playlist, source, onConvert, onShare, targetService, disabled, shareDisabled }: PlaylistCardProps) {
   const isSpotify = source === "spotify";
   
   // Normalize playlist data
@@ -98,7 +99,7 @@ export function PlaylistCard({ playlist, source, onConvert, onShare, targetServi
                 size="sm"
                 variant="outline"
                 onClick={() => onShare(playlist)}
-                disabled={disabled}
+                disabled={shareDisabled}
                 className="gap-1.5"
               >
                 <IconShare size={16} />

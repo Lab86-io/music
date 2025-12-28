@@ -102,6 +102,15 @@ export default function DashboardPage() {
   // Active tab
   const [activeTab, setActiveTab] = useState<string>("spotify");
 
+  // Auto-select tab based on which service is connected
+  useEffect(() => {
+    if (spotifyConnected && !appleConnected) {
+      setActiveTab("spotify");
+    } else if (appleConnected && !spotifyConnected) {
+      setActiveTab("apple");
+    }
+  }, [spotifyConnected, appleConnected]);
+
   // Sharing state
   const [sharingPlaylist, setSharingPlaylist] = useState<SpotifyPlaylist | AppleMusicPlaylist | null>(null);
   const [sharingSource, setSharingSource] = useState<"spotify" | "apple">("spotify");
@@ -441,56 +450,60 @@ export default function DashboardPage() {
           )}
 
           {/* Playlists */}
-          {spotifyConnected && appleConnected && (
+          {(spotifyConnected || appleConnected) && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <div className="flex items-center justify-between border-b border-border">
                 <div className="flex gap-1">
-                  <button
-                    onClick={() => setActiveTab("spotify")}
-                    className={cn(
-                      "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
-                      activeTab === "spotify"
-                        ? "text-[#1DB954]"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <SpotifyLogo className="h-4 w-4" />
-                    <span>Spotify</span>
-                    <span className={cn(
-                      "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
-                      activeTab === "spotify"
-                        ? "bg-[#1DB954]/15 text-[#1DB954]"
-                        : "bg-muted text-muted-foreground"
-                    )}>
-                      {spotifyPlaylists.length}
-                    </span>
-                    {activeTab === "spotify" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1DB954]" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("apple")}
-                    className={cn(
-                      "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
-                      activeTab === "apple"
-                        ? "text-[#FC3C44]"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <AppleLogo className="h-4 w-4" />
-                    <span>Apple Music</span>
-                    <span className={cn(
-                      "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
-                      activeTab === "apple"
-                        ? "bg-[#FC3C44]/15 text-[#FC3C44]"
-                        : "bg-muted text-muted-foreground"
-                    )}>
-                      {applePlaylists.length}
-                    </span>
-                    {activeTab === "apple" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FC3C44]" />
-                    )}
-                  </button>
+                  {spotifyConnected && (
+                    <button
+                      onClick={() => setActiveTab("spotify")}
+                      className={cn(
+                        "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
+                        activeTab === "spotify"
+                          ? "text-[#1DB954]"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <SpotifyLogo className="h-4 w-4" />
+                      <span>Spotify</span>
+                      <span className={cn(
+                        "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                        activeTab === "spotify"
+                          ? "bg-[#1DB954]/15 text-[#1DB954]"
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {spotifyPlaylists.length}
+                      </span>
+                      {activeTab === "spotify" && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1DB954]" />
+                      )}
+                    </button>
+                  )}
+                  {appleConnected && (
+                    <button
+                      onClick={() => setActiveTab("apple")}
+                      className={cn(
+                        "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
+                        activeTab === "apple"
+                          ? "text-[#FC3C44]"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <AppleLogo className="h-4 w-4" />
+                      <span>Apple Music</span>
+                      <span className={cn(
+                        "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                        activeTab === "apple"
+                          ? "bg-[#FC3C44]/15 text-[#FC3C44]"
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {applePlaylists.length}
+                      </span>
+                      {activeTab === "apple" && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FC3C44]" />
+                      )}
+                    </button>
+                  )}
                 </div>
                 <Tooltip>
                   <TooltipTrigger
@@ -523,6 +536,7 @@ export default function DashboardPage() {
                           onConvert={handleConvert}
                           onShare={(p) => handleShare(p, "spotify")}
                           disabled={isConverting || !appleConnected}
+                          shareDisabled={isConverting}
                         />
                       ))
                     ) : (
@@ -553,6 +567,7 @@ export default function DashboardPage() {
                           onConvert={handleConvert}
                           onShare={(p) => handleShare(p, "apple")}
                           disabled={isConverting || !spotifyConnected}
+                          shareDisabled={isConverting}
                         />
                       ))
                     ) : (
