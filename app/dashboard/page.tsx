@@ -367,7 +367,7 @@ export default function DashboardPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background">
+      <div className="h-screen overflow-hidden bg-background flex flex-col">
         <Header>
           <div className="hidden sm:flex items-center gap-2">
             {spotifyConnected && (
@@ -385,7 +385,7 @@ export default function DashboardPage() {
           </div>
         </Header>
         
-        <div className="container mx-auto px-4 py-6">
+        <div className="flex-1 overflow-hidden container mx-auto px-4 py-6 flex flex-col">
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected || !appleConnected) && (
@@ -432,7 +432,7 @@ export default function DashboardPage() {
 
           {/* Playlists */}
           {(spotifyConnected || appleConnected) && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center justify-between border-b border-border">
                 <div className="flex gap-1">
                   {spotifyConnected && (
@@ -502,13 +502,13 @@ export default function DashboardPage() {
               </div>
 
               {/* Spotify Playlists */}
-              <TabsContent value="spotify">
-                <div className="relative">
+              <TabsContent value="spotify" className="flex-1 min-h-0 mt-4">
+                <div className="relative h-full">
                   {/* Top gradient fade */}
                   <div className="pointer-events-none absolute top-0 left-0 right-4 h-6 bg-gradient-to-b from-background to-transparent z-10" />
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
-                  <ScrollArea className="h-[calc(100vh-260px)]">
+                  <ScrollArea className="h-full">
                     <div className="space-y-3 pr-4 py-4 pl-1">
                       {loadingSpotify ? (
                         <PlaylistSkeletonList count={5} />
@@ -539,13 +539,13 @@ export default function DashboardPage() {
               </TabsContent>
 
               {/* Apple Music Playlists */}
-              <TabsContent value="apple">
-                <div className="relative">
+              <TabsContent value="apple" className="flex-1 min-h-0 mt-4">
+                <div className="relative h-full">
                   {/* Top gradient fade */}
                   <div className="pointer-events-none absolute top-0 left-0 right-4 h-6 bg-gradient-to-b from-background to-transparent z-10" />
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
-                  <ScrollArea className="h-[calc(100vh-260px)]">
+                  <ScrollArea className="h-full">
                     <div className="space-y-3 pr-4 py-4 pl-1">
                       {loadingApple ? (
                         <PlaylistSkeletonList count={5} />
