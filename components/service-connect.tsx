@@ -216,7 +216,7 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
   return (
     <div className="grid gap-3 md:grid-cols-2">
       {/* Spotify Card */}
-      <Card className="relative overflow-hidden border-2">
+      <Card className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#1DB954]/5 to-transparent" />
         <CardContent className="relative p-4">
           <div className="flex items-center justify-between mb-3">
@@ -274,7 +274,7 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
       </Card>
 
       {/* Apple Music Card */}
-      <Card className="relative overflow-hidden border-2">
+      <Card className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#FC3C44]/5 to-transparent" />
         <CardContent className="relative p-4">
           <div className="flex items-center justify-between mb-3">

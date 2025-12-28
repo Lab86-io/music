@@ -492,37 +492,37 @@ export default function DashboardPage() {
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-2 flex-1 justify-end">
-                  <div className="relative max-w-xs flex-1">
-                    <IconSearch size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <div className="flex items-center gap-1.5">
+                  <Tooltip>
+                    <TooltipTrigger
+                      onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}
+                      disabled={activeTab === "spotify" ? loadingSpotify : loadingApple}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shrink-0"
+                    >
+                      <IconRefresh
+                        size={14}
+                        className={activeTab === "spotify" ? (loadingSpotify ? "animate-spin" : "") : (loadingApple ? "animate-spin" : "")}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>Refresh playlists</TooltipContent>
+                  </Tooltip>
+                  <div className="relative w-36">
+                    <IconSearch size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="Search playlists..."
+                      placeholder="Search..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-8 pr-8 h-8 text-sm"
+                      className="pl-7 pr-7 h-7 text-xs"
                     />
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery("")}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
-                        <IconX size={14} />
+                        <IconX size={12} />
                       </button>
                     )}
                   </div>
-                  <Tooltip>
-                    <TooltipTrigger
-                      onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}
-                      disabled={activeTab === "spotify" ? loadingSpotify : loadingApple}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shrink-0"
-                    >
-                      <IconRefresh
-                        size={16}
-                        className={activeTab === "spotify" ? (loadingSpotify ? "animate-spin" : "") : (loadingApple ? "animate-spin" : "")}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>Refresh playlists</TooltipContent>
-                  </Tooltip>
                 </div>
               </div>
 
@@ -534,9 +534,9 @@ export default function DashboardPage() {
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
                   <ScrollArea className="h-full">
-                    <div className="space-y-2 pr-4 py-4 pl-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pr-4 py-4 pl-1">
                       {loadingSpotify ? (
-                        <PlaylistSkeletonList count={5} />
+                        <PlaylistSkeletonList count={6} />
                       ) : (() => {
                         const filtered = spotifyPlaylists.filter(p => 
                           p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -556,7 +556,7 @@ export default function DashboardPage() {
                             />
                           ))
                         ) : (
-                          <Card>
+                          <Card className="col-span-full">
                             <CardContent className="flex flex-col items-center justify-center py-8">
                               <IconMusic size={32} className="mb-3 text-muted-foreground" />
                               <p className="text-muted-foreground text-sm">
@@ -579,9 +579,9 @@ export default function DashboardPage() {
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
                   <ScrollArea className="h-full">
-                    <div className="space-y-2 pr-4 py-4 pl-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pr-4 py-4 pl-1">
                       {loadingApple ? (
-                        <PlaylistSkeletonList count={5} />
+                        <PlaylistSkeletonList count={6} />
                       ) : (() => {
                         const filtered = applePlaylists.filter(p => 
                           p.attributes.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -601,7 +601,7 @@ export default function DashboardPage() {
                             />
                           ))
                         ) : (
-                          <Card>
+                          <Card className="col-span-full">
                             <CardContent className="flex flex-col items-center justify-center py-8">
                               <IconMusic size={32} className="mb-3 text-muted-foreground" />
                               <p className="text-muted-foreground text-sm">

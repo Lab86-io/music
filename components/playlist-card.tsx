@@ -40,7 +40,7 @@ export function PlaylistCard({ playlist, source, onConvert, onShare, targetServi
     : (playlist as AppleMusicPlaylist).attributes.description?.standard;
 
   return (
-    <Card className="group overflow-visible transition-colors hover:bg-muted/50 border-2">
+    <Card className="group overflow-visible transition-colors hover:bg-muted/50">
       <CardContent className="p-0">
         <div className="flex gap-3 p-3">
           {/* Album Art */}
