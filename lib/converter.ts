@@ -65,6 +65,19 @@ function getArtistName(track: SpotifyTrack | AppleMusicTrack): string {
 }
 
 /**
+ * Calculate artist similarity between two tracks
+ * Returns a score from 0-1
+ */
+function calculateArtistSimilarity(
+  sourceTrack: SpotifyTrack | AppleMusicTrack,
+  targetTrack: SpotifyTrack | AppleMusicTrack
+): number {
+  const sourceArtist = normalizeString(getArtistName(sourceTrack));
+  const targetArtist = normalizeString(getArtistName(targetTrack));
+  return stringSimilarity.compareTwoStrings(sourceArtist, targetArtist);
+}
+
+/**
  * Calculate match confidence between two tracks
  */
 function calculateMatchConfidence(
@@ -82,6 +95,10 @@ function calculateMatchConfidence(
   // Weight name slightly higher than artist
   return Math.round((nameScore * 0.6 + artistScore * 0.4) * 100);
 }
+
+// Minimum artist similarity required to trust an ISRC match
+// This prevents cover versions from matching to originals via ISRC
+const MIN_ARTIST_SIMILARITY_FOR_ISRC = 0.4;
 
 /**
  * Convert Spotify tracks to Apple Music
@@ -104,10 +121,17 @@ export async function convertSpotifyToAppleMusic(
 
     // Try ISRC first
     if (isrc) {
-      targetTrack = await searchAppleMusicTrack(appleMusicDevToken, query, isrc);
-      if (targetTrack) {
-        matchMethod = "isrc";
-        matchConfidence = 100;
+      const isrcResult = await searchAppleMusicTrack(appleMusicDevToken, query, isrc);
+      if (isrcResult) {
+        // Verify artist matches to avoid cover → original mismatches
+        const artistSimilarity = calculateArtistSimilarity(track, isrcResult);
+        if (artistSimilarity >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
+          targetTrack = isrcResult;
+          matchMethod = "isrc";
+          matchConfidence = 100;
+        }
+        // If artist doesn't match, ISRC result is likely wrong (e.g., cover has original's ISRC)
+        // Fall through to fuzzy search
       }
     }
 
@@ -161,10 +185,17 @@ export async function convertAppleMusicToSpotify(
 
     // Try ISRC first
     if (isrc) {
-      targetTrack = await searchSpotifyTrack(spotifyAccessToken, query, isrc);
-      if (targetTrack) {
-        matchMethod = "isrc";
-        matchConfidence = 100;
+      const isrcResult = await searchSpotifyTrack(spotifyAccessToken, query, isrc);
+      if (isrcResult) {
+        // Verify artist matches to avoid cover → original mismatches
+        const artistSimilarity = calculateArtistSimilarity(track, isrcResult);
+        if (artistSimilarity >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
+          targetTrack = isrcResult;
+          matchMethod = "isrc";
+          matchConfidence = 100;
+        }
+        // If artist doesn't match, ISRC result is likely wrong (e.g., cover has original's ISRC)
+        // Fall through to fuzzy search
       }
     }
 

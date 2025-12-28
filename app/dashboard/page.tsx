@@ -12,7 +12,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
@@ -430,32 +431,64 @@ export default function DashboardPage() {
 
           {/* Playlists */}
           {spotifyConnected && appleConnected && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <TabsList>
-                  <TabsTrigger value="spotify" className="gap-2">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <div className="flex items-center justify-between border-b border-border">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setActiveTab("spotify")}
+                    className={cn(
+                      "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
+                      activeTab === "spotify"
+                        ? "text-[#1DB954]"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
                     <SpotifyLogo className="h-4 w-4" />
-                    Spotify
-                    <Badge variant="secondary" className="ml-1 text-xs">
+                    <span>Spotify</span>
+                    <span className={cn(
+                      "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                      activeTab === "spotify"
+                        ? "bg-[#1DB954]/15 text-[#1DB954]"
+                        : "bg-muted text-muted-foreground"
+                    )}>
                       {spotifyPlaylists.length}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="apple" className="gap-2">
+                    </span>
+                    {activeTab === "spotify" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1DB954]" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("apple")}
+                    className={cn(
+                      "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
+                      activeTab === "apple"
+                        ? "text-[#FC3C44]"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
                     <AppleLogo className="h-4 w-4" />
-                    Apple Music
-                    <Badge variant="secondary" className="ml-1 text-xs">
+                    <span>Apple Music</span>
+                    <span className={cn(
+                      "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                      activeTab === "apple"
+                        ? "bg-[#FC3C44]/15 text-[#FC3C44]"
+                        : "bg-muted text-muted-foreground"
+                    )}>
                       {applePlaylists.length}
-                    </Badge>
-                  </TabsTrigger>
-                </TabsList>
+                    </span>
+                    {activeTab === "apple" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FC3C44]" />
+                    )}
+                  </button>
+                </div>
                 <Tooltip>
                   <TooltipTrigger
                     onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}
                     disabled={activeTab === "spotify" ? loadingSpotify : loadingApple}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                   >
                     <IconRefresh
-                      size={18}
+                      size={16}
                       className={activeTab === "spotify" ? (loadingSpotify ? "animate-spin" : "") : (loadingApple ? "animate-spin" : "")}
                     />
                   </TooltipTrigger>
@@ -466,7 +499,7 @@ export default function DashboardPage() {
               {/* Spotify Playlists */}
               <TabsContent value="spotify">
                 <ScrollArea className="h-[calc(100vh-280px)]">
-                  <div className="space-y-3 pr-4 pb-4 pt-1 pl-1">
+                  <div className="space-y-3 pr-4 pb-8 pt-1 pl-1">
                     {loadingSpotify ? (
                       <PlaylistSkeletonList count={5} />
                     ) : spotifyPlaylists.length > 0 ? (
@@ -495,7 +528,7 @@ export default function DashboardPage() {
               {/* Apple Music Playlists */}
               <TabsContent value="apple">
                 <ScrollArea className="h-[calc(100vh-280px)]">
-                  <div className="space-y-3 pr-4 pb-4 pt-1 pl-1">
+                  <div className="space-y-3 pr-4 pb-8 pt-1 pl-1">
                     {loadingApple ? (
                       <PlaylistSkeletonList count={5} />
                     ) : applePlaylists.length > 0 ? (
