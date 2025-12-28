@@ -202,9 +202,9 @@ export default function SharePageClient() {
   }, []);
 
   const connectSpotify = () => {
-    // Save current URL to redirect back after auth
-    sessionStorage.setItem("shareRedirect", window.location.href);
-    window.location.href = "/api/spotify/auth";
+    // Pass current URL as return URL so we come back here after auth
+    const returnUrl = encodeURIComponent(window.location.href);
+    window.location.href = `/api/spotify/auth?returnUrl=${returnUrl}`;
   };
 
   const connectApple = useCallback(async () => {

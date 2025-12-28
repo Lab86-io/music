@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing SPOTIFY_CLIENT_ID" }, { status: 500 });
   }
   
+  // Get optional return URL from query params
+  const returnUrl = request.nextUrl.searchParams.get("returnUrl");
+  
   // Generate PKCE codes
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
@@ -61,6 +64,17 @@ export async function GET(request: NextRequest) {
     maxAge: 60 * 10,
     path: "/",
   });
+  
+  // Store return URL if provided (for redirecting back after auth)
+  if (returnUrl) {
+    cookieStore.set("spotify_return_url", returnUrl, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 60 * 10,
+      path: "/",
+    });
+  }
   
   // Build Spotify authorization URL
   const callbackUrl = `${origin}/api/spotify/callback`;

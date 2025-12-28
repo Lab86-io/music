@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   const storedState = cookieStore.get("spotify_auth_state")?.value;
   const codeVerifier = cookieStore.get("spotify_code_verifier")?.value;
+  const returnUrl = cookieStore.get("spotify_return_url")?.value;
   
   // Verify state
   if (state !== storedState) {
@@ -95,11 +96,15 @@ export async function GET(request: NextRequest) {
       expiresAt: Math.floor(Date.now() / 1000) + tokens.expires_in,
     };
     
+    // Determine redirect URL (return URL if provided, otherwise dashboard)
+    const redirectTo = returnUrl || `${origin}/dashboard`;
+    
     // Clear auth cookies and set session
-    const response = NextResponse.redirect(`${origin}/dashboard`);
+    const response = NextResponse.redirect(redirectTo);
     
     response.cookies.delete("spotify_auth_state");
     response.cookies.delete("spotify_code_verifier");
+    response.cookies.delete("spotify_return_url");
     
     // Store Spotify session in a cookie (encrypted with base64 for simplicity)
     // In production, you'd want to encrypt this properly
