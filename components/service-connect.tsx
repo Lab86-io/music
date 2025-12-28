@@ -218,51 +218,51 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
       {/* Spotify Card */}
       <Card className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#1DB954]/5 to-transparent" />
-        <CardContent className="relative p-3">
+        <CardContent className="relative px-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1DB954] text-white">
-                <SpotifyLogo className="h-4 w-4" />
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1DB954] text-white">
+                <SpotifyLogo className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <p className="font-semibold text-sm">Spotify</p>
+                <p className="font-semibold">Spotify</p>
               </div>
             </div>
             {spotifyConnected ? (
-              <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs py-0.5">
-                <IconCheck size={10} className="mr-1" />
+              <Badge className="bg-emerald-500 hover:bg-emerald-600">
+                <IconCheck size={12} className="mr-1" />
                 Connected
               </Badge>
             ) : (
-              <Badge variant="secondary" className="text-xs py-0.5">
-                <IconX size={10} className="mr-1" />
+              <Badge variant="secondary">
+                <IconX size={12} className="mr-1" />
                 Not connected
               </Badge>
             )}
           </div>
           {spotifyConnected ? (
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
+            <div className="flex items-center gap-2.5">
+              <Avatar className="h-7 w-7">
                 <AvatarImage src={spotifySession?.user?.image || undefined} alt={spotifySession?.user?.name || "User"} />
                 <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
               </Avatar>
-              <p className="text-xs font-medium truncate flex-1">
+              <p className="text-sm font-medium truncate flex-1">
                 {spotifySession?.user?.name || "Spotify User"}
               </p>
-              <Button variant="outline" size="sm" onClick={disconnectSpotify} className="h-6 text-xs px-2">
+              <Button variant="outline" size="sm" onClick={disconnectSpotify}>
                 Disconnect
               </Button>
             </div>
           ) : (
             <Button
               onClick={connectSpotify}
-              className="w-full bg-[#1DB954] hover:bg-[#1aa34a] text-white h-8"
+              className="w-full bg-[#1DB954] hover:bg-[#1aa34a] text-white"
               disabled={spotifyLoading}
             >
               {spotifyLoading ? (
-                <IconLoader2 className="mr-2 animate-spin" size={14} />
+                <IconLoader2 className="mr-2 animate-spin" size={16} />
               ) : (
-                <SpotifyLogo className="mr-2 h-4 w-4" />
+                <SpotifyLogo className="mr-2 h-5 w-5" />
               )}
               Connect Spotify
             </Button>
@@ -273,50 +273,50 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
       {/* Apple Music Card */}
       <Card className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#FC3C44]/5 to-transparent" />
-        <CardContent className="relative p-3">
+        <CardContent className="relative px-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FC3C44] text-white">
-                <AppleLogo className="h-4 w-4" />
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FC3C44] text-white">
+                <AppleLogo className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <p className="font-semibold text-sm">Apple Music</p>
+                <p className="font-semibold">Apple Music</p>
               </div>
             </div>
             {appleConnected ? (
-              <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs py-0.5">
-                <IconCheck size={10} className="mr-1" />
+              <Badge className="bg-emerald-500 hover:bg-emerald-600">
+                <IconCheck size={12} className="mr-1" />
                 Connected
               </Badge>
             ) : (
-              <Badge variant="secondary" className="text-xs py-0.5">
-                <IconX size={10} className="mr-1" />
+              <Badge variant="secondary">
+                <IconX size={12} className="mr-1" />
                 Not connected
               </Badge>
             )}
           </div>
           {appleConnected ? (
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
+            <div className="flex items-center gap-2.5">
+              <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-[#FC3C44] text-white">
-                  <AppleLogo className="h-3 w-3" />
+                  <AppleLogo className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
-              <p className="text-xs font-medium flex-1">Apple Music Connected</p>
-              <Button variant="outline" size="sm" onClick={disconnectApple} className="h-6 text-xs px-2">
+              <p className="text-sm font-medium flex-1">Apple Music Connected</p>
+              <Button variant="outline" size="sm" onClick={disconnectApple}>
                 Disconnect
               </Button>
             </div>
           ) : (
             <Button
               onClick={connectApple}
-              className="w-full bg-[#FC3C44] hover:bg-[#e03540] text-white h-8"
+              className="w-full bg-[#FC3C44] hover:bg-[#e03540] text-white"
               disabled={appleLoading || !musicKit}
             >
               {appleLoading ? (
-                <IconLoader2 className="mr-2 animate-spin" size={14} />
+                <IconLoader2 className="mr-2 animate-spin" size={16} />
               ) : (
-                <AppleLogo className="mr-2 h-4 w-4" />
+                <AppleLogo className="mr-2 h-5 w-5" />
               )}
               {!musicKit ? "Loading..." : "Connect Apple Music"}
             </Button>
