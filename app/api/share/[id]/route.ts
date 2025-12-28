@@ -17,6 +17,7 @@ interface SharedTrack {
   name: string;
   artist: string;
   album: string;
+  albumArt?: string;
   isrc?: string;
   duration_ms?: number;
 }
@@ -81,6 +82,8 @@ export async function GET(
           name: t.name,
           artist: t.artist,
           album: t.album,
+          albumArt: t.albumArt,
+          duration_ms: t.duration_ms,
         })),
         createdAt: shared.createdAt,
       },

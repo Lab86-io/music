@@ -29,6 +29,7 @@ interface SharedTrack {
   name: string;
   artist: string;
   album: string;
+  albumArt?: string;
   isrc?: string;
   duration_ms?: number;
 }
@@ -37,20 +38,29 @@ function extractTrackData(track: SpotifyTrack | AppleMusicTrack): SharedTrack {
   if ("name" in track && "artists" in track) {
     // Spotify track
     const spotifyTrack = track as SpotifyTrack;
+    // Get smallest image (64x64) for efficiency, fallback to first available
+    const albumArt = spotifyTrack.album.images
+      ?.sort((a, b) => a.width - b.width)[0]?.url;
     return {
       name: spotifyTrack.name,
       artist: spotifyTrack.artists[0]?.name || "",
       album: spotifyTrack.album.name,
+      albumArt,
       isrc: spotifyTrack.external_ids?.isrc,
       duration_ms: spotifyTrack.duration_ms,
     };
   } else {
     // Apple Music track
     const appleTrack = track as AppleMusicTrack;
+    // Apple Music artwork URLs have {w}x{h} placeholders - replace with small size
+    const albumArt = appleTrack.attributes.artwork?.url
+      ?.replace("{w}", "64")
+      .replace("{h}", "64");
     return {
       name: appleTrack.attributes.name,
       artist: appleTrack.attributes.artistName,
       album: appleTrack.attributes.albumName,
+      albumArt,
       isrc: appleTrack.attributes.isrc,
       duration_ms: appleTrack.attributes.durationInMillis,
     };

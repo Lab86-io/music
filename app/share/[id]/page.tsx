@@ -24,8 +24,21 @@ interface SharedPlaylist {
   playlistName: string;
   sourceService: "spotify" | "apple";
   trackCount: number;
-  tracks: { name: string; artist: string; album: string }[];
+  tracks: { 
+    name: string; 
+    artist: string; 
+    album: string;
+    albumArt?: string;
+    duration_ms?: number;
+  }[];
   createdAt: string;
+}
+
+function formatDuration(ms?: number): string {
+  if (!ms) return "";
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 interface MusicKitInstance {
@@ -404,7 +417,7 @@ export default function SharePage() {
           </CardHeader>
           <CardContent>
             <h3 className="text-sm font-medium mb-3">Track Preview</h3>
-            <ScrollArea className="h-64 rounded-lg border border-border">
+            <ScrollArea className="h-80 rounded-lg border border-border">
               <div className="p-2 space-y-1">
                 {sharedPlaylist.tracks.map((track, index) => (
                   <div
@@ -414,11 +427,28 @@ export default function SharePage() {
                     <span className="text-xs text-muted-foreground w-6 text-right tabular-nums">
                       {index + 1}
                     </span>
-                    <IconPlayerPlay className="h-4 w-4 text-muted-foreground" />
+                    {track.albumArt ? (
+                      <img 
+                        src={track.albumArt} 
+                        alt={track.album}
+                        className="h-10 w-10 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                        <IconMusic className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{track.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {track.artist} • {track.album}
+                      </p>
                     </div>
+                    {track.duration_ms && (
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {formatDuration(track.duration_ms)}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

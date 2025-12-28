@@ -67,7 +67,7 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
     fetchSpotifySession();
   }, []);
 
-  // Initialize MusicKit
+  // Initialize MusicKit and validate stored token
   useEffect(() => {
     const initMusicKit = async () => {
       if (typeof window === "undefined" || !window.MusicKit) return;
@@ -91,8 +91,37 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
         
         setMusicKit(mk);
         
-        if (mk.isAuthorized) {
-          setAppleConnected(true);
+        // Check if we have a stored token and validate it
+        // Using sessionStorage for security (clears when browser closes)
+        const storedToken = sessionStorage.getItem("appleUserToken");
+        if (storedToken) {
+          // Validate the token by making a lightweight API call
+          try {
+            const validateResponse = await fetch("/api/apple/playlists?limit=1", {
+              headers: { "Music-User-Token": storedToken },
+            });
+            if (validateResponse.ok) {
+              setAppleConnected(true);
+              setAppleUserToken(storedToken);
+              onConnectionChange?.("apple", true, storedToken);
+            } else {
+              // Token is stale or invalid, clear it
+              console.log("Apple Music token is stale, clearing...");
+              sessionStorage.removeItem("appleUserToken");
+              if (mk.isAuthorized) {
+                await mk.unauthorize();
+              }
+            }
+          } catch {
+            // Token validation failed, clear it
+            sessionStorage.removeItem("appleUserToken");
+            if (mk.isAuthorized) {
+              await mk.unauthorize();
+            }
+          }
+        } else if (mk.isAuthorized) {
+          // MusicKit thinks we're authorized but we have no token - clear state
+          await mk.unauthorize();
         }
       } catch (error) {
         console.error("Failed to initialize MusicKit:", error);
@@ -113,7 +142,7 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
     return () => {
       document.removeEventListener("musickitloaded", initMusicKit);
     };
-  }, []);
+  }, [onConnectionChange]);
 
   const connectSpotify = () => {
     // Use custom OAuth flow that bypasses Auth.js signin issues
@@ -169,7 +198,9 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
     }
   }, [spotifyConnected, spotifySession?.accessToken, onConnectionChange]);
 
-  // Store Apple user token in sessionStorage for API calls
+  // Store Apple user token in sessionStorage for security
+  // (clears when browser closes - this is intentional for security)
+  // MusicKit tokens must be client-side accessible, unlike Spotify which uses HTTP-only cookies
   useEffect(() => {
     if (appleUserToken) {
       sessionStorage.setItem("appleUserToken", appleUserToken);
