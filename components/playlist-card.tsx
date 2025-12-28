@@ -40,35 +40,35 @@ export function PlaylistCard({ playlist, source, onConvert, onShare, targetServi
     : (playlist as AppleMusicPlaylist).attributes.description?.standard;
 
   return (
-    <Card className="group overflow-visible transition-colors hover:bg-muted/50 ring-0">
+    <Card className="group overflow-visible transition-colors hover:bg-muted/50 border-2">
       <CardContent className="p-0">
-        <div className="flex gap-4 p-4">
+        <div className="flex gap-3 p-3">
           {/* Album Art */}
-          <div className="relative h-16 w-16 shrink-0">
-            <div className="h-full w-full overflow-hidden rounded-md bg-muted">
+          <div className="relative h-12 w-12 shrink-0">
+            <div className="h-full w-full overflow-hidden rounded bg-muted">
               {imageUrl ? (
                 <Image
                   src={imageUrl}
                   alt={name}
                   fill
                   className="object-cover"
-                  sizes="64px"
+                  sizes="48px"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-muted">
-                  <IconMusic size={24} className="text-muted-foreground" />
+                  <IconMusic size={20} className="text-muted-foreground" />
                 </div>
               )}
             </div>
             {/* Service badge - positioned outside image bounds */}
-            <div className="absolute -bottom-1.5 -right-1.5 z-10">
+            <div className="absolute -bottom-1 -right-1 z-10">
               {isSpotify ? (
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1DB954] text-white ring-2 ring-background">
-                  <SpotifyLogo className="h-3 w-3" />
+                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-[#1DB954] text-white ring-2 ring-background">
+                  <SpotifyLogo className="h-2.5 w-2.5" />
                 </div>
               ) : (
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FC3C44] text-white ring-2 ring-background">
-                  <AppleLogo className="h-3 w-3" />
+                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-[#FC3C44] text-white ring-2 ring-background">
+                  <AppleLogo className="h-2.5 w-2.5" />
                 </div>
               )}
             </div>
@@ -76,34 +76,28 @@ export function PlaylistCard({ playlist, source, onConvert, onShare, targetServi
 
           {/* Playlist Info */}
           <div className="flex flex-1 flex-col justify-center min-w-0">
-            <h3 className="font-medium text-foreground truncate" title={name}>
+            <h3 className="font-medium text-sm text-foreground truncate" title={name}>
               {name}
             </h3>
-            {description && (
-              <p className="text-sm text-muted-foreground line-clamp-1">
-                {description}
-              </p>
-            )}
-            <div className="flex items-center mt-1">
-              <Badge variant="secondary" className="text-xs">
-                <IconMusic size={12} className="mr-1" />
-                {trackCount > 0 ? `${trackCount} tracks` : "Playlist"}
-              </Badge>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {trackCount > 0 && <span>{trackCount} tracks</span>}
+              {description && trackCount > 0 && <span>•</span>}
+              {description && <span className="truncate">{description}</span>}
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {onShare && (
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => onShare(playlist)}
                 disabled={shareDisabled}
-                className="gap-1.5"
+                className="h-8 px-2 sm:px-3"
               >
-                <IconShare size={16} />
-                <span className="hidden sm:inline">Share</span>
+                <IconShare size={14} />
+                <span className="hidden sm:inline ml-1.5">Share</span>
               </Button>
             )}
             <Button
@@ -111,19 +105,19 @@ export function PlaylistCard({ playlist, source, onConvert, onShare, targetServi
               onClick={() => onConvert(playlist)}
               disabled={disabled}
               className={cn(
-                "gap-1.5",
+                "h-8 px-2 sm:px-3",
                 targetService === "spotify" 
                   ? "bg-[#1DB954] hover:bg-[#1aa34a]" 
                   : "bg-[#FC3C44] hover:bg-[#e03540]"
               )}
             >
-              <span className="hidden sm:inline">Convert</span>
+              <span className="hidden sm:inline mr-1.5">Convert</span>
               {targetService === "spotify" ? (
-                <SpotifyLogo className="h-4 w-4" />
+                <SpotifyLogo className="h-3.5 w-3.5" />
               ) : (
-                <AppleLogo className="h-4 w-4" />
+                <AppleLogo className="h-3.5 w-3.5" />
               )}
-              <IconArrowRight size={14} />
+              <IconArrowRight size={12} className="ml-0.5" />
             </Button>
           </div>
         </div>

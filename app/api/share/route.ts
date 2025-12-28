@@ -113,6 +113,9 @@ export async function POST(request: Request) {
     // Generate a short, URL-safe ID
     const shareId = nanoid(10);
 
+    // Links expire after 48 hours
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
     // Store in database
     await db.insert(sharedPlaylists).values({
       id: shareId,
@@ -121,6 +124,7 @@ export async function POST(request: Request) {
       sourceService,
       tracks: JSON.stringify(tracks),
       trackCount: tracks.length,
+      expiresAt,
     });
 
     // Generate share URL using the request's origin

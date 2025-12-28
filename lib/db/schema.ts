@@ -57,6 +57,7 @@ export const sharedPlaylists = pgTable("shared_playlists", {
   tracks: text("tracks").notNull(), // JSON array of track data
   trackCount: integer("track_count").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(), // Links expire after 48 hours
 });
 
 export type User = typeof users.$inferSelect;

@@ -69,6 +69,17 @@ export async function GET(
     }
 
     const shared = result[0];
+
+    // Check if link has expired
+    if (shared.expiresAt && new Date(shared.expiresAt) < new Date()) {
+      // Clean up expired link
+      await db.delete(sharedPlaylists).where(eq(sharedPlaylists.id, id));
+      return NextResponse.json(
+        { success: false, error: "This share link has expired" },
+        { status: 410 }
+      );
+    }
+
     const tracks = JSON.parse(shared.tracks) as SharedTrack[];
 
     return NextResponse.json({
@@ -87,6 +98,7 @@ export async function GET(
           duration_ms: t.duration_ms,
         })),
         createdAt: shared.createdAt,
+        expiresAt: shared.expiresAt,
       },
     });
   } catch (error) {
@@ -150,8 +162,18 @@ export async function POST(
 
     if (result.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Share link not found or has already been claimed" },
+        { success: false, error: "Share link not found or has expired" },
         { status: 404 }
+      );
+    }
+
+    // Check if link has expired
+    if (result[0].expiresAt && new Date(result[0].expiresAt) < new Date()) {
+      // Clean up expired link
+      await db.delete(sharedPlaylists).where(eq(sharedPlaylists.id, id));
+      return NextResponse.json(
+        { success: false, error: "This share link has expired" },
+        { status: 410 }
       );
     }
 
@@ -368,9 +390,6 @@ export async function POST(
               }
             }
 
-            // Delete the shared playlist (one-time use)
-            await db.delete(sharedPlaylists).where(eq(sharedPlaylists.id, id));
-
             const matchedCount = matchResults.filter(m => m.targetTrack !== null).length;
             const avgConfidence = matchResults.length > 0
               ? Math.round(matchResults.reduce((sum, m) => sum + m.matchConfidence, 0) / matchResults.length)
@@ -485,9 +504,6 @@ export async function POST(
         await addTracksToAppleMusicPlaylist(appleDevToken, appleUserToken, newPlaylistId, trackIds);
       }
     }
-
-    // Delete the shared playlist (one-time use)
-    await db.delete(sharedPlaylists).where(eq(sharedPlaylists.id, id));
 
     return NextResponse.json({
       success: true,

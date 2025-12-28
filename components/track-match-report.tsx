@@ -307,7 +307,7 @@ export function TrackMatchReport({
 
                 {/* Search Panel */}
                 {isSearching && (
-                  <div className="mt-2 ml-11 p-3 rounded-lg border bg-muted/30 space-y-3">
+                  <div className="mt-2 ml-0 sm:ml-11 p-3 rounded-lg border bg-muted/30 space-y-3 max-h-[50vh] overflow-y-auto">
                     <div className="flex gap-2">
                       <Input
                         placeholder="Search for track..."
@@ -316,7 +316,7 @@ export function TrackMatchReport({
                         onKeyDown={(e) => e.key === "Enter" && handleCustomSearch()}
                         className="flex-1"
                       />
-                      <Button size="sm" onClick={handleCustomSearch}>
+                      <Button size="sm" onClick={handleCustomSearch} className="shrink-0">
                         <IconSearch size={14} />
                       </Button>
                     </div>
@@ -326,7 +326,7 @@ export function TrackMatchReport({
                         {searchResults.map((result) => (
                           <div
                             key={result.id}
-                            className="flex items-center gap-3 p-2 rounded-lg border bg-background hover:bg-muted/50"
+                            className="flex items-center gap-2 sm:gap-3 p-2 rounded-lg border bg-background hover:bg-muted/50"
                           >
                             {result.image ? (
                               <Image
@@ -334,10 +334,10 @@ export function TrackMatchReport({
                                 alt={result.name}
                                 width={40}
                                 height={40}
-                                className="rounded object-cover"
+                                className="rounded object-cover shrink-0"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                              <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
                                 <IconMusic size={16} className="text-muted-foreground" />
                               </div>
                             )}
@@ -351,13 +351,14 @@ export function TrackMatchReport({
                               size="sm"
                               onClick={() => handleAddTrack(result)}
                               disabled={addingTrack === result.id}
+                              className="shrink-0"
                             >
                               {addingTrack === result.id ? (
                                 <IconLoader2 size={14} className="animate-spin" />
                               ) : (
                                 <>
-                                  <IconPlus size={14} className="mr-1" />
-                                  Add
+                                  <IconPlus size={14} className="sm:mr-1" />
+                                  <span className="hidden sm:inline">Add</span>
                                 </>
                               )}
                             </Button>

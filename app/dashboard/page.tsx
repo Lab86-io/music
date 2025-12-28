@@ -11,6 +11,7 @@ import { TrackMatchReport } from "@/components/track-match-report";
 import { ShareDialog } from "@/components/share-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -21,7 +22,9 @@ import {
   IconMusic, 
   IconRefresh, 
   IconLoader2,
-  IconArrowsExchange
+  IconArrowsExchange,
+  IconSearch,
+  IconX
 } from "@tabler/icons-react";
 import { SpotifyLogo, AppleLogo } from "@/components/icons";
 import { Header } from "@/components/header";
@@ -102,6 +105,9 @@ export default function DashboardPage() {
 
   // Active tab
   const [activeTab, setActiveTab] = useState<string>("spotify");
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Sharing state
   const [sharingPlaylist, setSharingPlaylist] = useState<SpotifyPlaylist | AppleMusicPlaylist | null>(null);
@@ -385,20 +391,20 @@ export default function DashboardPage() {
           </div>
         </Header>
         
-        <div className="flex-1 overflow-hidden container mx-auto px-4 py-6 flex flex-col">
+        <div className="flex-1 overflow-hidden container mx-auto px-4 py-4 flex flex-col">
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected || !appleConnected) && (
-            <div className="mb-8">
+            <div className="mb-4">
               <ServiceConnect onConnectionChange={handleConnectionChange} />
             </div>
           )}
 
           {/* Conversion Progress/Result */}
           {(isConverting || conversionResult) && conversionPlaylist && (
-            <div className="mb-8 space-y-4">
+            <div className="mb-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Conversion Status</h2>
+                <h2 className="text-base font-semibold">Conversion Status</h2>
                 {conversionResult && (
                   <Button variant="ghost" size="sm" onClick={clearConversion}>
                     Dismiss
@@ -433,22 +439,22 @@ export default function DashboardPage() {
           {/* Playlists */}
           {(spotifyConnected || appleConnected) && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-              <div className="flex items-center justify-between border-b border-border">
-                <div className="flex gap-1">
+              <div className="flex items-center justify-between gap-2 border-b border-border">
+                <div className="flex gap-1 shrink-0">
                   {spotifyConnected && (
                     <button
                       onClick={() => setActiveTab("spotify")}
                       className={cn(
-                        "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
+                        "relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
                         activeTab === "spotify"
                           ? "text-[#1DB954]"
                           : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       <SpotifyLogo className="h-4 w-4" />
-                      <span>Spotify</span>
+                      <span className="hidden sm:inline">Spotify</span>
                       <span className={cn(
-                        "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                        "rounded-full px-1.5 py-0.5 text-xs tabular-nums",
                         activeTab === "spotify"
                           ? "bg-[#1DB954]/15 text-[#1DB954]"
                           : "bg-muted text-muted-foreground"
@@ -464,16 +470,16 @@ export default function DashboardPage() {
                     <button
                       onClick={() => setActiveTab("apple")}
                       className={cn(
-                        "relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
+                        "relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
                         activeTab === "apple"
                           ? "text-[#FC3C44]"
                           : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       <AppleLogo className="h-4 w-4" />
-                      <span>Apple Music</span>
+                      <span className="hidden sm:inline">Apple Music</span>
                       <span className={cn(
-                        "ml-1 rounded-full px-2 py-0.5 text-xs tabular-nums",
+                        "rounded-full px-1.5 py-0.5 text-xs tabular-nums",
                         activeTab === "apple"
                           ? "bg-[#FC3C44]/15 text-[#FC3C44]"
                           : "bg-muted text-muted-foreground"
@@ -486,90 +492,125 @@ export default function DashboardPage() {
                     </button>
                   )}
                 </div>
-                <Tooltip>
-                  <TooltipTrigger
-                    onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}
-                    disabled={activeTab === "spotify" ? loadingSpotify : loadingApple}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-                  >
-                    <IconRefresh
-                      size={16}
-                      className={activeTab === "spotify" ? (loadingSpotify ? "animate-spin" : "") : (loadingApple ? "animate-spin" : "")}
+                <div className="flex items-center gap-2 flex-1 justify-end">
+                  <div className="relative max-w-xs flex-1">
+                    <IconSearch size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search playlists..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8 pr-8 h-8 text-sm"
                     />
-                  </TooltipTrigger>
-                  <TooltipContent>Refresh playlists</TooltipContent>
-                </Tooltip>
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <IconX size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <Tooltip>
+                    <TooltipTrigger
+                      onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}
+                      disabled={activeTab === "spotify" ? loadingSpotify : loadingApple}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shrink-0"
+                    >
+                      <IconRefresh
+                        size={16}
+                        className={activeTab === "spotify" ? (loadingSpotify ? "animate-spin" : "") : (loadingApple ? "animate-spin" : "")}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>Refresh playlists</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
 
               {/* Spotify Playlists */}
-              <TabsContent value="spotify" className="flex-1 min-h-0 mt-4">
+              <TabsContent value="spotify" className="flex-1 min-h-0 mt-2">
                 <div className="relative h-full">
                   {/* Top gradient fade */}
                   <div className="pointer-events-none absolute top-0 left-0 right-4 h-6 bg-gradient-to-b from-background to-transparent z-10" />
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
                   <ScrollArea className="h-full">
-                    <div className="space-y-3 pr-4 py-4 pl-1">
+                    <div className="space-y-2 pr-4 py-4 pl-1">
                       {loadingSpotify ? (
                         <PlaylistSkeletonList count={5} />
-                      ) : spotifyPlaylists.length > 0 ? (
-                        spotifyPlaylists.map((playlist) => (
-                          <PlaylistCard
-                            key={playlist.id}
-                            playlist={playlist}
-                            source="spotify"
-                            targetService="apple"
-                            onConvert={handleConvert}
-                            onShare={(p) => handleShare(p, "spotify")}
-                            disabled={isConverting || !appleConnected}
-                            shareDisabled={isConverting}
-                          />
-                        ))
-                      ) : (
-                        <Card>
-                          <CardContent className="flex flex-col items-center justify-center py-12">
-                            <IconMusic size={48} className="mb-4 text-muted-foreground" />
-                            <p className="text-muted-foreground">No playlists found</p>
-                          </CardContent>
-                        </Card>
-                      )}
+                      ) : (() => {
+                        const filtered = spotifyPlaylists.filter(p => 
+                          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                        );
+                        return filtered.length > 0 ? (
+                          filtered.map((playlist) => (
+                            <PlaylistCard
+                              key={playlist.id}
+                              playlist={playlist}
+                              source="spotify"
+                              targetService="apple"
+                              onConvert={handleConvert}
+                              onShare={(p) => handleShare(p, "spotify")}
+                              disabled={isConverting || !appleConnected}
+                              shareDisabled={isConverting}
+                            />
+                          ))
+                        ) : (
+                          <Card>
+                            <CardContent className="flex flex-col items-center justify-center py-8">
+                              <IconMusic size={32} className="mb-3 text-muted-foreground" />
+                              <p className="text-muted-foreground text-sm">
+                                {searchQuery ? "No playlists match your search" : "No playlists found"}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        );
+                      })()}
                     </div>
                   </ScrollArea>
                 </div>
               </TabsContent>
 
               {/* Apple Music Playlists */}
-              <TabsContent value="apple" className="flex-1 min-h-0 mt-4">
+              <TabsContent value="apple" className="flex-1 min-h-0 mt-2">
                 <div className="relative h-full">
                   {/* Top gradient fade */}
                   <div className="pointer-events-none absolute top-0 left-0 right-4 h-6 bg-gradient-to-b from-background to-transparent z-10" />
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
                   <ScrollArea className="h-full">
-                    <div className="space-y-3 pr-4 py-4 pl-1">
+                    <div className="space-y-2 pr-4 py-4 pl-1">
                       {loadingApple ? (
                         <PlaylistSkeletonList count={5} />
-                      ) : applePlaylists.length > 0 ? (
-                        applePlaylists.map((playlist) => (
-                          <PlaylistCard
-                            key={playlist.id}
-                            playlist={playlist}
-                            source="apple"
-                            targetService="spotify"
-                            onConvert={handleConvert}
-                            onShare={(p) => handleShare(p, "apple")}
-                            disabled={isConverting || !spotifyConnected}
-                            shareDisabled={isConverting}
-                          />
-                        ))
-                      ) : (
-                        <Card>
-                          <CardContent className="flex flex-col items-center justify-center py-12">
-                            <IconMusic size={48} className="mb-4 text-muted-foreground" />
-                            <p className="text-muted-foreground">No playlists found</p>
-                          </CardContent>
-                        </Card>
-                      )}
+                      ) : (() => {
+                        const filtered = applePlaylists.filter(p => 
+                          p.attributes.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.attributes.description?.standard?.toLowerCase().includes(searchQuery.toLowerCase())
+                        );
+                        return filtered.length > 0 ? (
+                          filtered.map((playlist) => (
+                            <PlaylistCard
+                              key={playlist.id}
+                              playlist={playlist}
+                              source="apple"
+                              targetService="spotify"
+                              onConvert={handleConvert}
+                              onShare={(p) => handleShare(p, "apple")}
+                              disabled={isConverting || !spotifyConnected}
+                              shareDisabled={isConverting}
+                            />
+                          ))
+                        ) : (
+                          <Card>
+                            <CardContent className="flex flex-col items-center justify-center py-8">
+                              <IconMusic size={32} className="mb-3 text-muted-foreground" />
+                              <p className="text-muted-foreground text-sm">
+                                {searchQuery ? "No playlists match your search" : "No playlists found"}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        );
+                      })()}
                     </div>
                   </ScrollArea>
                 </div>
