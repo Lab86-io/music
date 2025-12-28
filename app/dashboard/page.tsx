@@ -109,6 +109,17 @@ export default function DashboardPage() {
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Normalize text for fuzzy search (handle apostrophes, special chars, etc.)
+  const normalizeForSearch = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+      .replace(/[''`]/g, "") // Remove apostrophes
+      .replace(/[^\w\s]/g, "") // Remove other special chars
+      .trim();
+  };
+
   // Sharing state
   const [sharingPlaylist, setSharingPlaylist] = useState<SpotifyPlaylist | AppleMusicPlaylist | null>(null);
   const [sharingSource, setSharingSource] = useState<"spotify" | "apple">("spotify");
@@ -538,9 +549,10 @@ export default function DashboardPage() {
                       {loadingSpotify ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
+                        const normalizedQuery = normalizeForSearch(searchQuery);
                         const filtered = spotifyPlaylists.filter(p => 
-                          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                          normalizeForSearch(p.name).includes(normalizedQuery) ||
+                          (p.description && normalizeForSearch(p.description).includes(normalizedQuery))
                         );
                         return filtered.length > 0 ? (
                           filtered.map((playlist) => (
@@ -583,9 +595,10 @@ export default function DashboardPage() {
                       {loadingApple ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
+                        const normalizedQuery = normalizeForSearch(searchQuery);
                         const filtered = applePlaylists.filter(p => 
-                          p.attributes.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          p.attributes.description?.standard?.toLowerCase().includes(searchQuery.toLowerCase())
+                          normalizeForSearch(p.attributes.name).includes(normalizedQuery) ||
+                          (p.attributes.description?.standard && normalizeForSearch(p.attributes.description.standard).includes(normalizedQuery))
                         );
                         return filtered.length > 0 ? (
                           filtered.map((playlist) => (
