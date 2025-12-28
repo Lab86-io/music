@@ -51,13 +51,14 @@ export const conversionHistory = pgTable("conversion_history", {
 export const sharedPlaylists = pgTable("shared_playlists", {
   id: text("id").primaryKey(), // nanoid for URL-safe short IDs
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdByName: varchar("created_by_name", { length: 255 }), // Display name of sharer
   playlistName: varchar("playlist_name", { length: 500 }).notNull(),
   playlistImage: text("playlist_image"), // URL to playlist cover image
   sourceService: varchar("source_service", { length: 20 }).notNull(), // "spotify" or "apple"
   tracks: text("tracks").notNull(), // JSON array of track data
   trackCount: integer("track_count").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  expiresAt: timestamp("expires_at").notNull(), // Links expire after 48 hours
+  expiresAt: timestamp("expires_at"), // Links expire after 48 hours (nullable for existing data)
 });
 
 export type User = typeof users.$inferSelect;

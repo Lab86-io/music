@@ -7,6 +7,12 @@ import { generateAppleMusicToken, getAppleMusicPlaylistTracks } from "@/lib/appl
 import type { SpotifyTrack, AppleMusicTrack } from "@/types";
 
 interface SpotifySession {
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string;
+  };
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
@@ -80,6 +86,7 @@ export async function POST(request: Request) {
     }
 
     let tracks: SharedTrack[] = [];
+    let createdByName: string | null = null;
 
     if (sourceService === "spotify") {
       const session = await getSpotifySession();
@@ -89,6 +96,9 @@ export async function POST(request: Request) {
           { status: 401 }
         );
       }
+
+      // Capture the sharer's name for metadata
+      createdByName = session.user?.name || null;
 
       const spotifyTracks = await getSpotifyPlaylistTracks(session.accessToken, playlistId);
       tracks = spotifyTracks.map(extractTrackData);
@@ -119,6 +129,7 @@ export async function POST(request: Request) {
     // Store in database
     await db.insert(sharedPlaylists).values({
       id: shareId,
+      createdByName,
       playlistName,
       playlistImage: playlistImage || null,
       sourceService,
