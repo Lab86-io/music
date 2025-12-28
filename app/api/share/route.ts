@@ -112,8 +112,10 @@ export async function POST(request: Request) {
       trackCount: tracks.length,
     });
 
-    // Generate share URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    // Generate share URL using the request's origin
+    const host = request.headers.get("host") || "localhost:3000";
+    const protocol = request.headers.get("x-forwarded-proto") || "https";
+    const baseUrl = `${protocol}://${host}`;
     const shareUrl = `${baseUrl}/share/${shareId}`;
 
     return NextResponse.json({
