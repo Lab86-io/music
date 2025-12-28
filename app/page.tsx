@@ -194,11 +194,14 @@ export default function HomePage() {
                             <IconCopy size={14} />
                           )}
                         </Button>
-                        <Button size="sm" variant="outline" asChild className="shrink-0">
-                          <a href={shareResult.shareUrl} target="_blank" rel="noopener noreferrer">
-                            <IconExternalLink size={14} />
-                          </a>
-                        </Button>
+                        <a 
+                          href={shareResult.shareUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="shrink-0 inline-flex items-center justify-center h-8 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm"
+                        >
+                          <IconExternalLink size={14} />
+                        </a>
                       </div>
                     </div>
                   </div>
