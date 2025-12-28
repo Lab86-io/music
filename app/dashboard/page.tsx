@@ -503,64 +503,76 @@ export default function DashboardPage() {
 
               {/* Spotify Playlists */}
               <TabsContent value="spotify">
-                <ScrollArea className="h-[calc(100vh-280px)]">
-                  <div className="space-y-3 pr-4 pb-8 pt-1 pl-1">
-                    {loadingSpotify ? (
-                      <PlaylistSkeletonList count={5} />
-                    ) : spotifyPlaylists.length > 0 ? (
-                      spotifyPlaylists.map((playlist) => (
-                        <PlaylistCard
-                          key={playlist.id}
-                          playlist={playlist}
-                          source="spotify"
-                          targetService="apple"
-                          onConvert={handleConvert}
-                          onShare={(p) => handleShare(p, "spotify")}
-                          disabled={isConverting || !appleConnected}
-                          shareDisabled={isConverting}
-                        />
-                      ))
-                    ) : (
-                      <Card>
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                          <IconMusic size={48} className="mb-4 text-muted-foreground" />
-                          <p className="text-muted-foreground">No playlists found</p>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                </ScrollArea>
+                <div className="relative">
+                  {/* Top gradient fade */}
+                  <div className="pointer-events-none absolute top-0 left-0 right-4 h-6 bg-gradient-to-b from-background to-transparent z-10" />
+                  {/* Bottom gradient fade */}
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
+                  <ScrollArea className="h-[calc(100vh-260px)]">
+                    <div className="space-y-3 pr-4 py-4 pl-1">
+                      {loadingSpotify ? (
+                        <PlaylistSkeletonList count={5} />
+                      ) : spotifyPlaylists.length > 0 ? (
+                        spotifyPlaylists.map((playlist) => (
+                          <PlaylistCard
+                            key={playlist.id}
+                            playlist={playlist}
+                            source="spotify"
+                            targetService="apple"
+                            onConvert={handleConvert}
+                            onShare={(p) => handleShare(p, "spotify")}
+                            disabled={isConverting || !appleConnected}
+                            shareDisabled={isConverting}
+                          />
+                        ))
+                      ) : (
+                        <Card>
+                          <CardContent className="flex flex-col items-center justify-center py-12">
+                            <IconMusic size={48} className="mb-4 text-muted-foreground" />
+                            <p className="text-muted-foreground">No playlists found</p>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
               </TabsContent>
 
               {/* Apple Music Playlists */}
               <TabsContent value="apple">
-                <ScrollArea className="h-[calc(100vh-280px)]">
-                  <div className="space-y-3 pr-4 pb-8 pt-1 pl-1">
-                    {loadingApple ? (
-                      <PlaylistSkeletonList count={5} />
-                    ) : applePlaylists.length > 0 ? (
-                      applePlaylists.map((playlist) => (
-                        <PlaylistCard
-                          key={playlist.id}
-                          playlist={playlist}
-                          source="apple"
-                          targetService="spotify"
-                          onConvert={handleConvert}
-                          onShare={(p) => handleShare(p, "apple")}
-                          disabled={isConverting || !spotifyConnected}
-                          shareDisabled={isConverting}
-                        />
-                      ))
-                    ) : (
-                      <Card>
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                          <IconMusic size={48} className="mb-4 text-muted-foreground" />
-                          <p className="text-muted-foreground">No playlists found</p>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                </ScrollArea>
+                <div className="relative">
+                  {/* Top gradient fade */}
+                  <div className="pointer-events-none absolute top-0 left-0 right-4 h-6 bg-gradient-to-b from-background to-transparent z-10" />
+                  {/* Bottom gradient fade */}
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
+                  <ScrollArea className="h-[calc(100vh-260px)]">
+                    <div className="space-y-3 pr-4 py-4 pl-1">
+                      {loadingApple ? (
+                        <PlaylistSkeletonList count={5} />
+                      ) : applePlaylists.length > 0 ? (
+                        applePlaylists.map((playlist) => (
+                          <PlaylistCard
+                            key={playlist.id}
+                            playlist={playlist}
+                            source="apple"
+                            targetService="spotify"
+                            onConvert={handleConvert}
+                            onShare={(p) => handleShare(p, "apple")}
+                            disabled={isConverting || !spotifyConnected}
+                            shareDisabled={isConverting}
+                          />
+                        ))
+                      ) : (
+                        <Card>
+                          <CardContent className="flex flex-col items-center justify-center py-12">
+                            <IconMusic size={48} className="mb-4 text-muted-foreground" />
+                            <p className="text-muted-foreground">No playlists found</p>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
               </TabsContent>
             </Tabs>
           )}
