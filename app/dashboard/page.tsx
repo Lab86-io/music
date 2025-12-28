@@ -402,18 +402,18 @@ export default function DashboardPage() {
           </div>
         </Header>
         
-        <div className="flex-1 overflow-hidden container mx-auto px-4 py-4 flex flex-col">
+        <div className="flex-1 overflow-hidden container mx-auto px-4 py-3 flex flex-col">
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected || !appleConnected) && (
-            <div className="mb-4">
+            <div className="mb-3">
               <ServiceConnect onConnectionChange={handleConnectionChange} />
             </div>
           )}
 
           {/* Conversion Progress/Result */}
           {(isConverting || conversionResult) && conversionPlaylist && (
-            <div className="mb-4 space-y-3">
+            <div className="mb-3 space-y-2">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold">Conversion Status</h2>
                 {conversionResult && (
@@ -545,7 +545,7 @@ export default function DashboardPage() {
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
                   <ScrollArea className="h-full">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pr-4 py-4 pl-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pr-4 py-2 pl-1">
                       {loadingSpotify ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
@@ -591,7 +591,7 @@ export default function DashboardPage() {
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
                   <ScrollArea className="h-full">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pr-4 py-4 pl-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pr-4 py-2 pl-1">
                       {loadingApple ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
