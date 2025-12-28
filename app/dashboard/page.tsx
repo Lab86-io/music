@@ -102,6 +102,12 @@ export default function DashboardPage() {
   // Active tab
   const [activeTab, setActiveTab] = useState<string>("spotify");
 
+  // Sharing state
+  const [sharingPlaylist, setSharingPlaylist] = useState<SpotifyPlaylist | AppleMusicPlaylist | null>(null);
+  const [sharingSource, setSharingSource] = useState<"spotify" | "apple">("spotify");
+
+  const spotifyConnected = !!spotifySession;
+
   // Auto-select tab based on which service is connected
   useEffect(() => {
     if (spotifyConnected && !appleConnected) {
@@ -110,12 +116,6 @@ export default function DashboardPage() {
       setActiveTab("apple");
     }
   }, [spotifyConnected, appleConnected]);
-
-  // Sharing state
-  const [sharingPlaylist, setSharingPlaylist] = useState<SpotifyPlaylist | AppleMusicPlaylist | null>(null);
-  const [sharingSource, setSharingSource] = useState<"spotify" | "apple">("spotify");
-
-  const spotifyConnected = !!spotifySession;
 
   // Fetch Spotify session on mount
   useEffect(() => {
