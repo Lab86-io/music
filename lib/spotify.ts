@@ -190,3 +190,71 @@ export async function searchSpotifyTrack(
   return null;
 }
 
+/**
+ * Get a public Spotify playlist using client credentials (no user auth required)
+ * Works only for public playlists
+ */
+export async function getPublicSpotifyPlaylist(playlistId: string): Promise<{
+  name: string;
+  description: string | null;
+  image: string | null;
+  ownerName: string | null;
+  tracks: SpotifyTrack[];
+}> {
+  // Use client credentials flow - no user authentication needed
+  const spotify = SpotifyApi.withClientCredentials(
+    process.env.SPOTIFY_CLIENT_ID!,
+    process.env.SPOTIFY_CLIENT_SECRET!
+  );
+
+  // Get playlist metadata
+  const playlist = await spotify.playlists.getPlaylist(playlistId);
+
+  // Get all tracks with pagination
+  const tracks: SpotifyTrack[] = [];
+  let offset = 0;
+  const limit = 50;
+
+  while (true) {
+    const response = await spotify.playlists.getPlaylistItems(
+      playlistId,
+      undefined,
+      undefined,
+      limit,
+      offset
+    );
+
+    for (const item of response.items) {
+      if (item.track && item.track.type === "track") {
+        const track = item.track;
+        tracks.push({
+          id: track.id,
+          name: track.name,
+          artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
+          album: {
+            id: track.album.id,
+            name: track.album.name,
+            images: track.album.images,
+          },
+          duration_ms: track.duration_ms,
+          external_ids: track.external_ids,
+          uri: track.uri,
+        });
+      }
+    }
+
+    if (response.items.length < limit || !response.next) {
+      break;
+    }
+    offset += limit;
+  }
+
+  return {
+    name: playlist.name,
+    description: playlist.description,
+    image: playlist.images?.[0]?.url || null,
+    ownerName: playlist.owner.display_name || null,
+    tracks,
+  };
+}
+

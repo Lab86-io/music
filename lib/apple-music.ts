@@ -254,4 +254,70 @@ export async function getAppleMusicSongDetails(
   return null;
 }
 
+/**
+ * Get a public Apple Music playlist from the catalog (no user auth required)
+ * Works only for playlists with "Share on Web and in Search" enabled
+ */
+export async function getPublicAppleMusicPlaylist(
+  playlistId: string,
+  storefront: string = "us"
+): Promise<{
+  name: string;
+  description: string | null;
+  image: string | null;
+  curatorName: string | null;
+  tracks: AppleMusicTrack[];
+}> {
+  const developerToken = await generateAppleMusicToken();
+
+  // Get playlist metadata
+  const playlistResponse = await appleMusicFetch(
+    `/catalog/${storefront}/playlists/${playlistId}`,
+    developerToken
+  );
+  const playlistData = await playlistResponse.json();
+  
+  if (!playlistData.data || playlistData.data.length === 0) {
+    throw new Error("Playlist not found or not publicly accessible");
+  }
+
+  const playlist = playlistData.data[0];
+  const attributes = playlist.attributes;
+
+  // Get all tracks with pagination
+  const tracks: AppleMusicTrack[] = [];
+  let offset = 0;
+  const limit = 100;
+
+  while (true) {
+    const response = await appleMusicFetch(
+      `/catalog/${storefront}/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`,
+      developerToken
+    );
+    const data = await response.json();
+
+    if (data.data) {
+      tracks.push(...data.data);
+    }
+
+    if (!data.next || data.data?.length < limit) {
+      break;
+    }
+    offset += limit;
+  }
+
+  // Get playlist artwork - replace {w}x{h} placeholders
+  const image = attributes.artwork?.url
+    ?.replace("{w}", "300")
+    .replace("{h}", "300") || null;
+
+  return {
+    name: attributes.name,
+    description: attributes.description?.standard || null,
+    image,
+    curatorName: attributes.curatorName || null,
+    tracks,
+  };
+}
+
 
