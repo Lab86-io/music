@@ -48,7 +48,18 @@ export const conversionHistory = pgTable("conversion_history", {
   completedAt: timestamp("completed_at"),
 });
 
+export const sharedPlaylists = pgTable("shared_playlists", {
+  id: text("id").primaryKey(), // nanoid for URL-safe short IDs
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  playlistName: varchar("playlist_name", { length: 500 }).notNull(),
+  sourceService: varchar("source_service", { length: 20 }).notNull(), // "spotify" or "apple"
+  tracks: text("tracks").notNull(), // JSON array of track data
+  trackCount: integer("track_count").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type ConversionHistory = typeof conversionHistory.$inferSelect;
+export type SharedPlaylist = typeof sharedPlaylists.$inferSelect;

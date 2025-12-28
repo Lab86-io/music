@@ -8,6 +8,7 @@ import { PlaylistCard } from "@/components/playlist-card";
 import { PlaylistSkeletonList } from "@/components/playlist-skeleton";
 import { ConversionProgress } from "@/components/conversion-progress";
 import { TrackMatchReport } from "@/components/track-match-report";
+import { ShareDialog } from "@/components/share-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,6 +101,10 @@ export default function DashboardPage() {
 
   // Active tab
   const [activeTab, setActiveTab] = useState<string>("spotify");
+
+  // Sharing state
+  const [sharingPlaylist, setSharingPlaylist] = useState<SpotifyPlaylist | AppleMusicPlaylist | null>(null);
+  const [sharingSource, setSharingSource] = useState<"spotify" | "apple">("spotify");
 
   const spotifyConnected = !!spotifySession;
 
@@ -196,6 +201,12 @@ export default function DashboardPage() {
         toast.success("Connected to Apple Music");
       }
     }
+  };
+
+  // Handle playlist sharing
+  const handleShare = (playlist: SpotifyPlaylist | AppleMusicPlaylist, source: "spotify" | "apple") => {
+    setSharingPlaylist(playlist);
+    setSharingSource(source);
   };
 
   // Handle playlist conversion
@@ -510,6 +521,7 @@ export default function DashboardPage() {
                           source="spotify"
                           targetService="apple"
                           onConvert={handleConvert}
+                          onShare={(p) => handleShare(p, "spotify")}
                           disabled={isConverting || !appleConnected}
                         />
                       ))
@@ -539,6 +551,7 @@ export default function DashboardPage() {
                           source="apple"
                           targetService="spotify"
                           onConvert={handleConvert}
+                          onShare={(p) => handleShare(p, "apple")}
                           disabled={isConverting || !spotifyConnected}
                         />
                       ))
@@ -558,6 +571,16 @@ export default function DashboardPage() {
 
         </div>
       </div>
+
+      {/* Share Dialog */}
+      {sharingPlaylist && (
+        <ShareDialog
+          playlist={sharingPlaylist}
+          source={sharingSource}
+          appleUserToken={appleUserToken}
+          onClose={() => setSharingPlaylist(null)}
+        />
+      )}
     </TooltipProvider>
   );
 }

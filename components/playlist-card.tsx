@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { IconMusic, IconArrowRight } from "@tabler/icons-react";
+import { IconMusic, IconArrowRight, IconShare } from "@tabler/icons-react";
 import { SpotifyLogo, AppleLogo } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
@@ -13,11 +13,12 @@ interface PlaylistCardProps {
   playlist: SpotifyPlaylist | AppleMusicPlaylist;
   source: "spotify" | "apple";
   onConvert: (playlist: SpotifyPlaylist | AppleMusicPlaylist) => void;
+  onShare?: (playlist: SpotifyPlaylist | AppleMusicPlaylist) => void;
   targetService: "spotify" | "apple";
   disabled?: boolean;
 }
 
-export function PlaylistCard({ playlist, source, onConvert, targetService, disabled }: PlaylistCardProps) {
+export function PlaylistCard({ playlist, source, onConvert, onShare, targetService, disabled }: PlaylistCardProps) {
   const isSpotify = source === "spotify";
   
   // Normalize playlist data
@@ -90,8 +91,20 @@ export function PlaylistCard({ playlist, source, onConvert, targetService, disab
             </div>
           </div>
 
-          {/* Convert Button */}
-          <div className="flex items-center">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {onShare && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onShare(playlist)}
+                disabled={disabled}
+                className="gap-1.5"
+              >
+                <IconShare size={16} />
+                <span className="hidden sm:inline">Share</span>
+              </Button>
+            )}
             <Button
               size="sm"
               onClick={() => onConvert(playlist)}
