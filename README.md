@@ -1,6 +1,9 @@
 # Playlist Converter
 
-Convert playlists between **Spotify** and **Apple Music** seamlessly.
+Convert and share playlists between **Spotify** and **Apple Music** seamlessly.
+
+🌐 **Website:** [playlist.jakoblangtry.com](https://playlist.jakoblangtry.com)  
+📱 **iOS Shortcut:** [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c53069e0839)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![React](https://img.shields.io/badge/React-19-blue)
@@ -9,100 +12,110 @@ Convert playlists between **Spotify** and **Apple Music** seamlessly.
 
 ## Features
 
-- **Bidirectional Transfer**: Convert playlists from Spotify → Apple Music or Apple Music → Spotify
-- **Smart Track Matching**: Uses ISRC codes for exact matches, with fuzzy search fallback
-- **Real-time Progress**: See conversion progress and match confidence for each track
-- **Dark/Light Theme**: Follows system preference with manual toggle
-- **Production Ready**: Designed for deployment on Sevalla with PostgreSQL
+### 🔄 Playlist Conversion
+- Convert playlists from Spotify → Apple Music or Apple Music → Spotify
+- Smart track matching using ISRC codes with fuzzy search fallback
+- Real-time progress streaming during conversion
+- Manual matching for unmatched tracks
+
+### 🔗 Playlist Sharing (No Sign-In Required)
+- Share **public playlists** without creating an account
+- Just paste a Spotify or Apple Music playlist URL
+- Get a shareable link with rich Open Graph previews
+- Links expire after 48 hours (multi-use)
+
+### 📱 iOS Shortcut
+- Share playlists directly from the iOS share sheet
+- Works with Spotify and Apple Music apps
+- Automatically copies share link to clipboard
+
+### 🎨 User Interface
+- Clean, responsive design with dark/light mode
+- Sticky header navigation
+- Grid layout with playlist search
+- Album art and track metadata display
+
+## Quick Start
+
+### Share a Public Playlist (No Account Needed)
+
+1. Go to [playlist.jakoblangtry.com](https://playlist.jakoblangtry.com)
+2. Paste any public Spotify or Apple Music playlist URL
+3. Get your shareable link instantly!
+
+### iOS Shortcut
+
+[**Download the Shortcut**](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c53069e0839)
+
+1. Install the shortcut on your iPhone/iPad
+2. Open Spotify or Apple Music
+3. Share a playlist → Choose "Share Playlist" shortcut
+4. Link is copied to your clipboard!
+
+### Convert Playlists
+
+1. Sign in with Spotify and/or Apple Music
+2. Select a playlist from your library
+3. Click to convert to the other service
+4. Review matches and manually fix any unmatched tracks
+
+## API
+
+Public API for integrations and shortcuts:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/share/from-url` | POST | Create share link from public playlist URL |
+| `/api/share/from-url?url=...` | GET | Same, for simpler integrations |
+| `/api/share/[id]` | GET | Get shared playlist data |
+| `/api/share/[id]` | POST | Import shared playlist (requires auth) |
+
+### Example: Create Share Link
+
+```bash
+curl -X POST https://playlist.jakoblangtry.com/api/share/from-url \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"}'
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "shareUrl": "https://playlist.jakoblangtry.com/share/abc123xyz",
+    "playlistName": "Today's Top Hits",
+    "trackCount": 50,
+    "service": "Spotify"
+  }
+}
+```
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Next.js 16 (App Router) |
-| UI | shadcn/ui (maia preset, stone/emerald theme) |
-| Styling | Tailwind CSS v4 |
+| Framework | Next.js 16 (App Router, Turbopack) |
+| UI | shadcn/ui + Tailwind CSS v4 |
 | Icons | Tabler Icons + Official Brand Logos |
-| Auth | Auth.js (NextAuth v5) |
 | Database | PostgreSQL + Drizzle ORM |
-| APIs | Spotify Web API, Apple MusicKit JS |
+| Auth | Spotify OAuth (PKCE), Apple MusicKit JS |
 | Hosting | Sevalla (by Kinsta) |
 
-## Prerequisites
+## Self-Hosting
 
-### 1. Spotify Developer Account
+### Prerequisites
 
-1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Create a new app
-3. Add Redirect URIs:
-   - Local: `http://localhost:3000/api/auth/callback/spotify`
-   - Production: `https://your-app.sevalla.app/api/auth/callback/spotify`
-4. Copy your **Client ID** and **Client Secret**
+- Node.js 20+
+- PostgreSQL database
+- [Spotify Developer App](https://developer.spotify.com/dashboard)
+- [Apple Developer Account](https://developer.apple.com/account) with MusicKit key
 
-### 2. Apple Developer Account
-
-1. Go to [Apple Developer Portal](https://developer.apple.com/account)
-2. Navigate to **Certificates, Identifiers & Profiles** → **Keys**
-3. Create a new key with **MusicKit** enabled
-4. Download the `.p8` file (one-time download!)
-5. Note your **Key ID** and **Team ID**
-
-## Deployment on Sevalla
-
-### 1. Create PostgreSQL Database
-
-1. In Sevalla dashboard, go to **Databases** → **Add Database**
-2. Select **PostgreSQL**
-3. Choose your region and size
-4. Copy the **External connection string**
-
-### 2. Create Application
-
-1. Go to **Applications** → **Create an app**
-2. Connect your GitHub repository
-3. Select the `playlist-app` directory as build path
-4. Set **Build command**: `pnpm build`
-5. Set **Start command**: `pnpm start`
-
-### 3. Configure Environment Variables
-
-Add these environment variables in Sevalla:
-
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string from Sevalla |
-| `SPOTIFY_CLIENT_ID` | From Spotify Developer Dashboard |
-| `SPOTIFY_CLIENT_SECRET` | From Spotify Developer Dashboard |
-| `APPLE_TEAM_ID` | Your Apple Developer Team ID |
-| `APPLE_KEY_ID` | Your MusicKit Key ID |
-| `APPLE_PRIVATE_KEY` | Contents of your .p8 file |
-| `AUTH_SECRET` | Generate with `openssl rand -base64 32` |
-| `AUTH_URL` | Your Sevalla app URL (e.g., `https://your-app.sevalla.app`) |
-
-### 4. Run Database Migrations
-
-After first deployment, run migrations via Sevalla's web terminal or locally:
-
-```bash
-pnpm db:push
-```
-
-## Local Development
-
-### 1. Install Dependencies
-
-```bash
-cd playlist-app
-pnpm install
-```
-
-### 2. Set Up Environment Variables
-
-Create `.env.local`:
+### Environment Variables
 
 ```env
-# Database (use local PostgreSQL or Sevalla's external connection)
-DATABASE_URL=postgresql://user:password@localhost:5432/playlist_converter
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/playlist
 
 # Spotify
 SPOTIFY_CLIENT_ID=your_client_id
@@ -112,24 +125,29 @@ SPOTIFY_CLIENT_SECRET=your_client_secret
 APPLE_TEAM_ID=ABC123DEF4
 APPLE_KEY_ID=XXXXXXXXXX
 APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
-...your key...
+...your .p8 key contents...
 -----END PRIVATE KEY-----"
 
 # Auth
-AUTH_SECRET=generate_with_openssl_rand
-AUTH_URL=http://localhost:3000
+AUTH_SECRET=generate_with_openssl_rand_base64_32
+AUTH_URL=https://your-domain.com
 ```
 
-### 3. Push Database Schema
+### Installation
 
 ```bash
+# Install dependencies
+pnpm install
+
+# Push database schema
 pnpm db:push
-```
 
-### 4. Start Development Server
-
-```bash
+# Start development server
 pnpm dev
+
+# Or build for production
+pnpm build
+pnpm start
 ```
 
 ## Scripts
@@ -139,35 +157,8 @@ pnpm dev
 | `pnpm dev` | Start development server |
 | `pnpm build` | Build for production |
 | `pnpm start` | Start production server |
-| `pnpm db:generate` | Generate migrations |
 | `pnpm db:push` | Push schema to database |
 | `pnpm db:studio` | Open Drizzle Studio |
-
-## Project Structure
-
-```
-playlist-app/
-├── app/
-│   ├── api/
-│   │   ├── auth/[...nextauth]/  # Auth.js routes
-│   │   ├── spotify/             # Spotify API routes
-│   │   ├── apple/               # Apple Music API routes
-│   │   └── convert/             # Conversion endpoint
-│   ├── dashboard/               # Main dashboard page
-│   └── page.tsx                 # Landing page
-├── components/
-│   ├── ui/                      # shadcn components
-│   ├── icons.tsx                # Official brand logos
-│   ├── theme-provider.tsx       # Dark/light theme
-│   └── ...                      # App components
-├── lib/
-│   ├── auth.ts                  # Auth.js configuration
-│   ├── spotify.ts               # Spotify API client
-│   ├── apple-music.ts           # Apple Music API client
-│   ├── converter.ts             # Track matching logic
-│   └── db/                      # Database schema & client
-└── drizzle/                     # Database migrations
-```
 
 ## License
 
