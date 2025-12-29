@@ -1,9 +1,9 @@
 # Playlist Converter
 
-Convert and share playlists between **Spotify** and **Apple Music** seamlessly.
+Convert and share playlists between Spotify and Apple Music seamlessly.
 
-🌐 **Website:** [playlist.jakoblangtry.com](https://playlist.jakoblangtry.com)  
-📱 **iOS Shortcut:** [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c53069e0839)
+Website: [playlist.jakoblangtry.com](https://playlist.jakoblangtry.com)  
+iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c53069e0839)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![React](https://img.shields.io/badge/React-19-blue)
@@ -12,24 +12,24 @@ Convert and share playlists between **Spotify** and **Apple Music** seamlessly.
 
 ## Features
 
-### 🔄 Playlist Conversion
-- Convert playlists from Spotify → Apple Music or Apple Music → Spotify
+### Playlist Conversion
+- Convert playlists from Spotify -> Apple Music or Apple Music -> Spotify
 - Smart track matching using ISRC codes with fuzzy search fallback
 - Real-time progress streaming during conversion
 - Manual matching for unmatched tracks
 
-### 🔗 Playlist Sharing (No Sign-In Required)
-- Share **public playlists** without creating an account
+### Playlist Sharing (No Sign-In Required)
+- Share public playlists without creating an account
 - Just paste a Spotify or Apple Music playlist URL
 - Get a shareable link with rich Open Graph previews
 - Links expire after 48 hours (multi-use)
 
-### 📱 iOS Shortcut
+### iOS Shortcut
 - Share playlists directly from the iOS share sheet
 - Works with Spotify and Apple Music apps
 - Automatically copies share link to clipboard
 
-### 🎨 User Interface
+### User Interface
 - Clean, responsive design with dark/light mode
 - Sticky header navigation
 - Grid layout with playlist search
@@ -49,7 +49,7 @@ Convert and share playlists between **Spotify** and **Apple Music** seamlessly.
 
 1. Install the shortcut on your iPhone/iPad
 2. Open Spotify or Apple Music
-3. Share a playlist → Choose "Share Playlist" shortcut
+3. Share a playlist -> Choose "Share Playlist" shortcut
 4. Link is copied to your clipboard!
 
 ### Convert Playlists
