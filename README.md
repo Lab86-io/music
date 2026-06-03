@@ -157,6 +157,8 @@ pnpm start
 | `pnpm dev` | Start development server |
 | `pnpm build` | Build for production |
 | `pnpm start` | Start production server |
+| `pnpm test` | Run tests in watch mode |
+| `pnpm test:run` | Run tests once (CI) |
 | `pnpm db:push` | Push schema to database |
 | `pnpm db:studio` | Open Drizzle Studio |
 
