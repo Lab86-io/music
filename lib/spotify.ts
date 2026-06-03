@@ -191,6 +191,66 @@ export async function searchSpotifyTrack(
 }
 
 /**
+ * Search Spotify using client credentials (no user access token).
+ * Useful for public catalog lookups.
+ */
+export async function searchSpotifyTrackClient(query: string, isrc?: string): Promise<SpotifyTrack | null> {
+  const spotify = SpotifyApi.withClientCredentials(
+    process.env.SPOTIFY_CLIENT_ID!,
+    process.env.SPOTIFY_CLIENT_SECRET!
+  );
+
+  // ISRC first
+  if (isrc) {
+    try {
+      const isrcResult = await spotify.search(`isrc:${isrc}`, ["track"], undefined, 1);
+      if (isrcResult.tracks.items.length > 0) {
+        const track = isrcResult.tracks.items[0];
+        return {
+          id: track.id,
+          name: track.name,
+          artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
+          album: {
+            id: track.album.id,
+            name: track.album.name,
+            images: track.album.images,
+          },
+          duration_ms: track.duration_ms,
+          external_ids: track.external_ids,
+          uri: track.uri,
+        };
+      }
+    } catch {
+      // fallthrough
+    }
+  }
+
+  try {
+    const result = await spotify.search(query, ["track"], undefined, 1);
+    if (result.tracks.items.length > 0) {
+      const track = result.tracks.items[0];
+      return {
+        id: track.id,
+        name: track.name,
+        artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
+        album: {
+          id: track.album.id,
+          name: track.album.name,
+          images: track.album.images,
+        },
+        duration_ms: track.duration_ms,
+        external_ids: track.external_ids,
+        uri: track.uri,
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+/**
  * Get a public Spotify playlist using client credentials (no user auth required)
  * Works only for public playlists
  */
