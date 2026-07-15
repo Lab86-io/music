@@ -1,4 +1,5 @@
-# Nixpacks configuration for Sevalla deployment
+# Nixpacks configuration (legacy — production deploys via Railway's Railpack builder,
+# which does not read this file; kept as a reference for self-hosting with Nixpacks)
 
 [phases.setup]
 nixPkgs = ["nodejs_20"]

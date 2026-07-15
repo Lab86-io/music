@@ -135,7 +135,7 @@ Response:
 | Icons | Tabler Icons + Official Brand Logos |
 | Database | PostgreSQL + Drizzle ORM |
 | Auth | Spotify OAuth (PKCE), Apple MusicKit JS |
-| Hosting | Sevalla (by Kinsta) |
+| Hosting | Railway |
 
 ## Self-Hosting
 
