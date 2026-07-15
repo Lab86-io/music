@@ -191,6 +191,43 @@ export async function searchSpotifyTrack(
 }
 
 /**
+ * Client-credentials Spotify client for public catalog lookups (no user auth).
+ */
+export function getSpotifyCatalogClient() {
+  return SpotifyApi.withClientCredentials(
+    process.env.SPOTIFY_CLIENT_ID!,
+    process.env.SPOTIFY_CLIENT_SECRET!
+  );
+}
+
+export async function getSpotifyTrackById(id: string) {
+  return getSpotifyCatalogClient().tracks.get(id, "US");
+}
+
+export async function getSpotifyAlbumById(id: string) {
+  return getSpotifyCatalogClient().albums.get(id, "US");
+}
+
+export async function getSpotifyArtistById(id: string) {
+  return getSpotifyCatalogClient().artists.get(id);
+}
+
+/**
+ * Generic catalog search with client credentials. Returns raw SDK items.
+ */
+export async function searchSpotifyCatalog(
+  query: string,
+  type: "track" | "album" | "artist",
+  limit: 1 | 5 | 10 | 25 = 10
+) {
+  const spotify = getSpotifyCatalogClient();
+  const result = await spotify.search(query, [type], "US", limit);
+  if (type === "track") return result.tracks?.items ?? [];
+  if (type === "album") return result.albums?.items ?? [];
+  return result.artists?.items ?? [];
+}
+
+/**
  * Search Spotify using client credentials (no user access token).
  * Useful for public catalog lookups.
  */

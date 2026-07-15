@@ -66,6 +66,92 @@ export function parsePlaylistUrl(url: string): ParsedPlaylistUrl | null {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Generic music link parsing (tracks, albums, artists, playlists)
+// ---------------------------------------------------------------------------
+
+export type MusicLinkType = "track" | "album" | "artist" | "playlist";
+
+export interface ParsedMusicUrl {
+  service: "spotify" | "apple";
+  type: MusicLinkType;
+  id: string;
+  storefront?: string; // Apple Music regional catalog (e.g. "us", "gb")
+}
+
+/**
+ * Parse any Spotify or Apple Music content URL (track, album, artist, playlist).
+ *
+ * Supported formats:
+ * - https://open.spotify.com/{track|album|artist|playlist}/{id}
+ * - https://open.spotify.com/intl-de/track/{id} (locale prefixes)
+ * - https://music.apple.com/us/album/name/123456?i=654321 (track via ?i=)
+ * - https://music.apple.com/us/album/name/123456
+ * - https://music.apple.com/us/song/name/654321
+ * - https://music.apple.com/us/artist/name/123456
+ * - https://music.apple.com/us/playlist/name/pl.xxx
+ */
+export function parseMusicUrl(url: string): ParsedMusicUrl | null {
+  try {
+    const parsed = new URL(url.trim());
+
+    if (
+      parsed.hostname === "open.spotify.com" ||
+      parsed.hostname === "play.spotify.com"
+    ) {
+      // Strip optional locale prefix like /intl-de or /intl-pt-BR
+      const path = parsed.pathname.replace(/^\/intl-[a-z]{2}(?:-[A-Za-z]{2})?/, "");
+      const match = path.match(/^\/(track|album|artist|playlist)\/([a-zA-Z0-9]+)/);
+      if (match) {
+        return { service: "spotify", type: match[1] as MusicLinkType, id: match[2] };
+      }
+      return null;
+    }
+
+    if (
+      parsed.hostname === "music.apple.com" ||
+      parsed.hostname === "geo.music.apple.com" ||
+      parsed.hostname === "itunes.apple.com"
+    ) {
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      let storefront = "us";
+      let rest = parts;
+      if (parts.length > 0 && /^[a-z]{2}$/.test(parts[0])) {
+        storefront = parts[0];
+        rest = parts.slice(1);
+      }
+      const kind = rest[0];
+      const lastPart = rest[rest.length - 1];
+      const trackId = parsed.searchParams.get("i");
+
+      if (kind === "playlist") {
+        const pl = rest.find((p) => p.startsWith("pl."));
+        return pl ? { service: "apple", type: "playlist", id: pl, storefront } : null;
+      }
+      if (kind === "album") {
+        if (trackId && /^\d+$/.test(trackId)) {
+          return { service: "apple", type: "track", id: trackId, storefront };
+        }
+        if (lastPart && /^\d+$/.test(lastPart)) {
+          return { service: "apple", type: "album", id: lastPart, storefront };
+        }
+        return null;
+      }
+      if (kind === "song" && lastPart && /^\d+$/.test(lastPart)) {
+        return { service: "apple", type: "track", id: lastPart, storefront };
+      }
+      if (kind === "artist" && lastPart && /^\d+$/.test(lastPart)) {
+        return { service: "apple", type: "artist", id: lastPart, storefront };
+      }
+      return null;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Check if a string looks like a valid playlist URL
  */

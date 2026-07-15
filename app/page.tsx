@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { IconLoader2, IconLink, IconCopy, IconCheck, IconExternalLink } from "@tabler/icons-react";
 import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { LinkConverter } from "@/components/link-converter";
 import Image from "next/image";
 
 interface ShareResult {
@@ -209,6 +210,9 @@ export default function HomePage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Link Converter Section */}
+          <LinkConverter />
 
           {/* Divider */}
           <div className="flex items-center gap-4">

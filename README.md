@@ -1,8 +1,8 @@
 # Playlist Converter
 
-Convert and share playlists between Spotify and Apple Music seamlessly.
+Convert and share playlists, songs, albums, and artists between Spotify and Apple Music seamlessly.
 
-Website: [playlist.jakoblangtry.com](https://playlist.jakoblangtry.com)  
+Website: [music.lab86.io](https://music.lab86.io) (also at [playlist.jakoblangtry.com](https://playlist.jakoblangtry.com))  
 iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c53069e0839)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
@@ -18,6 +18,14 @@ iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c
 - Real-time progress streaming during conversion
 - Manual matching for unmatched tracks
 
+### Link Conversion (No Sign-In Required)
+- Convert individual song, album, and artist links between Spotify and Apple Music
+- ISRC-based matching for songs with fuzzy search fallback (tribute/karaoke filtering)
+- Match confidence scoring with full metadata display (artwork, release date, genres)
+- Audio preview playback when available
+- Local conversion history (last 10, stored in your browser)
+- Available on the home page and at `/convert`
+
 ### Playlist Sharing (No Sign-In Required)
 - Share public playlists without creating an account
 - Just paste a Spotify or Apple Music playlist URL
@@ -25,9 +33,10 @@ iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c
 - Links expire after 48 hours (multi-use)
 
 ### iOS Shortcut
-- Share playlists directly from the iOS share sheet
+- Share songs, albums, artists, and playlists directly from the iOS share sheet
+- Songs/albums/artists convert to the other service; playlists become share links
 - Works with Spotify and Apple Music apps
-- Automatically copies share link to clipboard
+- Automatically copies the resulting link to clipboard
 
 ### User Interface
 - Clean, responsive design with dark/light mode
@@ -39,9 +48,15 @@ iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c
 
 ### Share a Public Playlist (No Account Needed)
 
-1. Go to [playlist.jakoblangtry.com](https://playlist.jakoblangtry.com)
+1. Go to [music.lab86.io](https://music.lab86.io)
 2. Paste any public Spotify or Apple Music playlist URL
 3. Get your shareable link instantly!
+
+### Convert a Song, Album, or Artist Link (No Account Needed)
+
+1. Go to [music.lab86.io/convert](https://music.lab86.io/convert)
+2. Paste a Spotify or Apple Music song/album/artist link
+3. Get the matching link on the other service, with a confidence score
 
 ### iOS Shortcut
 
@@ -65,15 +80,35 @@ Public API for integrations and shortcuts:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/api/convert/link` | POST / GET `?url=...` | Convert a song/album/artist link; playlist links become share links |
+| `/api/shortcut` | POST / GET `?url=...&redirect=1` | One-shot endpoint for iOS Shortcuts (optionally 302-redirects) |
 | `/api/share/from-url` | POST | Create share link from public playlist URL |
 | `/api/share/from-url?url=...` | GET | Same, for simpler integrations |
 | `/api/share/[id]` | GET | Get shared playlist data |
 | `/api/share/[id]` | POST | Import shared playlist (requires auth) |
 
+### Example: Convert a Song Link
+
+```bash
+curl "https://music.lab86.io/api/shortcut?url=https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC"
+```
+
+Response:
+```json
+{
+  "original": "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",
+  "converted": "https://music.apple.com/us/album/never-gonna-give-you-up/1558533900?i=1558534271",
+  "kind": "track",
+  "name": "Never Gonna Give You Up",
+  "artist": "Rick Astley",
+  "confidence": 100
+}
+```
+
 ### Example: Create Share Link
 
 ```bash
-curl -X POST https://playlist.jakoblangtry.com/api/share/from-url \
+curl -X POST https://music.lab86.io/api/share/from-url \
   -H "Content-Type: application/json" \
   -d '{"url": "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"}'
 ```
@@ -83,7 +118,7 @@ Response:
 {
   "success": true,
   "data": {
-    "shareUrl": "https://playlist.jakoblangtry.com/share/abc123xyz",
+    "shareUrl": "https://music.lab86.io/share/abc123xyz",
     "playlistName": "Today's Top Hits",
     "trackCount": 50,
     "service": "Spotify"

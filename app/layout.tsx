@@ -17,8 +17,8 @@ export const metadata: Metadata = {
     default: "Playlist Converter | Spotify ↔ Apple Music",
     template: "%s | Playlist Converter",
   },
-  description: "Convert your playlists between Spotify and Apple Music seamlessly. Share playlists across platforms with friends.",
-  metadataBase: new URL("https://playlist.jakoblangtry.com"),
+  description: "Convert playlists, songs, albums, and artists between Spotify and Apple Music seamlessly. Share playlists across platforms with friends.",
+  metadataBase: new URL("https://music.lab86.io"),
   icons: {
     icon: [
       { url: "/icon.png", type: "image/png", sizes: "192x192" },

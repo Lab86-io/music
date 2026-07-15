@@ -23,6 +23,12 @@ export function Header({ children }: HeaderProps) {
           <span className="font-semibold text-sm">Playlist Converter</span>
         </Link>
         <div className="flex items-center gap-2">
+          <Link
+            href="/convert"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors px-2"
+          >
+            Convert
+          </Link>
           {children}
           <ThemeToggle />
         </div>

@@ -24,6 +24,22 @@ export async function generateAppleMusicToken(): Promise<string> {
   return token;
 }
 
+// Cache the developer token in module scope; it is valid for 180 days but we
+// refresh well before expiry to survive long-lived server processes.
+let cachedDevToken: { token: string; expiresAt: number } | null = null;
+
+/**
+ * Get a (cached) Apple Music developer token.
+ */
+export async function getCachedAppleMusicToken(): Promise<string> {
+  if (cachedDevToken && Date.now() < cachedDevToken.expiresAt) {
+    return cachedDevToken.token;
+  }
+  const token = await generateAppleMusicToken();
+  cachedDevToken = { token, expiresAt: Date.now() + 24 * 60 * 60 * 1000 };
+  return token;
+}
+
 /**
  * Make an authenticated request to the Apple Music API
  */
@@ -252,6 +268,88 @@ export async function getAppleMusicSongDetails(
     return null;
   }
   return null;
+}
+
+/**
+ * Get album details from the Apple Music catalog by ID
+ */
+export async function getAppleMusicAlbumDetails(
+  developerToken: string,
+  catalogId: string,
+  storefront: string = "us"
+): Promise<any | null> {
+  try {
+    const response = await appleMusicFetch(
+      `/catalog/${storefront}/albums/${catalogId}`,
+      developerToken
+    );
+    const data = await response.json();
+    return data.data?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get artist details from the Apple Music catalog by ID
+ */
+export async function getAppleMusicArtistDetails(
+  developerToken: string,
+  catalogId: string,
+  storefront: string = "us"
+): Promise<any | null> {
+  try {
+    const response = await appleMusicFetch(
+      `/catalog/${storefront}/artists/${catalogId}`,
+      developerToken
+    );
+    const data = await response.json();
+    return data.data?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generic Apple Music catalog search. Returns raw items for the given type.
+ */
+export async function searchAppleMusicCatalog(
+  developerToken: string,
+  term: string,
+  type: "songs" | "albums" | "artists",
+  limit: number = 10,
+  storefront: string = "us"
+): Promise<any[]> {
+  try {
+    const response = await appleMusicFetch(
+      `/catalog/${storefront}/search?term=${encodeURIComponent(term)}&types=${type}&limit=${limit}`,
+      developerToken
+    );
+    const data = await response.json();
+    return data.results?.[type]?.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Look up Apple Music songs by ISRC. Returns raw song items.
+ */
+export async function getAppleMusicSongsByIsrc(
+  developerToken: string,
+  isrc: string,
+  storefront: string = "us"
+): Promise<any[]> {
+  try {
+    const response = await appleMusicFetch(
+      `/catalog/${storefront}/songs?filter[isrc]=${encodeURIComponent(isrc)}`,
+      developerToken
+    );
+    const data = await response.json();
+    return data.data ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /**
