@@ -2,28 +2,43 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   IconLoader2,
-  IconArrowsExchange,
+  IconArrowRight,
   IconCopy,
   IconCheck,
   IconExternalLink,
   IconTrash,
   IconChevronDown,
-  IconChevronUp,
+  IconAlertTriangle,
+  IconLink,
+  IconPlayerPlayFilled,
+  IconPlayerPauseFilled,
 } from "@tabler/icons-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { Vinyl } from "@/components/animated-icons";
 import { parseMusicUrl } from "@/lib/url-parser";
+import { cn } from "@/lib/utils";
 import type { LinkMetadata, MusicItemType } from "@/lib/link-converter";
 
-const SPOTIFY_GREEN = "#1DB954";
-const APPLE_RED = "#FC3C44";
 const HISTORY_KEY = "linkConversionHistory";
 const HISTORY_LIMIT = 10;
+
+const BRAND = {
+  spotify: {
+    name: "Spotify",
+    color: "#1DB954",
+    chip: "bg-[#1DB954]/12 text-[#0f7a37] dark:text-[#3ddc74]",
+    button: "bg-[#1DB954] text-[#07210f] hover:bg-[#22cc60]",
+  },
+  apple: {
+    name: "Apple Music",
+    color: "#FC3C44",
+    chip: "bg-[#FC3C44]/12 text-[#c2202b] dark:text-[#ff6b71]",
+    button: "bg-[#FC3C44] text-white hover:bg-[#ff4f56]",
+  },
+} as const;
 
 interface ConversionResponse {
   kind: "conversion";
@@ -51,16 +66,28 @@ interface HistoryItem {
   result: ConversionResponse;
 }
 
-function serviceLabel(direction: ConversionResponse["direction"]) {
-  return direction === "spotify-to-apple" ? "Apple Music" : "Spotify";
+function targetBrand(direction: ConversionResponse["direction"]) {
+  return direction === "spotify-to-apple" ? BRAND.apple : BRAND.spotify;
+}
+
+function TargetLogo({
+  direction,
+  className,
+}: {
+  direction: ConversionResponse["direction"];
+  className?: string;
+}) {
+  return direction === "spotify-to-apple" ? (
+    <AppleLogo className={className} />
+  ) : (
+    <SpotifyLogo className={className} />
+  );
 }
 
 function formatDuration(ms?: number) {
   if (!ms) return null;
   const totalSeconds = Math.round(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  return `${Math.floor(totalSeconds / 60)}:${(totalSeconds % 60).toString().padStart(2, "0")}`;
 }
 
 function loadHistory(): HistoryItem[] {
@@ -77,203 +104,375 @@ function loadHistory(): HistoryItem[] {
   }
 }
 
-function TargetIcon({ direction, size = 16 }: { direction: ConversionResponse["direction"]; size?: number }) {
-  return direction === "spotify-to-apple" ? (
-    <AppleLogo style={{ width: size, height: size, color: APPLE_RED }} />
-  ) : (
-    <SpotifyLogo style={{ width: size, height: size, color: SPOTIFY_GREEN }} />
+function CopyIconButton({
+  value,
+  label,
+  className,
+}: {
+  value: string;
+  label: string;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        onClick={async (e) => {
+          e.stopPropagation();
+          await navigator.clipboard.writeText(value);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1800);
+        }}
+        className={cn(
+          "inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground transition-colors hover:text-foreground hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          className
+        )}
+      >
+        {copied ? (
+          <IconCheck size={16} className="text-primary" />
+        ) : (
+          <IconCopy size={16} />
+        )}
+      </TooltipTrigger>
+      <TooltipContent>{copied ? "Copied!" : label}</TooltipContent>
+    </Tooltip>
   );
 }
 
-function ResultCard({ result }: { result: ConversionResponse }) {
-  const [copied, setCopied] = useState(false);
-  const target = result.target;
-  const targetService = serviceLabel(result.direction);
+function ConfidenceMeter({ result }: { result: ConversionResponse }) {
+  const explanation =
+    result.matchMethod === "isrc"
+      ? "Exact recording match — both services report the same ISRC code for this recording."
+      : "Matched by comparing title, artist, and album across catalogs.";
+  const tone =
+    result.confidence >= 80
+      ? "bg-primary"
+      : result.confidence >= 50
+        ? "bg-amber-500"
+        : "bg-destructive";
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        className="flex cursor-help items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        type="button"
+      >
+        <span className="h-1 w-20 overflow-hidden rounded-full bg-foreground/10">
+          <span
+            className={cn("block h-full rounded-full transition-all", tone)}
+            style={{ width: `${result.confidence}%` }}
+          />
+        </span>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {result.confidence}% match
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{explanation}</TooltipContent>
+    </Tooltip>
+  );
+}
 
-  const handleCopy = async () => {
-    if (!target) return;
-    await navigator.clipboard.writeText(target.url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+function PreviewButton({ url }: { url: string }) {
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      audio?.pause();
+    };
+  }, [audio]);
+
+  const toggle = () => {
+    if (playing) {
+      audio?.pause();
+      setPlaying(false);
+      return;
+    }
+    const el = audio ?? new Audio(url);
+    if (!audio) {
+      el.addEventListener("ended", () => setPlaying(false));
+      setAudio(el);
+    }
+    el.play();
+    setPlaying(true);
   };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        onClick={toggle}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground transition-colors hover:text-foreground hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {playing ? <IconPlayerPauseFilled size={15} /> : <IconPlayerPlayFilled size={15} />}
+      </TooltipTrigger>
+      <TooltipContent>{playing ? "Pause preview" : "Play 30s preview"}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function ConversionResult({ result }: { result: ConversionResponse }) {
+  const target = result.target;
+  const brand = targetBrand(result.direction);
 
   if (!target) {
     return (
-      <div className="mt-4 p-3 rounded-lg bg-muted/50 border">
-        <p className="text-sm">
+      <div className="animate-rise-in mt-6 flex items-start gap-3 rounded-xl border border-border/70 bg-muted/40 px-4 py-3.5">
+        <IconAlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-500" />
+        <p className="text-sm leading-relaxed">
           Found <span className="font-medium">{result.source.title}</span>
-          {result.type !== "artist" && <> by {result.source.artist}</>}, but no confident match on{" "}
-          {targetService}.
+          {result.type !== "artist" && <> by {result.source.artist}</>}, but nothing on{" "}
+          {brand.name} matched confidently enough. It may not be available there.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="mt-4 p-3 rounded-lg bg-muted/50 border">
-      <div className="flex items-start gap-3">
+    <div className="animate-rise-in relative mt-6 overflow-hidden rounded-2xl border border-border/70 shadow-[0_12px_32px_-16px_rgb(0_0_0/0.25)]">
+      {/* Artwork-derived backdrop, TIDAL-style */}
+      {target.artworkUrl && (
+        <Image
+          src={target.artworkUrl}
+          alt=""
+          aria-hidden
+          fill
+          sizes="640px"
+          className="scale-125 object-cover opacity-30 blur-2xl saturate-150 dark:opacity-25"
+        />
+      )}
+      <div className="relative flex flex-col gap-4 bg-background/70 p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:p-5 dark:bg-background/55">
         {target.artworkUrl ? (
           <Image
             src={target.artworkUrl}
             alt={target.title}
-            width={72}
-            height={72}
-            className={result.type === "artist" ? "rounded-full" : "rounded-md"}
+            width={96}
+            height={96}
+            className={cn(
+              "h-24 w-24 shrink-0 object-cover shadow-lg",
+              result.type === "artist" ? "rounded-full" : "rounded-lg"
+            )}
           />
         ) : (
-          <div className="h-[72px] w-[72px] rounded-md bg-muted flex items-center justify-center">
-            <TargetIcon direction={result.direction} size={28} />
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <TargetLogo direction={result.direction} className="h-9 w-9 opacity-60" />
           </div>
         )}
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <TargetIcon direction={result.direction} />
-            <p className="font-medium text-sm truncate">{target.title}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            <TargetLogo direction={result.direction} className="h-3.5 w-3.5" />
+            {result.type} on {brand.name}
           </div>
-          {result.type !== "artist" && (
-            <p className="text-xs text-muted-foreground truncate">
+          <h3 className="mt-1 truncate text-lg font-semibold leading-tight sm:text-xl">
+            {target.title}
+          </h3>
+          {result.type !== "artist" ? (
+            <p className="truncate text-sm text-muted-foreground">
               {target.artist}
-              {target.album && result.type === "track" ? ` • ${target.album}` : ""}
+              {result.type === "track" && target.album ? ` · ${target.album}` : ""}
             </p>
-          )}
-          {result.type === "artist" && target.genres && (
-            <p className="text-xs text-muted-foreground truncate">{target.genres.slice(0, 3).join(", ")}</p>
+          ) : (
+            target.genres && (
+              <p className="truncate text-sm text-muted-foreground">
+                {target.genres.slice(0, 3).join(" · ")}
+              </p>
+            )
           )}
 
-          {/* Confidence */}
-          <div className="flex items-center gap-2 mt-2">
-            <div className="h-1.5 flex-1 rounded-full bg-border overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${result.confidence}%`,
-                  backgroundColor:
-                    result.confidence >= 80 ? SPOTIFY_GREEN : result.confidence >= 50 ? "#eab308" : APPLE_RED,
-                }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground shrink-0">
-              {result.confidence}% match{result.matchMethod === "isrc" ? " (ISRC)" : ""}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 mt-2">
-            <code className="flex-1 text-xs bg-background px-2 py-1 rounded border truncate">
-              {target.url}
-            </code>
-            <Button size="sm" variant="outline" onClick={handleCopy} className="shrink-0">
-              {copied ? <IconCheck size={14} className="text-green-500" /> : <IconCopy size={14} />}
-            </Button>
+          <div className="mt-3 flex flex-wrap items-center gap-2.5">
             <a
               href={target.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="shrink-0 inline-flex items-center justify-center h-8 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm"
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-medium shadow-sm transition-colors",
+                brand.button
+              )}
             >
+              Open in {brand.name}
               <IconExternalLink size={14} />
             </a>
+            <CopyIconButton value={target.url} label="Copy link" />
+            {target.previewUrl && <PreviewButton url={target.previewUrl} />}
+            <div className="ml-auto hidden sm:block">
+              <ConfidenceMeter result={result} />
+            </div>
           </div>
-
-          {target.previewUrl && (
-            <audio controls preload="none" src={target.previewUrl} className="mt-2 w-full h-8" />
-          )}
+          <div className="mt-2.5 sm:hidden">
+            <ConfidenceMeter result={result} />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function HistoryEntry({ item }: { item: HistoryItem }) {
+function PlaylistResult({ result }: { result: PlaylistShareResponse }) {
+  return (
+    <div className="animate-rise-in relative mt-6 overflow-hidden rounded-2xl border border-border/70 shadow-[0_12px_32px_-16px_rgb(0_0_0/0.25)]">
+      {result.image && (
+        <Image
+          src={result.image}
+          alt=""
+          aria-hidden
+          fill
+          sizes="640px"
+          className="scale-125 object-cover opacity-30 blur-2xl saturate-150 dark:opacity-25"
+        />
+      )}
+      <div className="relative flex flex-col gap-4 bg-background/70 p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:p-5 dark:bg-background/55">
+        {result.image ? (
+          <Image
+            src={result.image}
+            alt={result.playlistName}
+            width={96}
+            height={96}
+            className="h-24 w-24 shrink-0 rounded-lg object-cover shadow-lg"
+          />
+        ) : (
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <IconLink size={28} className="opacity-50" />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Share link · expires in 48 hours
+          </div>
+          <h3 className="mt-1 truncate text-lg font-semibold leading-tight sm:text-xl">
+            {result.playlistName}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {result.trackCount} tracks · from {result.service}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2.5">
+            <code className="min-w-0 flex-1 truncate rounded-full border border-border/70 bg-background/70 px-3.5 py-2 text-xs">
+              {result.shareUrl}
+            </code>
+            <CopyIconButton value={result.shareUrl} label="Copy share link" />
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <a
+                    href={result.shareUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                  />
+                }
+              >
+                <IconExternalLink size={16} />
+              </TooltipTrigger>
+              <TooltipContent>Open share page</TooltipContent>
+            </Tooltip>
+          </div>
+          <p className="mt-2.5 text-xs text-muted-foreground">
+            Anyone with this link can sign in on the page and import the playlist into their
+            own service.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HistoryRow({ item }: { item: HistoryItem }) {
   const [expanded, setExpanded] = useState(false);
-  const [copied, setCopied] = useState(false);
   const { result } = item;
   const target = result.target;
   if (!target) return null;
-
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    await navigator.clipboard.writeText(target.url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const brand = targetBrand(result.direction);
 
   return (
-    <div
-      className="p-2 rounded-lg border bg-background hover:bg-muted/40 cursor-pointer transition-colors"
-      onClick={() => setExpanded((v) => !v)}
-    >
-      <div className="flex items-center gap-2">
+    <li>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setExpanded((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setExpanded((v) => !v);
+          }
+        }}
+        className="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         {target.artworkUrl ? (
           <Image
             src={target.artworkUrl}
-            alt={target.title}
-            width={32}
-            height={32}
-            className={result.type === "artist" ? "rounded-full" : "rounded"}
+            alt=""
+            width={40}
+            height={40}
+            className={cn(
+              "h-10 w-10 shrink-0 object-cover",
+              result.type === "artist" ? "rounded-full" : "rounded-md"
+            )}
           />
         ) : (
-          <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-            <TargetIcon direction={result.direction} size={14} />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+            <TargetLogo direction={result.direction} className="h-4 w-4 opacity-60" />
           </div>
         )}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium truncate">{target.title}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
-            {result.type === "artist" ? serviceLabel(result.direction) : target.artist} •{" "}
-            {new Date(item.timestamp).toLocaleDateString()}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{target.title}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {result.type === "artist" ? brand.name : target.artist} ·{" "}
+            {new Date(item.timestamp).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+            })}
           </p>
         </div>
-        <Badge variant="outline" className="text-[10px] shrink-0 capitalize">
+        <span
+          className={cn(
+            "hidden shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize sm:inline-flex",
+            brand.chip
+          )}
+        >
+          <TargetLogo direction={result.direction} className="h-2.5 w-2.5" />
           {result.type}
-        </Badge>
-        <Button size="sm" variant="ghost" onClick={handleCopy} className="h-7 w-7 p-0 shrink-0">
-          {copied ? <IconCheck size={13} className="text-green-500" /> : <IconCopy size={13} />}
-        </Button>
-        {expanded ? (
-          <IconChevronUp size={14} className="text-muted-foreground shrink-0" />
-        ) : (
-          <IconChevronDown size={14} className="text-muted-foreground shrink-0" />
-        )}
+        </span>
+        <span
+          onClick={(e) => e.stopPropagation()}
+          className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+        >
+          <CopyIconButton value={target.url} label="Copy link" className="h-8 w-8" />
+        </span>
+        <IconChevronDown
+          size={15}
+          className={cn(
+            "shrink-0 text-muted-foreground/60 transition-transform",
+            expanded && "rotate-180"
+          )}
+        />
       </div>
 
       {expanded && (
-        <div className="mt-2 pl-10 space-y-1 text-xs text-muted-foreground">
-          {result.type === "track" && target.album && <p>Album: {target.album}</p>}
-          {target.releaseDate && <p>Released: {new Date(target.releaseDate).toLocaleDateString()}</p>}
-          {target.duration && <p>Duration: {formatDuration(target.duration)}</p>}
-          {target.genres && <p>Genres: {target.genres.slice(0, 4).join(", ")}</p>}
+        <div className="animate-rise-in mb-2 ml-[3.25rem] mr-2 space-y-1 rounded-lg bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+          {result.type === "track" && target.album && <p>Album · {target.album}</p>}
+          {target.releaseDate && (
+            <p>Released · {new Date(target.releaseDate).toLocaleDateString()}</p>
+          )}
+          {target.duration && <p>Duration · {formatDuration(target.duration)}</p>}
+          {target.genres && <p>Genres · {target.genres.slice(0, 4).join(", ")}</p>}
           <a
             href={target.url}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1 text-primary hover:underline"
+            className="inline-flex items-center gap-1 font-medium text-foreground hover:underline"
           >
-            Open in {serviceLabel(result.direction)} <IconExternalLink size={12} />
+            Open in {brand.name} <IconExternalLink size={11} />
           </a>
-          {target.previewUrl && (
-            <audio
-              controls
-              preload="none"
-              src={target.previewUrl}
-              className="mt-1 w-full h-8"
-              onClick={(e) => e.stopPropagation()}
-            />
-          )}
         </div>
       )}
-    </div>
+    </li>
   );
 }
 
-export function LinkConverter() {
+export function LinkConverter({ showHistory = true }: { showHistory?: boolean }) {
   const [url, setUrl] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ConvertApiResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     setHistory(loadHistory());
@@ -325,142 +524,128 @@ export function LinkConverter() {
     setHistory([]);
   };
 
-  const copyShareUrl = async (shareUrl: string) => {
-    await navigator.clipboard.writeText(shareUrl);
-    setShareCopied(true);
-    setTimeout(() => setShareCopied(false), 2000);
-  };
+  const detectedBrand = detected
+    ? detected.service === "spotify"
+      ? BRAND.spotify
+      : BRAND.apple
+    : null;
+  const oppositeName = detected
+    ? detected.service === "spotify"
+      ? "Apple Music"
+      : "Spotify"
+    : null;
 
   return (
-    <Card>
-      <CardContent className="px-4">
-        <div className="flex items-center gap-2 mb-3">
-          <IconArrowsExchange size={20} className="text-primary" />
-          <h2 className="font-semibold">Convert a Link</h2>
-          <span className="text-xs text-muted-foreground">(No sign-in required)</span>
-        </div>
-
-        <p className="text-sm text-muted-foreground mb-3">
-          Paste a Spotify or Apple Music song, album, or artist link to get the matching link on the
-          other service. Playlist links become share links.
-        </p>
-
-        <div className="flex gap-2">
-          <Input
-            placeholder="https://open.spotify.com/track/... or https://music.apple.com/..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleConvert()}
-            disabled={isConverting}
-            className="flex-1"
-          />
-          <Button onClick={handleConvert} disabled={!url.trim() || isConverting}>
-            {isConverting ? <IconLoader2 className="h-4 w-4 animate-spin" /> : "Convert"}
-          </Button>
-        </div>
-
-        {/* Live detection badge */}
-        {url.trim() && (
-          <div className="flex items-center gap-2 mt-2">
-            {detected ? (
-              <>
-                {detected.service === "spotify" ? (
-                  <SpotifyLogo className="h-4 w-4" style={{ color: SPOTIFY_GREEN }} />
-                ) : (
-                  <AppleLogo className="h-4 w-4" style={{ color: APPLE_RED }} />
-                )}
-                <span className="text-xs text-muted-foreground capitalize">
-                  {detected.service === "spotify" ? "Spotify" : "Apple Music"} {detected.type} detected
-                  {detected.type !== "playlist" && (
-                    <> — will convert to {detected.service === "spotify" ? "Apple Music" : "Spotify"}</>
-                  )}
-                </span>
-              </>
-            ) : (
-              <span className="text-xs text-muted-foreground">
-                Not a recognized Spotify or Apple Music link yet
-              </span>
-            )}
-          </div>
+    <div className="w-full">
+      {/* The hero object: one input for everything */}
+      <div
+        className={cn(
+          "relative flex items-center gap-2 rounded-full border bg-card py-1.5 pl-5 pr-1.5",
+          "shadow-[0_1px_2px_rgb(0_0_0/0.05),0_16px_40px_-20px_rgb(0_0_0/0.25)]",
+          "transition-all focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10",
+          detected && !isConverting && "border-primary/40"
         )}
+      >
+        <IconLink size={18} className="shrink-0 text-muted-foreground/60" />
+        <input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleConvert()}
+          disabled={isConverting}
+          placeholder="Paste a Spotify or Apple Music link…"
+          aria-label="Music link to convert"
+          className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
+        />
+        <button
+          onClick={handleConvert}
+          disabled={!url.trim() || isConverting}
+          className={cn(
+            "inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground",
+            "transition-all hover:brightness-105 active:scale-[0.98]",
+            "disabled:cursor-not-allowed disabled:opacity-45"
+          )}
+        >
+          {isConverting ? (
+            <>
+              <Vinyl spinning className="h-4.5 w-4.5" />
+              <span className="hidden sm:inline">Matching…</span>
+            </>
+          ) : (
+            <>
+              <span className="hidden sm:inline">Convert</span>
+              <IconArrowRight size={17} />
+            </>
+          )}
+        </button>
+      </div>
 
-        {error && <p className="text-sm text-destructive mt-2">{error}</p>}
-
-        {result?.kind === "conversion" && <ResultCard result={result} />}
-
-        {result?.kind === "playlist" && (
-          <div className="mt-4 p-3 rounded-lg bg-muted/50 border">
-            <div className="flex items-start gap-3">
-              {result.image ? (
-                <Image
-                  src={result.image}
-                  alt={result.playlistName}
-                  width={56}
-                  height={56}
-                  className="rounded-md"
-                />
-              ) : (
-                <div className="h-14 w-14 rounded-md bg-muted flex items-center justify-center">
-                  <IconArrowsExchange size={20} className="text-muted-foreground" />
-                </div>
+      {/* Live detection line */}
+      <div className="mt-3 flex min-h-6 items-center justify-center">
+        {url.trim() &&
+          (detected && detectedBrand ? (
+            <span
+              className={cn(
+                "animate-rise-in inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
+                detectedBrand.chip
               )}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{result.playlistName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {result.trackCount} tracks • {result.service} • share link (48h)
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <code className="flex-1 text-xs bg-background px-2 py-1 rounded border truncate">
-                    {result.shareUrl}
-                  </code>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => copyShareUrl(result.shareUrl)}
-                    className="shrink-0"
-                  >
-                    {shareCopied ? (
-                      <IconCheck size={14} className="text-green-500" />
-                    ) : (
-                      <IconCopy size={14} />
-                    )}
-                  </Button>
-                  <a
-                    href={result.shareUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 inline-flex items-center justify-center h-8 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm"
-                  >
-                    <IconExternalLink size={14} />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+            >
+              {detected.service === "spotify" ? (
+                <SpotifyLogo className="h-3.5 w-3.5" />
+              ) : (
+                <AppleLogo className="h-3.5 w-3.5" />
+              )}
+              {detectedBrand.name} {detected.type}
+              <IconArrowRight size={12} className="opacity-60" />
+              {detected.type === "playlist" ? "48-hour share link" : oppositeName}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground/70">
+              Keep pasting — that doesn&apos;t look like a Spotify or Apple Music link yet
+            </span>
+          ))}
+      </div>
 
-        {/* History */}
-        {history.length > 0 && (
-          <div className="mt-5">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium">Recent Conversions</h3>
-              <Button
-                size="sm"
-                variant="ghost"
+      {error && (
+        <div className="animate-rise-in mt-3 flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+          <IconAlertTriangle size={16} className="mt-0.5 shrink-0 text-destructive" />
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      )}
+
+      {isConverting && (
+        <p className="animate-rise-in mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <IconLoader2 size={15} className="animate-spin" />
+          Searching the other catalog…
+        </p>
+      )}
+
+      {result?.kind === "conversion" && <ConversionResult result={result} />}
+      {result?.kind === "playlist" && <PlaylistResult result={result} />}
+
+      {showHistory && history.length > 0 && (
+        <section className="mt-12">
+          <div className="flex items-baseline justify-between px-2">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Recent conversions
+            </h2>
+            <Tooltip>
+              <TooltipTrigger
                 onClick={clearHistory}
-                className="h-7 text-xs text-muted-foreground"
+                className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted-foreground/70 transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <IconTrash size={13} className="mr-1" /> Clear
-              </Button>
-            </div>
-            <div className="space-y-1.5">
-              {history.map((item) => (
-                <HistoryEntry key={item.timestamp} item={item} />
-              ))}
-            </div>
+                <IconTrash size={12} />
+                Clear
+              </TooltipTrigger>
+              <TooltipContent>Stored only in this browser</TooltipContent>
+            </Tooltip>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <ul className="mt-2 divide-y divide-border/50">
+            {history.map((item) => (
+              <HistoryRow key={item.timestamp} item={item} />
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
   );
 }

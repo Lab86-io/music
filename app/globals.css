@@ -175,3 +175,52 @@
   );
   background-size: 200% 200%;
 }
+/* --- Music-native motion & texture (link converter redesign) --- */
+
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes spin-vinyl {
+  to { transform: rotate(360deg); }
+}
+
+.eq-bar {
+  transform-origin: bottom;
+  animation: eq-bar 1s ease-in-out infinite;
+}
+
+.animate-rise-in {
+  animation: rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-spin-vinyl {
+  animation: spin-vinyl 1.4s linear infinite;
+}
+
+/* Faint staff-line texture behind the hero, fading out radially */
+.hero-staff {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--foreground) 7%, transparent) 0 1px,
+    transparent 1px 22px
+  );
+  mask-image: radial-gradient(ellipse 75% 90% at 50% 0%, black 25%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 90% at 50% 0%, black 25%, transparent 72%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-bar,
+  .animate-spin-vinyl {
+    animation: none;
+  }
+  .animate-rise-in {
+    animation-duration: 0.01s;
+  }
+}

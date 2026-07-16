@@ -4,30 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ServiceConnect } from "@/components/service-connect";
 import { Header } from "@/components/header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { IconLoader2, IconLink, IconCopy, IconCheck, IconExternalLink } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo } from "@/components/icons";
 import { LinkConverter } from "@/components/link-converter";
-import Image from "next/image";
-
-interface ShareResult {
-  shareUrl: string;
-  playlistName: string;
-  trackCount: number;
-  service: string;
-  image: string | null;
-}
+import { Equalizer } from "@/components/animated-icons";
+import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { IconLoader2 } from "@tabler/icons-react";
 
 export default function HomePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [playlistUrl, setPlaylistUrl] = useState("");
-  const [isCreatingShare, setIsCreatingShare] = useState(false);
-  const [shareResult, setShareResult] = useState<ShareResult | null>(null);
-  const [shareError, setShareError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // Check Spotify session and redirect to dashboard if authenticated
   useEffect(() => {
@@ -48,57 +32,6 @@ export default function HomePage() {
     checkSession();
   }, [router]);
 
-  const handleCreateShareLink = async () => {
-    if (!playlistUrl.trim()) return;
-
-    setIsCreatingShare(true);
-    setShareError(null);
-    setShareResult(null);
-
-    try {
-      const response = await fetch("/api/share/from-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: playlistUrl }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        setShareError(data.error || "Failed to create share link");
-        return;
-      }
-
-      setShareResult(data.data);
-      setPlaylistUrl("");
-    } catch (error) {
-      console.error("Share error:", error);
-      setShareError("Failed to create share link. Please try again.");
-    } finally {
-      setIsCreatingShare(false);
-    }
-  };
-
-  const handleCopyLink = async () => {
-    if (!shareResult) return;
-    
-    try {
-      await navigator.clipboard.writeText(shareResult.shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback for older browsers
-      const input = document.createElement("input");
-      input.value = shareResult.shareUrl;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      document.body.removeChild(input);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -113,116 +46,45 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
-      <main className="container mx-auto px-4 py-8">
-        <div className="mx-auto max-w-3xl space-y-6">
-          {/* Quick Share Section */}
-          <Card>
-            <CardContent className="px-4">
-              <div className="flex items-center gap-2 mb-3">
-                <IconLink size={20} className="text-primary" />
-                <h2 className="font-semibold">Quick Share</h2>
-                <span className="text-xs text-muted-foreground">(No sign-in required)</span>
-              </div>
-              
-              <p className="text-sm text-muted-foreground mb-3">
-                Paste a public Spotify or Apple Music playlist link to create a shareable link.
-              </p>
 
-              <div className="flex gap-2">
-                <Input
-                  placeholder="https://open.spotify.com/playlist/... or https://music.apple.com/..."
-                  value={playlistUrl}
-                  onChange={(e) => setPlaylistUrl(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCreateShareLink()}
-                  disabled={isCreatingShare}
-                  className="flex-1"
-                />
-                <Button 
-                  onClick={handleCreateShareLink}
-                  disabled={!playlistUrl.trim() || isCreatingShare}
-                >
-                  {isCreatingShare ? (
-                    <IconLoader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Create Link"
-                  )}
-                </Button>
-              </div>
+      <main className="relative">
+        {/* Faint staff-line texture behind the hero */}
+        <div aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-[26rem]" />
 
-              {/* Error Message */}
-              {shareError && (
-                <p className="text-sm text-destructive mt-2">{shareError}</p>
-              )}
+        <div className="container relative mx-auto px-4">
+          {/* Hero */}
+          <section className="mx-auto max-w-2xl pb-2 pt-14 text-center sm:pt-20">
+            <div className="mb-7 inline-flex items-center gap-2.5 rounded-full border border-border/70 bg-background/70 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
+              <SpotifyLogo className="h-3.5 w-3.5 text-[#1DB954]" />
+              <Equalizer className="h-3 text-primary" />
+              <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
+              <span>Spotify &amp; Apple Music</span>
+            </div>
+            <h1 className="text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-[3.25rem]">
+              Music links that play <span className="text-primary">everywhere</span>
+            </h1>
+            <p className="mx-auto mt-4 max-w-lg text-balance text-base text-muted-foreground sm:text-lg">
+              Paste a song, album, artist, or playlist. Get a link that works on the other
+              service — no account needed.
+            </p>
+          </section>
 
-              {/* Success Result */}
-              {shareResult && (
-                <div className="mt-4 p-3 rounded-lg bg-muted/50 border">
-                  <div className="flex items-start gap-3">
-                    {/* Playlist Image */}
-                    {shareResult.image ? (
-                      <Image
-                        src={shareResult.image}
-                        alt={shareResult.playlistName}
-                        width={56}
-                        height={56}
-                        className="rounded-md"
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-md bg-muted flex items-center justify-center">
-                        {shareResult.service === "Spotify" ? (
-                          <SpotifyLogo className="h-6 w-6 text-[#1DB954]" />
-                        ) : (
-                          <AppleLogo className="h-6 w-6 text-[#FC3C44]" />
-                        )}
-                      </div>
-                    )}
+          {/* The one input */}
+          <section className="mx-auto max-w-2xl pb-4 pt-8">
+            <LinkConverter />
+          </section>
 
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{shareResult.playlistName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {shareResult.trackCount} tracks • {shareResult.service}
-                      </p>
-                      
-                      <div className="flex items-center gap-2 mt-2">
-                        <code className="flex-1 text-xs bg-background px-2 py-1 rounded border truncate">
-                          {shareResult.shareUrl}
-                        </code>
-                        <Button size="sm" variant="outline" onClick={handleCopyLink} className="shrink-0">
-                          {copied ? (
-                            <IconCheck size={14} className="text-green-500" />
-                          ) : (
-                            <IconCopy size={14} />
-                          )}
-                        </Button>
-                        <a 
-                          href={shareResult.shareUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="shrink-0 inline-flex items-center justify-center h-8 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm"
-                        >
-                          <IconExternalLink size={14} />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Link Converter Section */}
-          <LinkConverter />
-
-          {/* Divider */}
-          <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">or sign in to manage your playlists</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          {/* Service Connect */}
-          <ServiceConnect />
+          {/* Sign-in, demoted below the tool */}
+          <section className="mx-auto max-w-2xl pb-16 pt-14">
+            <div className="mb-6 flex items-center gap-4">
+              <div className="h-px flex-1 bg-border/70" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Or sign in to convert full playlists
+              </span>
+              <div className="h-px flex-1 bg-border/70" />
+            </div>
+            <ServiceConnect />
+          </section>
         </div>
       </main>
     </div>

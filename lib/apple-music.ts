@@ -270,6 +270,24 @@ export async function getAppleMusicSongDetails(
   return null;
 }
 
+// Raw Apple Music catalog resource (songs/albums/artists share this shape)
+export interface AppleMusicCatalogItem {
+  id: string;
+  type: string;
+  attributes?: Record<string, unknown> & {
+    name?: string;
+    artistName?: string;
+    albumName?: string;
+    isrc?: string;
+    url?: string;
+    releaseDate?: string;
+    genreNames?: string[];
+    durationInMillis?: number;
+    artwork?: { url?: string };
+    previews?: { url?: string }[];
+  };
+}
+
 /**
  * Get album details from the Apple Music catalog by ID
  */
@@ -277,7 +295,7 @@ export async function getAppleMusicAlbumDetails(
   developerToken: string,
   catalogId: string,
   storefront: string = "us"
-): Promise<any | null> {
+): Promise<AppleMusicCatalogItem | null> {
   try {
     const response = await appleMusicFetch(
       `/catalog/${storefront}/albums/${catalogId}`,
@@ -297,7 +315,7 @@ export async function getAppleMusicArtistDetails(
   developerToken: string,
   catalogId: string,
   storefront: string = "us"
-): Promise<any | null> {
+): Promise<AppleMusicCatalogItem | null> {
   try {
     const response = await appleMusicFetch(
       `/catalog/${storefront}/artists/${catalogId}`,
@@ -319,7 +337,7 @@ export async function searchAppleMusicCatalog(
   type: "songs" | "albums" | "artists",
   limit: number = 10,
   storefront: string = "us"
-): Promise<any[]> {
+): Promise<AppleMusicCatalogItem[]> {
   try {
     const response = await appleMusicFetch(
       `/catalog/${storefront}/search?term=${encodeURIComponent(term)}&types=${type}&limit=${limit}`,
@@ -339,7 +357,7 @@ export async function getAppleMusicSongsByIsrc(
   developerToken: string,
   isrc: string,
   storefront: string = "us"
-): Promise<any[]> {
+): Promise<AppleMusicCatalogItem[]> {
   try {
     const response = await appleMusicFetch(
       `/catalog/${storefront}/songs?filter[isrc]=${encodeURIComponent(isrc)}`,
