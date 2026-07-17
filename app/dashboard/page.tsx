@@ -551,7 +551,7 @@ export default function DashboardPage() {
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
                   <ScrollArea className="h-full">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pr-4 py-2 pl-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5 pr-4 py-3 pl-1">
                       {loadingSpotify ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
@@ -597,7 +597,7 @@ export default function DashboardPage() {
                   {/* Bottom gradient fade */}
                   <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
                   <ScrollArea className="h-full">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 pr-4 py-2 pl-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5 pr-4 py-3 pl-1">
                       {loadingApple ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
