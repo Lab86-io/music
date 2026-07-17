@@ -9,10 +9,8 @@ import { PlaylistSkeletonList } from "@/components/playlist-skeleton";
 import { ConversionProgress } from "@/components/conversion-progress";
 import { TrackMatchReport } from "@/components/track-match-report";
 import { ShareDialog } from "@/components/share-dialog";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -405,58 +403,64 @@ export default function DashboardPage() {
         
         <div className="flex-1 overflow-hidden container mx-auto px-4 py-3 flex flex-col">
 
-          {/* Universal link converter — same bar as the home page */}
-          <div className="mb-3">
-            <LinkConverter showHistory={false} />
+          {/* Universal link converter — compact utility placement */}
+          <div className="mb-3 shrink-0">
+            <LinkConverter showHistory={false} compact />
           </div>
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected || !appleConnected) && (
-            <div className="mb-3">
+            <div className="mb-3 shrink-0">
               <ServiceConnect onConnectionChange={handleConnectionChange} />
             </div>
           )}
 
-          {/* Conversion Progress/Result */}
+          {/* Conversion Progress/Result — its own scrollable region so long
+              match reports never get clipped by the fixed app frame */}
           {(isConverting || conversionResult) && conversionPlaylist && (
-            <div className="mb-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold">Conversion Status</h2>
+            <section className="mb-3 flex max-h-[55vh] min-h-0 shrink-0 flex-col">
+              <div className="mb-1.5 flex shrink-0 items-center justify-between">
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {isConverting ? "Converting playlist" : "Conversion complete"}
+                </h2>
                 {conversionResult && (
                   <Button variant="ghost" size="sm" onClick={clearConversion}>
                     Dismiss
                   </Button>
                 )}
               </div>
-              <ConversionProgress
-                isConverting={isConverting}
-                playlistName={conversionPlaylist.name}
-                sourceService={conversionPlaylist.source}
-                targetService={conversionPlaylist.target}
-                progress={conversionProgress || undefined}
-                currentTrack={currentTrack || undefined}
-                recentTracks={recentTracks}
-                result={conversionResult ? {
-                  success: conversionResult.success,
-                  stats: conversionResult.stats,
-                  newPlaylistId: conversionResult.newPlaylistId,
-                } : undefined}
-              />
-              {conversionResult?.success && conversionResult.matches.length > 0 && (
-                <TrackMatchReport 
-                  matches={conversionResult.matches}
+              <div className="min-h-0 space-y-2 overflow-y-auto overscroll-contain pr-1">
+                <ConversionProgress
+                  isConverting={isConverting}
+                  playlistName={conversionPlaylist.name}
+                  sourceService={conversionPlaylist.source}
                   targetService={conversionPlaylist.target}
-                  playlistId={conversionResult.newPlaylistId}
-                  appleUserToken={appleUserToken || sessionStorage.getItem("appleUserToken") || undefined}
+                  progress={conversionProgress || undefined}
+                  currentTrack={currentTrack || undefined}
+                  recentTracks={recentTracks}
+                  result={conversionResult ? {
+                    success: conversionResult.success,
+                    stats: conversionResult.stats,
+                    newPlaylistId: conversionResult.newPlaylistId,
+                  } : undefined}
                 />
-              )}
-            </div>
+                {conversionResult?.success && conversionResult.matches.length > 0 && (
+                  <TrackMatchReport
+                    matches={conversionResult.matches}
+                    targetService={conversionPlaylist.target}
+                    playlistId={conversionResult.newPlaylistId}
+                    appleUserToken={appleUserToken || sessionStorage.getItem("appleUserToken") || undefined}
+                  />
+                )}
+              </div>
+            </section>
           )}
 
           {/* Playlists */}
           {(spotifyConnected || appleConnected) && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-              <div className="flex items-center justify-between gap-2 border-b border-border">
+              <h1 className="shrink-0 text-xl font-semibold tracking-tight">Your library</h1>
+              <div className="mt-1 flex items-center justify-between gap-2 border-b border-border">
                 <div className="flex gap-1 shrink-0">
                   {spotifyConnected && (
                     <button
@@ -574,14 +578,12 @@ export default function DashboardPage() {
                             />
                           ))
                         ) : (
-                          <Card className="col-span-full">
-                            <CardContent className="flex flex-col items-center justify-center py-8">
-                              <IconMusic size={32} className="mb-3 text-muted-foreground" />
-                              <p className="text-muted-foreground text-sm">
-                                {searchQuery ? "No playlists match your search" : "No playlists found"}
-                              </p>
-                            </CardContent>
-                          </Card>
+                          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                            <IconMusic size={28} className="mb-2.5 text-muted-foreground/50" />
+                            <p className="text-sm text-muted-foreground">
+                              {searchQuery ? "No playlists match your search" : "No playlists found"}
+                            </p>
+                          </div>
                         );
                       })()}
                     </div>
@@ -620,14 +622,12 @@ export default function DashboardPage() {
                             />
                           ))
                         ) : (
-                          <Card className="col-span-full">
-                            <CardContent className="flex flex-col items-center justify-center py-8">
-                              <IconMusic size={32} className="mb-3 text-muted-foreground" />
-                              <p className="text-muted-foreground text-sm">
-                                {searchQuery ? "No playlists match your search" : "No playlists found"}
-                              </p>
-                            </CardContent>
-                          </Card>
+                          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                            <IconMusic size={28} className="mb-2.5 text-muted-foreground/50" />
+                            <p className="text-sm text-muted-foreground">
+                              {searchQuery ? "No playlists match your search" : "No playlists found"}
+                            </p>
+                          </div>
                         );
                       })()}
                     </div>

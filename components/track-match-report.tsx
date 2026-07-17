@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,6 @@ import {
   IconMusic, 
   IconSearch,
   IconLoader2,
-  IconAlertTriangle,
   IconPlus
 } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -187,45 +185,49 @@ export function TrackMatchReport({
     setSearchQuery("");
   };
 
+  const filterOptions = [
+    { key: "all" as const, label: "All", count: matches.length },
+    { key: "matched" as const, label: "Added", count: matchedCount },
+    { key: "unmatched" as const, label: "Unmatched", count: unmatchedCount },
+  ];
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <IconMusic size={20} />
-              Track Matching Report
-            </CardTitle>
-            <CardDescription>
-              {matchedCount} added, {unmatchedCount} need attention
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={filter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("all")}
-            >
-              All ({matches.length})
-            </Button>
-            <Button
-              variant={filter === "matched" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("matched")}
-            >
-              Added ({matchedCount})
-            </Button>
-            <Button
-              variant={filter === "unmatched" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter("unmatched")}
-            >
-              Unmatched ({unmatchedCount})
-            </Button>
-          </div>
+    <section className="rounded-xl border border-border/70 bg-card/60">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+        <div>
+          <h3 className="text-sm font-semibold leading-tight">Track matching</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {matchedCount} added
+            {unmatchedCount > 0 ? (
+              <>
+                {" · "}
+                <span className="font-medium text-amber-600 dark:text-amber-400">
+                  {unmatchedCount} need attention
+                </span>
+              </>
+            ) : (
+              " · all tracks matched"
+            )}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
+        <div className="flex items-center gap-0.5 rounded-full border border-border/70 bg-muted/40 p-0.5">
+          {filterOptions.map((option) => (
+            <button
+              key={option.key}
+              onClick={() => setFilter(option.key)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                filter === option.key
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {option.label}
+              <span className="ml-1 tabular-nums opacity-60">{option.count}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="p-3 sm:p-4">
         <div className="space-y-2">
           {displayedMatches.map(({ match, originalIndex }) => {
             const matched = isMatched(match, originalIndex);
@@ -398,7 +400,7 @@ export function TrackMatchReport({
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

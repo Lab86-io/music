@@ -558,7 +558,14 @@ function HistoryRow({ item }: { item: HistoryItem }) {
   );
 }
 
-export function LinkConverter({ showHistory = true }: { showHistory?: boolean }) {
+export function LinkConverter({
+  showHistory = true,
+  compact = false,
+}: {
+  showHistory?: boolean;
+  /** Smaller input + no reserved detection space — for utility placement (dashboard). */
+  compact?: boolean;
+}) {
   const [url, setUrl] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -624,47 +631,67 @@ export function LinkConverter({ showHistory = true }: { showHistory?: boolean })
       {/* The hero object: one input for everything */}
       <div
         className={cn(
-          "relative flex items-center gap-2 rounded-full border bg-card py-1.5 pl-5 pr-1.5",
-          "shadow-[0_1px_2px_rgb(0_0_0/0.05),0_16px_40px_-20px_rgb(0_0_0/0.25)]",
+          "relative flex items-center gap-2 rounded-full border bg-card",
+          compact ? "py-1 pl-4 pr-1" : "py-1.5 pl-5 pr-1.5",
+          compact
+            ? "shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
+            : "shadow-[0_1px_2px_rgb(0_0_0/0.05),0_16px_40px_-20px_rgb(0_0_0/0.25)]",
           "transition-all focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10",
           detected && !isConverting && "border-primary/40"
         )}
       >
-        <IconLink size={18} className="shrink-0 text-muted-foreground/60" />
+        <IconLink size={compact ? 15 : 18} className="shrink-0 text-muted-foreground/60" />
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleConvert()}
           disabled={isConverting}
-          placeholder="Paste a music link — song, album, artist, or playlist…"
+          placeholder={
+            compact
+              ? "Convert a music link…"
+              : "Paste a music link — song, album, artist, or playlist…"
+          }
           aria-label="Music link to convert"
-          className="h-11 min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground/60 disabled:opacity-60"
+          className={cn(
+            "min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground/60 disabled:opacity-60",
+            compact ? "h-9 text-sm" : "h-11 text-[15px]"
+          )}
         />
         <button
           onClick={handleConvert}
           disabled={!url.trim() || isConverting}
           className={cn(
-            "inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground",
+            "inline-flex shrink-0 items-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground",
+            compact ? "h-9 px-3.5 text-xs" : "h-11 px-5 text-sm",
             "transition-all hover:brightness-105 active:scale-[0.98]",
             "disabled:cursor-not-allowed disabled:opacity-45"
           )}
         >
           {isConverting ? (
             <>
-              <Vinyl spinning className="h-4.5 w-4.5" />
-              <span className="hidden sm:inline">Matching…</span>
+              <Vinyl spinning className={compact ? "h-4 w-4" : "h-4.5 w-4.5"} />
+              {!compact && <span className="hidden sm:inline">Matching…</span>}
             </>
           ) : (
             <>
-              <span className="hidden sm:inline">Convert</span>
-              <IconArrowRight size={17} />
+              {!compact && <span className="hidden sm:inline">Convert</span>}
+              <IconArrowRight size={compact ? 15 : 17} />
             </>
           )}
         </button>
       </div>
 
       {/* Live detection line */}
-      <div className="mt-3 flex min-h-6 items-center justify-center">
+      <div
+        className={cn(
+          "flex items-center",
+          compact
+            ? url.trim()
+              ? "mt-1.5 justify-start pl-2"
+              : "hidden"
+            : "mt-3 min-h-6 justify-center"
+        )}
+      >
         {url.trim() &&
           (detected && detectedBrand ? (
             <span
