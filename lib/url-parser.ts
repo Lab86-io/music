@@ -9,7 +9,7 @@
  */
 
 export interface ParsedPlaylistUrl {
-  service: "spotify" | "apple";
+  service: "spotify" | "apple" | "deezer";
   playlistId: string;
   storefront?: string; // For Apple Music regional catalogs (e.g., "us", "gb", "jp")
 }
@@ -71,12 +71,32 @@ export function parsePlaylistUrl(url: string): ParsedPlaylistUrl | null {
 // ---------------------------------------------------------------------------
 
 export type MusicLinkType = "track" | "album" | "artist" | "playlist";
+export type MusicService = "spotify" | "apple" | "deezer" | "youtube" | "amazon";
 
 export interface ParsedMusicUrl {
-  service: "spotify" | "apple";
+  service: MusicService;
   type: MusicLinkType;
   id: string;
   storefront?: string; // Apple Music regional catalog (e.g. "us", "gb")
+}
+
+/** Hosts we recognize but cannot read (no public catalog API). */
+export function isAmazonMusicUrl(url: string): boolean {
+  try {
+    return new URL(url.trim()).hostname.endsWith("music.amazon.com");
+  } catch {
+    return false;
+  }
+}
+
+/** Deezer short links need a server-side redirect resolution first. */
+export function isDeezerShortLink(url: string): boolean {
+  try {
+    const host = new URL(url.trim()).hostname;
+    return host === "link.deezer.com" || host === "deezer.page.link" || host === "dzr.page.link";
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -90,6 +110,8 @@ export interface ParsedMusicUrl {
  * - https://music.apple.com/us/song/name/654321
  * - https://music.apple.com/us/artist/name/123456
  * - https://music.apple.com/us/playlist/name/pl.xxx
+ * - https://www.deezer.com/{lang?}/{track|album|artist|playlist}/{id}
+ * - https://music.youtube.com/watch?v={id}, youtube.com/watch?v=, youtu.be/{id}
  */
 export function parseMusicUrl(url: string): ParsedMusicUrl | null {
   try {
@@ -146,6 +168,37 @@ export function parseMusicUrl(url: string): ParsedMusicUrl | null {
       return null;
     }
 
+    if (parsed.hostname === "www.deezer.com" || parsed.hostname === "deezer.com") {
+      // Optional locale prefix like /en or /fr-FR
+      const path = parsed.pathname.replace(/^\/[a-z]{2}(?:-[A-Za-z]{2})?(?=\/)/, "");
+      const match = path.match(/^\/(track|album|artist|playlist)\/(\d+)/);
+      if (match) {
+        return { service: "deezer", type: match[1] as MusicLinkType, id: match[2] };
+      }
+      return null;
+    }
+
+    if (
+      parsed.hostname === "music.youtube.com" ||
+      parsed.hostname === "www.youtube.com" ||
+      parsed.hostname === "youtube.com" ||
+      parsed.hostname === "m.youtube.com"
+    ) {
+      const videoId = parsed.searchParams.get("v");
+      if (parsed.pathname === "/watch" && videoId && /^[\w-]{6,20}$/.test(videoId)) {
+        return { service: "youtube", type: "track", id: videoId };
+      }
+      return null;
+    }
+
+    if (parsed.hostname === "youtu.be") {
+      const id = parsed.pathname.split("/").filter(Boolean)[0];
+      if (id && /^[\w-]{6,20}$/.test(id)) {
+        return { service: "youtube", type: "track", id };
+      }
+      return null;
+    }
+
     return null;
   } catch {
     return null;
@@ -163,6 +216,8 @@ export function isValidPlaylistUrl(url: string): boolean {
  * Get a human-readable service name from a parsed URL
  */
 export function getServiceName(parsed: ParsedPlaylistUrl): string {
-  return parsed.service === "spotify" ? "Spotify" : "Apple Music";
+  if (parsed.service === "spotify") return "Spotify";
+  if (parsed.service === "deezer") return "Deezer";
+  return "Apple Music";
 }
 

@@ -1,29 +1,43 @@
 import { NextResponse } from "next/server";
-import { parseMusicUrl } from "@/lib/url-parser";
+import { parseMusicUrl, isAmazonMusicUrl, isDeezerShortLink } from "@/lib/url-parser";
 import { convertMusicLink } from "@/lib/link-converter";
+import { resolveDeezerShortLink } from "@/lib/deezer";
 import { createShareFromParsedUrl, baseUrlFromRequest, ShareError } from "@/lib/share";
 
 /**
  * One-shot endpoint for the iOS Shortcut (share sheet).
  *
- * - Song / album / artist link  -> the equivalent link on the other service
+ * - Song / album / artist link  -> the best direct match on another service,
+ *   plus links for every service
  * - Playlist link               -> a 48h share page link
  *
  * GET  /api/shortcut?url=...&redirect=1   (302 to the converted link)
  * POST /api/shortcut { url, redirect? }
  *
- * JSON response: { original, converted, kind, name, artist?, confidence? }
+ * JSON response: { original, converted, kind, name, artist?, confidence?, links }
  */
-async function handleShortcut(url: string, redirect: boolean, request: Request) {
+async function handleShortcut(rawUrl: string, redirect: boolean, request: Request) {
+  let url = rawUrl;
+  if (isDeezerShortLink(url)) {
+    const resolved = await resolveDeezerShortLink(url);
+    if (resolved) url = resolved;
+  }
+
   const parsed = parseMusicUrl(url);
   if (!parsed) {
-    return NextResponse.json(
-      { error: "Unrecognized URL. Share a Spotify or Apple Music link." },
-      { status: 400 }
-    );
+    const message = isAmazonMusicUrl(url)
+      ? "Amazon Music links can't be read — share from Spotify, Apple Music, Deezer, or YouTube Music instead."
+      : "Unrecognized URL. Share a Spotify, Apple Music, Deezer, or YouTube Music link.";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   if (parsed.type === "playlist") {
+    if (parsed.service === "youtube" || parsed.service === "amazon") {
+      return NextResponse.json(
+        { error: "Playlist sharing works with Spotify, Apple Music, and Deezer playlists." },
+        { status: 400 }
+      );
+    }
     const share = await createShareFromParsedUrl(
       { service: parsed.service, playlistId: parsed.id, storefront: parsed.storefront },
       baseUrlFromRequest(request)
@@ -39,7 +53,9 @@ async function handleShortcut(url: string, redirect: boolean, request: Request) 
   }
 
   const result = await convertMusicLink(parsed);
-  if (!result.target) {
+  const linkMap = Object.fromEntries(result.links.map((l) => [l.service, l.url]));
+
+  if (!result.primary) {
     return NextResponse.json(
       {
         original: url,
@@ -47,49 +63,28 @@ async function handleShortcut(url: string, redirect: boolean, request: Request) 
         kind: result.type,
         name: result.source.title,
         artist: result.source.artist,
-        error: "No confident match found on the other service.",
+        links: linkMap,
+        error: "No confident direct match found on another service.",
       },
       { status: 404 }
     );
   }
 
-  if (redirect) return NextResponse.redirect(result.target.url);
+  if (redirect) return NextResponse.redirect(result.primary.url);
   return NextResponse.json({
     original: url,
-    converted: result.target.url,
+    converted: result.primary.url,
+    convertedService: result.primary.service,
     kind: result.type,
-    name: result.target.title,
-    artist: result.target.artist,
-    confidence: result.confidence,
+    name: result.primary.metadata?.title ?? result.source.title,
+    artist: result.primary.metadata?.artist ?? result.source.artist,
+    confidence: result.primary.confidence,
+    links: linkMap,
   });
 }
 
-export async function GET(request: Request) {
+async function handle(request: Request, url: string | null, redirect: boolean) {
   try {
-    const { searchParams } = new URL(request.url);
-    const url = searchParams.get("url");
-    const redirect = ["1", "true", "yes"].includes(
-      (searchParams.get("redirect") || "").toLowerCase()
-    );
-    if (!url) {
-      return NextResponse.json({ error: "Missing 'url' query parameter" }, { status: 400 });
-    }
-    return await handleShortcut(url, redirect, request);
-  } catch (error) {
-    if (error instanceof ShareError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-    console.error("Shortcut error:", error);
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const url = body.url;
-    const redirect = body.redirect === true;
     if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "Missing url" }, { status: 400 });
     }
@@ -102,4 +97,25 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const redirect = ["1", "true", "yes"].includes(
+    (searchParams.get("redirect") || "").toLowerCase()
+  );
+  return handle(request, searchParams.get("url"), redirect);
+}
+
+export async function POST(request: Request) {
+  let url: string | null = null;
+  let redirect = false;
+  try {
+    const body = await request.json();
+    url = body.url;
+    redirect = body.redirect === true;
+  } catch {
+    // handled by the missing-url check
+  }
+  return handle(request, url, redirect);
 }

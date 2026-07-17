@@ -1,5 +1,5 @@
 import * as stringSimilarity from "string-similarity";
-import type { ParsedMusicUrl } from "./url-parser";
+import type { ParsedMusicUrl, MusicService } from "./url-parser";
 import {
   getSpotifyTrackById,
   getSpotifyAlbumById,
@@ -14,8 +14,28 @@ import {
   searchAppleMusicCatalog,
   getAppleMusicSongsByIsrc,
 } from "./apple-music";
+import {
+  getDeezerTrack,
+  getDeezerTrackByIsrc,
+  getDeezerAlbum,
+  getDeezerArtist,
+  searchDeezerTracks,
+  searchDeezerAlbums,
+  searchDeezerArtists,
+  type DeezerTrack,
+  type DeezerAlbum,
+  type DeezerArtist,
+} from "./deezer";
+import {
+  getYouTubeVideoInfo,
+  parseYouTubeTitle,
+  searchYouTubeMusic,
+  youtubeMusicWatchUrl,
+  youtubeMusicSearchUrl,
+} from "./youtube";
 
 export type MusicItemType = "track" | "album" | "artist";
+export type { MusicService };
 
 export interface LinkMetadata {
   type: MusicItemType;
@@ -31,13 +51,24 @@ export interface LinkMetadata {
   url: string;
 }
 
+export interface ServiceLink {
+  service: MusicService;
+  url: string;
+  /** direct = an exact catalog match; search = a pre-filled search page */
+  kind: "direct" | "search";
+  confidence?: number; // 0-100, direct links only
+  matchMethod?: "isrc" | "fuzzy";
+  metadata?: LinkMetadata;
+}
+
 export interface LinkConversionResult {
-  direction: "spotify-to-apple" | "apple-to-spotify";
   type: MusicItemType;
+  sourceService: MusicService;
   source: LinkMetadata;
-  target: LinkMetadata | null;
-  confidence: number; // 0-100
-  matchMethod: "isrc" | "fuzzy" | "none";
+  /** One entry per other service, in display order. */
+  links: ServiceLink[];
+  /** Best direct match — what shortcuts and "converted" consumers want. */
+  primary: ServiceLink | null;
 }
 
 // Minimum artist similarity required to trust an ISRC match. Prevents cover
@@ -238,6 +269,43 @@ function mapAppleArtistMeta(a: any): LinkMetadata {
   };
 }
 
+function mapDeezerTrackMeta(t: DeezerTrack): LinkMetadata {
+  return {
+    type: "track",
+    title: t.title,
+    artist: t.artist?.name ?? "",
+    album: t.album?.title,
+    isrc: t.isrc,
+    artworkUrl: t.album?.cover_xl || t.album?.cover_medium,
+    releaseDate: t.release_date,
+    duration: t.duration ? t.duration * 1000 : undefined,
+    previewUrl: t.preview || undefined,
+    url: t.link,
+  };
+}
+
+function mapDeezerAlbumMeta(a: DeezerAlbum): LinkMetadata {
+  return {
+    type: "album",
+    title: a.title,
+    artist: a.artist?.name ?? "",
+    artworkUrl: a.cover_xl || a.cover_medium,
+    releaseDate: a.release_date,
+    genres: a.genres?.data?.length ? a.genres.data.map((g) => g.name) : undefined,
+    url: a.link,
+  };
+}
+
+function mapDeezerArtistMeta(a: DeezerArtist): LinkMetadata {
+  return {
+    type: "artist",
+    title: a.name,
+    artist: a.name,
+    artworkUrl: a.picture_xl || a.picture_medium,
+    url: a.link,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Query generation (most specific -> most permissive)
 // ---------------------------------------------------------------------------
@@ -262,7 +330,7 @@ function buildSpotifyQueries(source: LinkMetadata): string[] {
   return [...new Set(queries)];
 }
 
-function buildAppleQueries(source: LinkMetadata): string[] {
+function buildPlainQueries(source: LinkMetadata): string[] {
   const title = source.title;
   const artist = primaryArtist(source.artist);
   const cleanTitle = stripVersionInfo(removeFeaturingArtists(title));
@@ -280,19 +348,35 @@ function buildAppleQueries(source: LinkMetadata): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// Search + match
+// Per-service matchers (direct catalog matches)
 // ---------------------------------------------------------------------------
 
-async function findSpotifyMatch(
-  source: LinkMetadata
-): Promise<{ target: LinkMetadata; score: number; method: "isrc" | "fuzzy" } | null> {
-  // ISRC first for tracks, guarded by artist similarity
+interface DirectMatch {
+  metadata: LinkMetadata;
+  score: number;
+  method: "isrc" | "fuzzy";
+}
+
+function pickBest(
+  source: LinkMetadata,
+  candidates: LinkMetadata[],
+  best: DirectMatch | null
+): DirectMatch | null {
+  for (const meta of candidates) {
+    if (!meta?.title) continue;
+    const score = scoreCandidate(source, meta);
+    if (!best || score > best.score) best = { metadata: meta, score, method: "fuzzy" };
+  }
+  return best;
+}
+
+async function findSpotifyMatch(source: LinkMetadata): Promise<DirectMatch | null> {
   if (source.type === "track" && source.isrc) {
     const hits = (await searchSpotifyCatalog(`isrc:${source.isrc}`, "track", 5)) as any[];
     for (const hit of hits) {
       const meta = mapSpotifyTrackMeta(hit);
       if (artistSimilarity(source.artist, meta.artist) >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
-        return { target: meta, score: 1, method: "isrc" };
+        return { metadata: meta, score: 1, method: "isrc" };
       }
     }
   }
@@ -304,31 +388,16 @@ async function findSpotifyMatch(
         ? mapSpotifyAlbumMeta
         : mapSpotifyArtistMeta;
 
-  let best: { target: LinkMetadata; score: number } | null = null;
+  let best: DirectMatch | null = null;
   for (const query of buildSpotifyQueries(source)) {
     const items = (await searchSpotifyCatalog(query, source.type, 10)) as any[];
-    for (const item of items) {
-      if (!item) continue;
-      const meta = mapper(item);
-      let score = scoreCandidate(source, meta);
-      // Slight popularity tiebreak, mirrors the original converter
-      if (typeof item.popularity === "number") {
-        score *= 1 + item.popularity / 1000;
-      }
-      if (!best || score > best.score) best = { target: meta, score };
-    }
+    best = pickBest(source, items.filter(Boolean).map(mapper), best);
     if (best && best.score >= EARLY_EXIT_SCORE) break;
   }
-
-  if (best && best.score >= MIN_ACCEPT_SCORE) {
-    return { ...best, score: Math.min(best.score, 1), method: "fuzzy" };
-  }
-  return null;
+  return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
 }
 
-async function findAppleMatch(
-  source: LinkMetadata
-): Promise<{ target: LinkMetadata; score: number; method: "isrc" | "fuzzy" } | null> {
+async function findAppleMatch(source: LinkMetadata): Promise<DirectMatch | null> {
   const devToken = await getCachedAppleMusicToken();
 
   if (source.type === "track" && source.isrc) {
@@ -336,7 +405,7 @@ async function findAppleMatch(
     for (const hit of hits) {
       const meta = mapAppleSongMeta(hit);
       if (artistSimilarity(source.artist, meta.artist) >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
-        return { target: meta, score: 1, method: "isrc" };
+        return { metadata: meta, score: 1, method: "isrc" };
       }
     }
   }
@@ -350,22 +419,93 @@ async function findAppleMatch(
         ? mapAppleAlbumMeta
         : mapAppleArtistMeta;
 
-  let best: { target: LinkMetadata; score: number } | null = null;
-  for (const query of buildAppleQueries(source)) {
+  let best: DirectMatch | null = null;
+  for (const query of buildPlainQueries(source)) {
     const items = await searchAppleMusicCatalog(devToken, query, searchType, 10);
-    for (const item of items) {
-      if (!item) continue;
-      const meta = mapper(item);
-      const score = scoreCandidate(source, meta);
-      if (!best || score > best.score) best = { target: meta, score };
-    }
+    best = pickBest(source, items.filter(Boolean).map(mapper), best);
     if (best && best.score >= EARLY_EXIT_SCORE) break;
   }
+  return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
+}
 
-  if (best && best.score >= MIN_ACCEPT_SCORE) {
-    return { ...best, score: Math.min(best.score, 1), method: "fuzzy" };
+async function findDeezerMatch(source: LinkMetadata): Promise<DirectMatch | null> {
+  if (source.type === "track" && source.isrc) {
+    const hit = await getDeezerTrackByIsrc(source.isrc);
+    if (hit) {
+      const meta = mapDeezerTrackMeta(hit);
+      if (artistSimilarity(source.artist, meta.artist) >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
+        return { metadata: meta, score: 1, method: "isrc" };
+      }
+    }
   }
-  return null;
+
+  let best: DirectMatch | null = null;
+  for (const query of buildPlainQueries(source)) {
+    let candidates: LinkMetadata[] = [];
+    if (source.type === "track") {
+      candidates = (await searchDeezerTracks(query, 10)).map(mapDeezerTrackMeta);
+    } else if (source.type === "album") {
+      candidates = (await searchDeezerAlbums(query, 10)).map(mapDeezerAlbumMeta);
+    } else {
+      candidates = (await searchDeezerArtists(query, 10)).map(mapDeezerArtistMeta);
+    }
+    best = pickBest(source, candidates, best);
+    if (best && best.score >= EARLY_EXIT_SCORE) break;
+  }
+  return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
+}
+
+/**
+ * YouTube Music: direct video match for tracks (needs YOUTUBE_API_KEY),
+ * otherwise a pre-filled search link. Albums/artists always get search links.
+ */
+async function findYouTubeLink(source: LinkMetadata): Promise<ServiceLink> {
+  const query =
+    source.type === "artist" ? source.title : `${source.title} ${primaryArtist(source.artist)}`;
+  const searchLink: ServiceLink = {
+    service: "youtube",
+    url: youtubeMusicSearchUrl(query),
+    kind: "search",
+  };
+  if (source.type !== "track") return searchLink;
+
+  const hit = await searchYouTubeMusic(query);
+  if (!hit) return searchLink;
+
+  const parsed = parseYouTubeTitle({ videoId: hit.videoId, title: hit.title, channel: hit.channel });
+  const score =
+    titleSimilarity(source.title, parsed.title) * 0.6 +
+    Math.max(
+      artistSimilarity(source.artist, parsed.artist),
+      artistSimilarity(source.artist, hit.channel)
+    ) *
+      0.4;
+  if (score < 0.35) return searchLink;
+
+  return {
+    service: "youtube",
+    url: youtubeMusicWatchUrl(hit.videoId),
+    kind: "direct",
+    confidence: Math.round(Math.min(score, 1) * 100),
+    matchMethod: "fuzzy",
+    metadata: {
+      type: "track",
+      title: parsed.title,
+      artist: parsed.artist,
+      url: youtubeMusicWatchUrl(hit.videoId),
+    },
+  };
+}
+
+/** Amazon Music has no public catalog API — best we can do is a search link. */
+function amazonSearchLink(source: LinkMetadata): ServiceLink {
+  const query =
+    source.type === "artist" ? source.title : `${source.title} ${primaryArtist(source.artist)}`;
+  return {
+    service: "amazon",
+    url: `https://music.amazon.com/search/${encodeURIComponent(query)}`,
+    kind: "search",
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -379,19 +519,48 @@ async function fetchSourceMetadata(parsed: ParsedMusicUrl): Promise<LinkMetadata
     if (parsed.type === "artist") return mapSpotifyArtistMeta(await getSpotifyArtistById(parsed.id));
     return null;
   }
-  const devToken = await getCachedAppleMusicToken();
-  const storefront = parsed.storefront || "us";
-  if (parsed.type === "track") {
-    const song = await getAppleMusicSongDetails(devToken, parsed.id, storefront);
-    return song ? mapAppleSongMeta(song) : null;
+  if (parsed.service === "apple") {
+    const devToken = await getCachedAppleMusicToken();
+    const storefront = parsed.storefront || "us";
+    if (parsed.type === "track") {
+      const song = await getAppleMusicSongDetails(devToken, parsed.id, storefront);
+      return song ? mapAppleSongMeta(song) : null;
+    }
+    if (parsed.type === "album") {
+      const album = await getAppleMusicAlbumDetails(devToken, parsed.id, storefront);
+      return album ? mapAppleAlbumMeta(album) : null;
+    }
+    if (parsed.type === "artist") {
+      const artist = await getAppleMusicArtistDetails(devToken, parsed.id, storefront);
+      return artist ? mapAppleArtistMeta(artist) : null;
+    }
+    return null;
   }
-  if (parsed.type === "album") {
-    const album = await getAppleMusicAlbumDetails(devToken, parsed.id, storefront);
-    return album ? mapAppleAlbumMeta(album) : null;
+  if (parsed.service === "deezer") {
+    if (parsed.type === "track") {
+      const t = await getDeezerTrack(parsed.id);
+      return t ? mapDeezerTrackMeta(t) : null;
+    }
+    if (parsed.type === "album") {
+      const a = await getDeezerAlbum(parsed.id);
+      return a ? mapDeezerAlbumMeta(a) : null;
+    }
+    if (parsed.type === "artist") {
+      const a = await getDeezerArtist(parsed.id);
+      return a ? mapDeezerArtistMeta(a) : null;
+    }
+    return null;
   }
-  if (parsed.type === "artist") {
-    const artist = await getAppleMusicArtistDetails(devToken, parsed.id, storefront);
-    return artist ? mapAppleArtistMeta(artist) : null;
+  if (parsed.service === "youtube") {
+    const info = await getYouTubeVideoInfo(parsed.id);
+    if (!info) return null;
+    const { title, artist } = parseYouTubeTitle(info);
+    return {
+      type: "track",
+      title,
+      artist,
+      url: youtubeMusicWatchUrl(parsed.id),
+    };
   }
   return null;
 }
@@ -400,30 +569,103 @@ async function fetchSourceMetadata(parsed: ParsedMusicUrl): Promise<LinkMetadata
 // Public entry point
 // ---------------------------------------------------------------------------
 
+const LINK_ORDER: MusicService[] = ["spotify", "apple", "deezer", "youtube", "amazon"];
+
+function toServiceLink(service: MusicService, match: DirectMatch | null): ServiceLink | null {
+  if (!match) return null;
+  return {
+    service,
+    url: match.metadata.url,
+    kind: "direct",
+    confidence: Math.round(match.score * 100),
+    matchMethod: match.method,
+    metadata: match.metadata,
+  };
+}
+
 /**
- * Convert a single Spotify or Apple Music track/album/artist link to the
- * other service. Playlist URLs are not handled here (use the share flow).
+ * Convert a single music link into equivalents on every other service.
+ * Playlist URLs are not handled here (use the share flow).
  */
 export async function convertMusicLink(parsed: ParsedMusicUrl): Promise<LinkConversionResult> {
   if (parsed.type === "playlist") {
     throw new Error("Playlist links are handled by the share flow, not link conversion");
   }
 
-  const source = await fetchSourceMetadata(parsed);
+  let source = await fetchSourceMetadata(parsed);
   if (!source) {
     throw new Error("Could not fetch metadata for the source link");
   }
 
-  const match =
-    parsed.service === "spotify" ? await findAppleMatch(source) : await findSpotifyMatch(source);
+  const results = new Map<MusicService, ServiceLink | null>();
+
+  // For YouTube sources (title-parsed, no ISRC), resolve Spotify first and use
+  // its clean metadata to anchor the remaining lookups.
+  if (parsed.service === "youtube") {
+    const spotifyMatch = await findSpotifyMatch(source);
+    results.set("spotify", toServiceLink("spotify", spotifyMatch));
+    if (spotifyMatch) {
+      source = {
+        ...source,
+        title: spotifyMatch.metadata.title,
+        artist: spotifyMatch.metadata.artist,
+        album: spotifyMatch.metadata.album,
+        isrc: spotifyMatch.metadata.isrc,
+        duration: spotifyMatch.metadata.duration,
+        artworkUrl: source.artworkUrl ?? spotifyMatch.metadata.artworkUrl,
+      };
+    }
+  }
+
+  const lookups: Promise<void>[] = [];
+  for (const service of LINK_ORDER) {
+    if (service === parsed.service || results.has(service)) continue;
+    if (service === "spotify") {
+      lookups.push(
+        findSpotifyMatch(source).then((m) => void results.set("spotify", toServiceLink("spotify", m)))
+      );
+    } else if (service === "apple") {
+      lookups.push(
+        findAppleMatch(source).then((m) => void results.set("apple", toServiceLink("apple", m)))
+      );
+    } else if (service === "deezer") {
+      lookups.push(
+        findDeezerMatch(source).then((m) => void results.set("deezer", toServiceLink("deezer", m)))
+      );
+    } else if (service === "youtube") {
+      lookups.push(findYouTubeLink(source).then((l) => void results.set("youtube", l)));
+    } else if (service === "amazon") {
+      results.set("amazon", amazonSearchLink(source));
+    }
+  }
+  await Promise.all(lookups);
+
+  const links: ServiceLink[] = [];
+  for (const service of LINK_ORDER) {
+    if (service === parsed.service) continue;
+    const link = results.get(service);
+    if (link) links.push(link);
+  }
+
+  // Primary: the direct match a shortcut should open. Spotify sources prefer
+  // Apple Music (and vice versa); everything else prefers Spotify.
+  const preference: MusicService[] =
+    parsed.service === "spotify"
+      ? ["apple", "deezer", "youtube"]
+      : parsed.service === "apple"
+        ? ["spotify", "deezer", "youtube"]
+        : ["spotify", "apple", "deezer", "youtube"];
+  const primary =
+    preference
+      .map((s) => links.find((l) => l.service === s && l.kind === "direct"))
+      .find(Boolean) ?? null;
 
   return {
-    direction: parsed.service === "spotify" ? "spotify-to-apple" : "apple-to-spotify",
     type: parsed.type as MusicItemType,
+    sourceService: parsed.service,
     source,
-    target: match?.target ?? null,
-    confidence: match ? Math.round(match.score * 100) : 0,
-    matchMethod: match?.method ?? "none",
+    links,
+    primary,
   };
 }
 

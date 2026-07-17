@@ -6,7 +6,13 @@ import { ServiceConnect } from "@/components/service-connect";
 import { Header } from "@/components/header";
 import { LinkConverter } from "@/components/link-converter";
 import { Equalizer } from "@/components/animated-icons";
-import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import {
+  SpotifyLogo,
+  AppleLogo,
+  DeezerLogo,
+  YouTubeMusicLogo,
+  AmazonMusicLogo,
+} from "@/components/icons";
 import { IconLoader2 } from "@tabler/icons-react";
 
 export default function HomePage() {
@@ -56,16 +62,19 @@ export default function HomePage() {
           <section className="mx-auto max-w-2xl pb-2 pt-14 text-center sm:pt-20">
             <div className="mb-7 inline-flex items-center gap-2.5 rounded-full border border-border/70 bg-background/70 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
               <SpotifyLogo className="h-3.5 w-3.5 text-[#1DB954]" />
-              <Equalizer className="h-3 text-primary" />
               <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
-              <span>Spotify &amp; Apple Music</span>
+              <Equalizer className="h-3 text-primary" />
+              <DeezerLogo className="h-3.5 w-3.5 text-[#A238FF]" />
+              <YouTubeMusicLogo className="h-3.5 w-3.5 text-[#FF0000]" />
+              <AmazonMusicLogo className="h-3.5 w-3.5 text-[#25D1DA]" />
+              <span>5 music services</span>
             </div>
             <h1 className="text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-[3.25rem]">
               Music links that play <span className="text-primary">everywhere</span>
             </h1>
             <p className="mx-auto mt-4 max-w-lg text-balance text-base text-muted-foreground sm:text-lg">
-              Paste a song, album, artist, or playlist. Get a link that works on the other
-              service — no account needed.
+              Paste one link — song, album, artist, or playlist. Get matches on Spotify,
+              Apple Music, Deezer, YouTube Music, and Amazon Music. No account needed.
             </p>
           </section>
 

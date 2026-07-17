@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import { db, sharedPlaylists } from "@/lib/db";
 import { getPublicSpotifyPlaylist } from "@/lib/spotify";
 import { getPublicAppleMusicPlaylist } from "@/lib/apple-music";
+import { getDeezerPlaylist, type DeezerTrack } from "@/lib/deezer";
 import { getServiceName, type ParsedPlaylistUrl } from "@/lib/url-parser";
 import type { SpotifyTrack, AppleMusicTrack } from "@/types";
 
@@ -41,6 +42,17 @@ function extractSpotifyTrackData(track: SpotifyTrack): SharedTrack {
     albumArt,
     isrc: track.external_ids?.isrc,
     duration_ms: track.duration_ms,
+  };
+}
+
+function extractDeezerTrackData(track: DeezerTrack): SharedTrack {
+  return {
+    name: track.title,
+    artist: track.artist?.name || "",
+    album: track.album?.title || "",
+    albumArt: track.album?.cover_medium,
+    isrc: track.isrc,
+    duration_ms: track.duration ? track.duration * 1000 : undefined,
   };
 }
 
@@ -86,6 +98,18 @@ export async function createShareFromParsedUrl(
         403
       );
     }
+  } else if (parsed.service === "deezer") {
+    const playlist = await getDeezerPlaylist(parsed.playlistId);
+    if (!playlist) {
+      throw new ShareError(
+        "Could not access this Deezer playlist. Make sure it's public.",
+        403
+      );
+    }
+    playlistName = playlist.title;
+    playlistImage = playlist.picture_xl || playlist.picture_medium || null;
+    createdByName = playlist.creator?.name || null;
+    tracks = (playlist.tracks?.data ?? []).map(extractDeezerTrackData);
   } else {
     try {
       const playlist = await getPublicAppleMusicPlaylist(

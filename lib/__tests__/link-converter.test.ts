@@ -74,6 +74,60 @@ describe("parseMusicUrl", () => {
     });
   });
 
+  describe("Deezer URLs", () => {
+    it("parses track URLs", () => {
+      expect(parseMusicUrl("https://www.deezer.com/track/3135556")).toEqual({
+        service: "deezer",
+        type: "track",
+        id: "3135556",
+      });
+    });
+
+    it("parses locale-prefixed album URLs", () => {
+      expect(parseMusicUrl("https://www.deezer.com/en/album/302127")).toEqual({
+        service: "deezer",
+        type: "album",
+        id: "302127",
+      });
+    });
+
+    it("parses artist and playlist URLs", () => {
+      expect(parseMusicUrl("https://www.deezer.com/fr/artist/27")).toEqual({
+        service: "deezer",
+        type: "artist",
+        id: "27",
+      });
+      expect(parseMusicUrl("https://www.deezer.com/playlist/1479458365")).toEqual({
+        service: "deezer",
+        type: "playlist",
+        id: "1479458365",
+      });
+    });
+  });
+
+  describe("YouTube URLs", () => {
+    it("parses YouTube Music watch URLs", () => {
+      expect(parseMusicUrl("https://music.youtube.com/watch?v=dQw4w9WgXcQ")).toEqual({
+        service: "youtube",
+        type: "track",
+        id: "dQw4w9WgXcQ",
+      });
+    });
+
+    it("parses regular YouTube and youtu.be URLs", () => {
+      expect(parseMusicUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10")).toEqual({
+        service: "youtube",
+        type: "track",
+        id: "dQw4w9WgXcQ",
+      });
+      expect(parseMusicUrl("https://youtu.be/dQw4w9WgXcQ")).toEqual({
+        service: "youtube",
+        type: "track",
+        id: "dQw4w9WgXcQ",
+      });
+    });
+  });
+
   describe("invalid URLs", () => {
     it("rejects non-music URLs", () => {
       expect(parseMusicUrl("https://example.com/track/123")).toBeNull();

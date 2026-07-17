@@ -28,6 +28,7 @@ import {
 } from "@tabler/icons-react";
 import { SpotifyLogo, AppleLogo } from "@/components/icons";
 import { Header } from "@/components/header";
+import { LinkConverter } from "@/components/link-converter";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
 
 interface SpotifySession {
@@ -403,6 +404,11 @@ export default function DashboardPage() {
         </Header>
         
         <div className="flex-1 overflow-hidden container mx-auto px-4 py-3 flex flex-col">
+
+          {/* Universal link converter — same bar as the home page */}
+          <div className="mb-3">
+            <LinkConverter showHistory={false} />
+          </div>
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected || !appleConnected) && (

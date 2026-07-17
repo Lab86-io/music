@@ -26,6 +26,36 @@ export function AppleMusicLogo(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function DeezerLogo(props: SVGProps<SVGSVGElement>) {
+  // Deezer equalizer-bars mark (simplified)
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M18.81 4.16v3.03H24V4.16h-5.19zM6.27 8.38v3.027h5.189V8.38h-5.19zm12.54 0v3.027H24V8.38h-5.19zM0 12.594v3.027h5.19v-3.027H0zm6.27 0v3.027h5.189v-3.027h-5.19zm6.271 0v3.027h5.19v-3.027h-5.19zm6.27 0v3.027H24v-3.027h-5.19zM0 16.81v3.029h5.19v-3.03H0zm6.27 0v3.029h5.189v-3.03h-5.19zm6.271 0v3.029h5.19v-3.03h-5.19zm6.27 0v3.029H24v-3.03h-5.19z" />
+    </svg>
+  );
+}
+
+export function YouTubeMusicLogo(props: SVGProps<SVGSVGElement>) {
+  // YouTube Music circle-play mark
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0zm0 19.104c-3.924 0-7.104-3.18-7.104-7.104S8.076 4.896 12 4.896s7.104 3.18 7.104 7.104-3.18 7.104-7.104 7.104zm0-13.332c-3.432 0-6.228 2.796-6.228 6.228S8.568 18.228 12 18.228s6.228-2.796 6.228-6.228S15.432 5.772 12 5.772zM9.684 15.54V8.46L15.816 12l-6.132 3.54z" />
+    </svg>
+  );
+}
+
+export function AmazonMusicLogo(props: SVGProps<SVGSVGElement>) {
+  // Amazon Music note-and-smile mark (simplified)
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M9.5 15.5V4.8l8.2-1.4v10.4" />
+      <circle cx="7.3" cy="15.7" r="2.2" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="14" r="2.2" fill="currentColor" stroke="none" />
+      <path d="M3.5 19.6c2.6 1.5 5.5 2.3 8.5 2.3s5.9-.8 8.5-2.3" strokeWidth="1.7" />
+    </svg>
+  );
+}
+
 export function MusicNote(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>

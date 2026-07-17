@@ -18,8 +18,7 @@ export default function ConvertPage() {
           <section className="mx-auto max-w-2xl pt-12 text-center sm:pt-16">
             <h1 className="text-3xl font-bold tracking-tight">Convert a link</h1>
             <p className="mx-auto mt-3 max-w-md text-balance text-muted-foreground">
-              Songs, albums, and artists jump between services. Playlists become 48-hour
-              share links.
+              One link in, five services out. Playlists become 48-hour share links.
             </p>
           </section>
           <section className="mx-auto max-w-2xl pb-16 pt-8">
