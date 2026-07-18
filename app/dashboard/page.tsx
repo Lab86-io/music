@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   IconMusic, 
@@ -383,7 +382,7 @@ export default function DashboardPage() {
 
   return (
     <TooltipProvider>
-      <div className="h-screen overflow-hidden bg-background flex flex-col">
+      <div className="min-h-screen bg-background">
         <Header>
           <div className="hidden sm:flex items-center gap-2">
             {spotifyConnected && (
@@ -401,25 +400,24 @@ export default function DashboardPage() {
           </div>
         </Header>
         
-        <div className="flex-1 overflow-hidden container mx-auto px-4 py-3 flex flex-col">
+        <div className="container mx-auto px-4 py-4 pb-12">
 
           {/* Universal link converter — compact utility placement */}
-          <div className="mb-3 shrink-0">
+          <div className="mb-4">
             <LinkConverter showHistory={false} compact />
           </div>
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected || !appleConnected) && (
-            <div className="mb-3 shrink-0">
+            <div className="mb-4">
               <ServiceConnect onConnectionChange={handleConnectionChange} />
             </div>
           )}
 
-          {/* Conversion Progress/Result — its own scrollable region so long
-              match reports never get clipped by the fixed app frame */}
+          {/* Conversion Progress/Result */}
           {(isConverting || conversionResult) && conversionPlaylist && (
-            <section className="mb-3 flex max-h-[55vh] min-h-0 shrink-0 flex-col">
-              <div className="mb-1.5 flex shrink-0 items-center justify-between">
+            <section className="mb-6">
+              <div className="mb-1.5 flex items-center justify-between">
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   {isConverting ? "Converting playlist" : "Conversion complete"}
                 </h2>
@@ -429,7 +427,7 @@ export default function DashboardPage() {
                   </Button>
                 )}
               </div>
-              <div className="min-h-0 space-y-2 overflow-y-auto overscroll-contain pr-1">
+              <div className="space-y-2">
                 <ConversionProgress
                   isConverting={isConverting}
                   playlistName={conversionPlaylist.name}
@@ -458,9 +456,9 @@ export default function DashboardPage() {
 
           {/* Playlists */}
           {(spotifyConnected || appleConnected) && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-              <h1 className="shrink-0 text-xl font-semibold tracking-tight">Your library</h1>
-              <div className="mt-1 flex items-center justify-between gap-2 border-b border-border">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <h1 className="text-xl font-semibold tracking-tight">Your library</h1>
+              <div className="sticky top-[57px] z-20 mt-1 -mx-1 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-1 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div className="flex gap-1 shrink-0">
                   {spotifyConnected && (
                     <button
@@ -548,14 +546,8 @@ export default function DashboardPage() {
               </div>
 
               {/* Spotify Playlists */}
-              <TabsContent value="spotify" className="flex-1 min-h-0 mt-2">
-                <div className="relative h-full">
-                  {/* Top gradient fade */}
-                  <div className="pointer-events-none absolute top-0 left-0 right-4 h-6 bg-gradient-to-b from-background to-transparent z-10" />
-                  {/* Bottom gradient fade */}
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
-                  <ScrollArea className="h-full">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5 pr-4 py-3 pl-1">
+              <TabsContent value="spotify" className="mt-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5">
                       {loadingSpotify ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
@@ -586,20 +578,12 @@ export default function DashboardPage() {
                           </div>
                         );
                       })()}
-                    </div>
-                  </ScrollArea>
                 </div>
               </TabsContent>
 
               {/* Apple Music Playlists */}
-              <TabsContent value="apple" className="flex-1 min-h-0 mt-2">
-                <div className="relative h-full">
-                  {/* Top gradient fade */}
-                  <div className="pointer-events-none absolute top-0 left-0 right-4 h-6 bg-gradient-to-b from-background to-transparent z-10" />
-                  {/* Bottom gradient fade */}
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-4 h-12 bg-gradient-to-t from-background to-transparent z-10" />
-                  <ScrollArea className="h-full">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5 pr-4 py-3 pl-1">
+              <TabsContent value="apple" className="mt-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5">
                       {loadingApple ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
@@ -630,8 +614,6 @@ export default function DashboardPage() {
                           </div>
                         );
                       })()}
-                    </div>
-                  </ScrollArea>
                 </div>
               </TabsContent>
             </Tabs>
