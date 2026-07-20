@@ -144,6 +144,26 @@ describe("parseMusicUrl", () => {
       });
     });
 
+    it("parses YouTube playlist URLs and rejects radio mixes", () => {
+      expect(
+        parseMusicUrl("https://music.youtube.com/playlist?list=PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI")
+      ).toEqual({
+        service: "youtube",
+        type: "playlist",
+        id: "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+      });
+      // watch?v=…&list=… still resolves to the playlist
+      expect(
+        parseMusicUrl("https://www.youtube.com/watch?v=abc123&list=PLxyz1234567890")
+      ).toEqual({ service: "youtube", type: "playlist", id: "PLxyz1234567890" });
+      // Auto-generated radio/mix lists are not shareable playlists
+      expect(parseMusicUrl("https://music.youtube.com/watch?v=abc123&list=RDabc123")).toEqual({
+        service: "youtube",
+        type: "track",
+        id: "abc123",
+      });
+    });
+
     it("parses regular YouTube and youtu.be URLs", () => {
       expect(parseMusicUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10")).toEqual({
         service: "youtube",

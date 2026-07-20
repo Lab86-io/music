@@ -9,7 +9,7 @@
  */
 
 export interface ParsedPlaylistUrl {
-  service: "spotify" | "apple" | "deezer" | "tidal";
+  service: "spotify" | "apple" | "deezer" | "tidal" | "youtube";
   playlistId: string;
   storefront?: string; // For Apple Music regional catalogs (e.g., "us", "gb", "jp")
 }
@@ -63,7 +63,9 @@ export function parsePlaylistUrl(url: string): ParsedPlaylistUrl | null {
     const generic = parseMusicUrl(url);
     if (
       generic?.type === "playlist" &&
-      (generic.service === "deezer" || generic.service === "tidal")
+      (generic.service === "deezer" ||
+        generic.service === "tidal" ||
+        generic.service === "youtube")
     ) {
       return { service: generic.service, playlistId: generic.id };
     }
@@ -213,6 +215,16 @@ export function parseMusicUrl(url: string): ParsedMusicUrl | null {
       parsed.hostname === "youtube.com" ||
       parsed.hostname === "m.youtube.com"
     ) {
+      const listId = parsed.searchParams.get("list");
+      if (
+        (parsed.pathname === "/playlist" || parsed.pathname === "/watch") &&
+        listId &&
+        /^[\w-]{10,60}$/.test(listId) &&
+        // Radio/mix auto-playlists aren't real playlists we can read
+        !/^(RD|LM|WL)/.test(listId)
+      ) {
+        return { service: "youtube", type: "playlist", id: listId };
+      }
       const videoId = parsed.searchParams.get("v");
       if (parsed.pathname === "/watch" && videoId && /^[\w-]{6,20}$/.test(videoId)) {
         return { service: "youtube", type: "track", id: videoId };
@@ -248,6 +260,7 @@ export function getServiceName(parsed: ParsedPlaylistUrl): string {
   if (parsed.service === "spotify") return "Spotify";
   if (parsed.service === "deezer") return "Deezer";
   if (parsed.service === "tidal") return "TIDAL";
+  if (parsed.service === "youtube") return "YouTube Music";
   return "Apple Music";
 }
 

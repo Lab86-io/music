@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { IconLoader2, IconCheck, IconX, IconArrowRight, IconAlertTriangle } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo, DeezerLogo, TidalLogo } from "@/components/icons";
+import { SpotifyLogo, AppleLogo, DeezerLogo, TidalLogo, YouTubeMusicLogo } from "@/components/icons";
 
 interface CurrentTrack {
   name: string;
@@ -57,7 +57,9 @@ export function ConversionProgress({
         ? DeezerLogo
         : sourceService === "tidal"
           ? TidalLogo
-          : AppleLogo;
+          : sourceService === "youtube"
+            ? YouTubeMusicLogo
+            : AppleLogo;
   const TargetIcon = targetService === "spotify" ? SpotifyLogo : AppleLogo;
 
   const progressValue = progress ? (progress.current / progress.total) * 100 : 0;
@@ -99,7 +101,9 @@ export function ConversionProgress({
                 ? "bg-[#A238FF]"
                 : sourceService === "tidal"
                   ? "bg-neutral-900"
-                  : "bg-[#FC3C44]"
+                  : sourceService === "youtube"
+                    ? "bg-[#FF0000]"
+                    : "bg-[#FC3C44]"
           } text-white`}>
             <SourceIcon className="h-5 w-5" />
           </div>
@@ -112,7 +116,7 @@ export function ConversionProgress({
           <div className="ml-2 flex-1">
             <CardTitle className="text-lg">{playlistName}</CardTitle>
             <CardDescription>
-              {sourceService === "spotify" ? "Spotify" : sourceService === "deezer" ? "Deezer" : sourceService === "tidal" ? "TIDAL" : "Apple Music"} → {targetService === "spotify" ? "Spotify" : "Apple Music"}
+              {sourceService === "spotify" ? "Spotify" : sourceService === "deezer" ? "Deezer" : sourceService === "tidal" ? "TIDAL" : sourceService === "youtube" ? "YouTube Music" : "Apple Music"} → {targetService === "spotify" ? "Spotify" : "Apple Music"}
             </CardDescription>
           </div>
           {progress && (

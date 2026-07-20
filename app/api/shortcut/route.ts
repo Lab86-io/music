@@ -32,9 +32,9 @@ async function handleShortcut(rawUrl: string, redirect: boolean, request: Reques
   }
 
   if (parsed.type === "playlist") {
-    if (parsed.service === "youtube" || parsed.service === "amazon") {
+    if (parsed.service === "amazon") {
       return NextResponse.json(
-        { error: "Playlist sharing works with Spotify, Apple Music, and Deezer playlists." },
+        { error: "Amazon Music playlists can't be read — no public API." },
         { status: 400 }
       );
     }

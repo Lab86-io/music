@@ -24,7 +24,7 @@ export function isYouTubeOAuthConfigured(): boolean {
 export function buildYouTubeAuthUrl(origin: string, state: string): string {
   const params = new URLSearchParams({
     client_id: process.env.YOUTUBE_OAUTH_CLIENT_ID!,
-    redirect_uri: `${origin}/api/youtube/callback`,
+    redirect_uri: `${origin}/api/youtube/callback/`,
     response_type: "code",
     scope: SCOPE,
     access_type: "offline",
@@ -45,7 +45,7 @@ export async function exchangeYouTubeCode(
       body: new URLSearchParams({
         client_id: process.env.YOUTUBE_OAUTH_CLIENT_ID!,
         client_secret: process.env.YOUTUBE_OAUTH_CLIENT_SECRET!,
-        redirect_uri: `${origin}/api/youtube/callback`,
+        redirect_uri: `${origin}/api/youtube/callback/`,
         grant_type: "authorization_code",
         code,
       }),

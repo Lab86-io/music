@@ -90,3 +90,99 @@ export function youtubeMusicWatchUrl(videoId: string): string {
 export function youtubeMusicSearchUrl(query: string): string {
   return `https://music.youtube.com/search?q=${encodeURIComponent(query)}`;
 }
+
+// ---------------------------------------------------------------------------
+// Public playlists (read via API key — no OAuth)
+// ---------------------------------------------------------------------------
+
+export interface YouTubePlaylistTrack {
+  name: string;
+  artist: string;
+  albumArt?: string;
+}
+
+export interface YouTubePlaylist {
+  name: string;
+  channel: string | null;
+  image: string | null;
+  tracks: YouTubePlaylistTrack[];
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/**
+ * Read a public YouTube / YouTube Music playlist using the API key.
+ * Video titles are parsed into {title, artist}; there is no ISRC, so
+ * downstream matching is title-based (accuracy varies).
+ * Returns null if unavailable or the key is missing.
+ */
+export async function getYouTubePlaylist(playlistId: string): Promise<YouTubePlaylist | null> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    // Playlist metadata (title, channel, thumbnail)
+    const metaResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${apiKey}`
+    );
+    if (!metaResponse.ok) return null;
+    const metaData = await metaResponse.json();
+    const meta = metaData?.items?.[0]?.snippet;
+    if (!meta) return null;
+
+    const thumbnails = meta.thumbnails ?? {};
+    const image =
+      thumbnails.high?.url ?? thumbnails.medium?.url ?? thumbnails.default?.url ?? null;
+
+    // Playlist items (paginated, 50 per page)
+    const tracks: YouTubePlaylistTrack[] = [];
+    let pageToken = "";
+    let guard = 0;
+    do {
+      guard += 1;
+      const params = new URLSearchParams({
+        part: "snippet",
+        maxResults: "50",
+        playlistId,
+        key: apiKey,
+      });
+      if (pageToken) params.set("pageToken", pageToken);
+      const itemsResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/playlistItems?${params}`
+      );
+      if (!itemsResponse.ok) break;
+      const itemsData = await itemsResponse.json();
+      for (const item of itemsData.items ?? []) {
+        const snippet = item.snippet;
+        // Skip deleted/private placeholders
+        if (!snippet?.title || snippet.title === "Deleted video" || snippet.title === "Private video") {
+          continue;
+        }
+        const channel = (snippet.videoOwnerChannelTitle ?? snippet.channelTitle ?? "").replace(
+          /\s*-\s*Topic$/i,
+          ""
+        );
+        const parsed = parseYouTubeTitle({
+          videoId: snippet.resourceId?.videoId ?? "",
+          title: snippet.title,
+          channel,
+        });
+        tracks.push({
+          name: parsed.title,
+          artist: parsed.artist,
+          albumArt: snippet.thumbnails?.default?.url,
+        });
+      }
+      pageToken = itemsData.nextPageToken ?? "";
+    } while (pageToken && guard < 20);
+
+    return {
+      name: meta.title ?? "YouTube Playlist",
+      channel: meta.channelTitle ?? null,
+      image,
+      tracks,
+    };
+  } catch {
+    return null;
+  }
+}

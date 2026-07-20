@@ -4,6 +4,7 @@ import { getPublicSpotifyPlaylist } from "@/lib/spotify";
 import { getPublicAppleMusicPlaylist } from "@/lib/apple-music";
 import { getDeezerPlaylist, type DeezerTrack } from "@/lib/deezer";
 import { getTidalPlaylist, getTidalTracksByIds, type TidalItem } from "@/lib/tidal";
+import { getYouTubePlaylist } from "@/lib/youtube";
 import { getServiceName, type ParsedPlaylistUrl } from "@/lib/url-parser";
 import type { SpotifyTrack, AppleMusicTrack } from "@/types";
 
@@ -123,6 +124,24 @@ export async function createShareFromParsedUrl(
     createdByName = null;
     const tidalTracks = await getTidalTracksByIds(playlist.trackIds);
     tracks = tidalTracks.map(extractTidalTrackData);
+  } else if (parsed.service === "youtube") {
+    const playlist = await getYouTubePlaylist(parsed.playlistId);
+    if (!playlist) {
+      throw new ShareError(
+        "Could not read this YouTube playlist. Make sure it's public.",
+        403
+      );
+    }
+    playlistName = playlist.name;
+    playlistImage = playlist.image;
+    createdByName = playlist.channel;
+    // No ISRC from YouTube — recipients match by title/artist (accuracy varies)
+    tracks = playlist.tracks.map((t) => ({
+      name: t.name,
+      artist: t.artist,
+      album: "",
+      albumArt: t.albumArt,
+    }));
   } else if (parsed.service === "deezer") {
     const playlist = await getDeezerPlaylist(parsed.playlistId);
     if (!playlist) {

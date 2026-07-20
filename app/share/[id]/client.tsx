@@ -463,15 +463,32 @@ export default function SharePageClient() {
                   <Badge variant="secondary" className="gap-1">
                     {sharedPlaylist.sourceService === "spotify" ? (
                       <SpotifyLogo className="h-3 w-3" />
+                    ) : sharedPlaylist.sourceService === "youtube" ? (
+                      <YouTubeMusicLogo className="h-3 w-3" />
                     ) : (
                       <AppleLogo className="h-3 w-3" />
                     )}
-                    From {sharedPlaylist.sourceService === "spotify" ? "Spotify" : "Apple Music"}
+                    From{" "}
+                    {sharedPlaylist.sourceService === "spotify"
+                      ? "Spotify"
+                      : sharedPlaylist.sourceService === "deezer"
+                        ? "Deezer"
+                        : sharedPlaylist.sourceService === "tidal"
+                          ? "TIDAL"
+                          : sharedPlaylist.sourceService === "youtube"
+                            ? "YouTube Music"
+                            : "Apple Music"}
                   </Badge>
                   <Badge variant="outline">
                     {sharedPlaylist.trackCount} tracks
                   </Badge>
                 </div>
+                {sharedPlaylist.sourceService === "youtube" && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    YouTube playlists have no track IDs, so tracks are matched by title —
+                    accuracy may vary.
+                  </p>
+                )}
               </div>
             </div>
           </CardHeader>
