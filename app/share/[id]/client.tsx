@@ -12,14 +12,19 @@ import { TrackMatchReport } from "@/components/track-match-report";
 import { 
   IconMusic, 
   IconLoader2, 
-  IconCheck, 
   IconX,
-  IconPlayerPlay,
   IconShare
 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo, YouTubeMusicLogo } from "@/components/icons";
+import {
+  SpotifyLogo,
+  AppleLogo,
+  YouTubeMusicLogo,
+  TidalLogo,
+  DeezerLogo,
+} from "@/components/icons";
 import { Header } from "@/components/header";
 import { cn } from "@/lib/utils";
+import { DeezerConnectDialog } from "@/components/deezer-connect-dialog";
 
 interface SharedPlaylist {
   id: string;
@@ -32,6 +37,7 @@ interface SharedPlaylist {
     artist: string; 
     album: string;
     albumArt?: string;
+    isrc?: string;
     duration_ms?: number;
   }[];
   createdAt: string;
@@ -116,7 +122,18 @@ export default function SharePageClient() {
     configured: false,
     connected: false,
   });
-  const [ytImporting, setYtImporting] = useState(false);
+  const [tidal, setTidal] = useState<{ configured: boolean; connected: boolean }>({
+    configured: false,
+    connected: false,
+  });
+  const [deezer, setDeezer] = useState<{ configured: boolean; connected: boolean }>({
+    configured: true,
+    connected: false,
+  });
+  const [externalImporting, setExternalImporting] = useState<
+    "youtube" | "tidal" | "deezer" | null
+  >(null);
+  const [deezerDialogOpen, setDeezerDialogOpen] = useState(false);
   const [importTarget, setImportTarget] = useState<"spotify" | "apple" | null>(null);
   
   // Streaming progress states
@@ -133,34 +150,57 @@ export default function SharePageClient() {
       .catch(() => {});
   }, []);
 
-  const handleYouTubeImport = async () => {
-    if (!sharedPlaylist || ytImporting) return;
-    setYtImporting(true);
+  useEffect(() => {
+    fetch("/api/tidal/status")
+      .then((r) => r.json())
+      .then((d) => setTidal({ configured: !!d.configured, connected: !!d.connected }))
+      .catch(() => {});
+    fetch("/api/deezer/status")
+      .then((r) => r.json())
+      .then((d) => setDeezer({ configured: !!d.configured, connected: !!d.connected }))
+      .catch(() => {});
+  }, []);
+
+  const handleExternalImport = async (targetService: "youtube" | "tidal" | "deezer") => {
+    if (!sharedPlaylist || externalImporting) return;
+    const serviceName =
+      targetService === "youtube"
+        ? "YouTube Music"
+        : targetService === "tidal"
+          ? "TIDAL"
+          : "Deezer";
+    setExternalImporting(targetService);
     try {
-      const response = await fetch("/api/youtube/import", {
+      const response = await fetch(`/api/${targetService}/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: sharedPlaylist.playlistName,
-          tracks: sharedPlaylist.tracks.map((t) => ({ name: t.name, artist: t.artist })),
+          tracks: sharedPlaylist.tracks.map((t) => ({
+            name: t.name,
+            artist: t.artist,
+            isrc: t.isrc,
+          })),
         }),
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
-        toast.error(data.error || "YouTube import failed");
+        toast.error(data.error || `${serviceName} import failed`);
         return;
       }
-      const summary = `Added ${data.added}/${data.total} tracks to YouTube`;
+      const summary = `Added ${data.added}/${data.total} tracks to ${serviceName}`;
       if (data.quotaExceeded) {
         toast.warning(`${summary} — daily YouTube quota ran out; try the rest tomorrow.`);
+      } else if (data.warning) {
+        toast.warning(`${summary} — ${data.warning}`);
       } else {
         toast.success(summary);
       }
       window.open(data.playlistUrl, "_blank");
     } catch {
-      toast.error("YouTube import failed");
+      toast.error(`${serviceName} import failed`);
     } finally {
-      setYtImporting(false);
+      setExternalImporting(null);
     }
   };
 
@@ -391,8 +431,6 @@ export default function SharePageClient() {
 
   // Show conversion progress during import
   if (importing || conversionResult) {
-    const hasUnmatched = conversionResult?.stats && conversionResult.stats.unmatched > 0;
-    
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -463,6 +501,10 @@ export default function SharePageClient() {
                   <Badge variant="secondary" className="gap-1">
                     {sharedPlaylist.sourceService === "spotify" ? (
                       <SpotifyLogo className="h-3 w-3" />
+                    ) : sharedPlaylist.sourceService === "deezer" ? (
+                      <DeezerLogo className="h-3 w-3" />
+                    ) : sharedPlaylist.sourceService === "tidal" ? (
+                      <TidalLogo className="h-3 w-3" />
                     ) : sharedPlaylist.sourceService === "youtube" ? (
                       <YouTubeMusicLogo className="h-3 w-3" />
                     ) : (
@@ -607,26 +649,59 @@ export default function SharePageClient() {
               )}
             </div>
 
+            {/* TIDAL Button (official OAuth) */}
+            {tidal.configured && (
+              <div className="flex items-center gap-3">
+                {tidal.connected ? (
+                  <Button
+                    onClick={() => handleExternalImport("tidal")}
+                    disabled={Boolean(externalImporting) || importing}
+                    className="flex-1 gap-2 bg-neutral-950 text-white ring-1 ring-white/15 hover:bg-neutral-800"
+                  >
+                    {externalImporting === "tidal" ? (
+                      <IconLoader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <TidalLogo className="h-4 w-4" />
+                    )}
+                    {externalImporting === "tidal" ? "Importing..." : "Import to TIDAL"}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      const returnTo = encodeURIComponent(window.location.pathname);
+                      window.location.href = `/api/tidal/auth?returnTo=${returnTo}`;
+                    }}
+                    variant="outline"
+                    className="flex-1 gap-2"
+                  >
+                    <TidalLogo className="h-4 w-4" />
+                    Connect TIDAL to Import
+                  </Button>
+                )}
+              </div>
+            )}
+
             {/* YouTube Music Button (shown when OAuth is configured) */}
             {youtube.configured && (
               <div className="flex items-center gap-3">
                 {youtube.connected ? (
                   <Button
-                    onClick={handleYouTubeImport}
-                    disabled={ytImporting || importing}
+                    onClick={() => handleExternalImport("youtube")}
+                    disabled={Boolean(externalImporting) || importing}
                     className="flex-1 gap-2 bg-[#FF0000] hover:bg-[#e60000] text-white"
                   >
-                    {ytImporting ? (
+                    {externalImporting === "youtube" ? (
                       <IconLoader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <YouTubeMusicLogo className="h-4 w-4" />
                     )}
-                    {ytImporting ? "Importing..." : "Import to YouTube Music"}
+                    {externalImporting === "youtube" ? "Importing..." : "Import to YouTube Music"}
                   </Button>
                 ) : (
                   <Button
                     onClick={() => {
-                      window.location.href = "/api/youtube/auth";
+                      const returnTo = encodeURIComponent(window.location.pathname);
+                      window.location.href = `/api/youtube/auth?returnTo=${returnTo}`;
                     }}
                     variant="outline"
                     className="flex-1 gap-2"
@@ -638,12 +713,49 @@ export default function SharePageClient() {
               </div>
             )}
 
+            {/* Deezer Button (advanced ARL connection) */}
+            {deezer.configured && (
+              <div className="flex items-center gap-3">
+                {deezer.connected ? (
+                  <Button
+                    onClick={() => handleExternalImport("deezer")}
+                    disabled={Boolean(externalImporting) || importing}
+                    className="flex-1 gap-2 bg-[#A238FF] text-white hover:bg-[#8f2bea]"
+                  >
+                    {externalImporting === "deezer" ? (
+                      <IconLoader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <DeezerLogo className="h-4 w-4" />
+                    )}
+                    {externalImporting === "deezer" ? "Importing..." : "Import to Deezer"}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => setDeezerDialogOpen(true)}
+                    variant="outline"
+                    className="flex-1 gap-2"
+                  >
+                    <DeezerLogo className="h-4 w-4 text-[#A238FF]" />
+                    Connect Deezer (Advanced)
+                  </Button>
+                )}
+              </div>
+            )}
+
             <p className="text-xs text-muted-foreground text-center pt-2">
               This share link expires after 48 hours.
             </p>
           </CardContent>
         </Card>
       </main>
+      <DeezerConnectDialog
+        open={deezerDialogOpen}
+        onOpenChange={setDeezerDialogOpen}
+        onConnected={(userName) => {
+          setDeezer((current) => ({ ...current, connected: true }));
+          toast.success(userName ? `Connected to Deezer as ${userName}` : "Connected to Deezer");
+        }}
+      />
     </div>
   );
 }

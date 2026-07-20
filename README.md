@@ -1,6 +1,7 @@
 # Playlist Converter
 
-Convert and share playlists, songs, albums, and artists between Spotify and Apple Music seamlessly.
+Convert and share playlists, songs, albums, and artists across Spotify, Apple Music,
+Deezer, TIDAL, YouTube Music, and Amazon Music.
 
 Website: [music.lab86.io](https://music.lab86.io) (also at [playlist.jakoblangtry.com](https://playlist.jakoblangtry.com))  
 iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c53069e0839)
@@ -13,13 +14,16 @@ iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c
 ## Features
 
 ### Playlist Conversion
-- Convert playlists from Spotify -> Apple Music or Apple Music -> Spotify
+- Create share links from public Spotify, Apple Music, Deezer, TIDAL, and YouTube playlists
+- Import shared playlists into Spotify, Apple Music, YouTube Music, or TIDAL
+- Convert playlists from the dashboard directly into connected destination services
+- Optional advanced Deezer import using a user-supplied ARL browser session
 - Smart track matching using ISRC codes with fuzzy search fallback
 - Real-time progress streaming during conversion
 - Manual matching for unmatched tracks
 
 ### Link Conversion (No Sign-In Required)
-- Convert individual song, album, and artist links between Spotify and Apple Music
+- Convert individual song, album, and artist links across all supported catalog services
 - ISRC-based matching for songs with fuzzy search fallback (tribute/karaoke filtering)
 - Match confidence scoring with full metadata display (artwork, release date, genres)
 - Audio preview playback when available
@@ -28,14 +32,14 @@ iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c
 
 ### Playlist Sharing (No Sign-In Required)
 - Share public playlists without creating an account
-- Just paste a Spotify or Apple Music playlist URL
+- Paste a Spotify, Apple Music, Deezer, TIDAL, or YouTube playlist URL
 - Get a shareable link with rich Open Graph previews
 - Links expire after 48 hours (multi-use)
 
 ### iOS Shortcut
 - Share songs, albums, artists, and playlists directly from the iOS share sheet
 - Songs/albums/artists convert to the other service; playlists become share links
-- Works with Spotify and Apple Music apps
+- Works with supported music-service share URLs
 - Automatically copies the resulting link to clipboard
 
 ### User Interface
@@ -44,19 +48,30 @@ iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c
 - Grid layout with playlist search
 - Album art and track metadata display
 
+### Service Matrix
+
+| Service | Link conversion | Playlist source | Playlist destination |
+|---------|-----------------|-----------------|----------------------|
+| Spotify | Yes | Yes | Yes |
+| Apple Music | Yes | Yes | Yes |
+| TIDAL | Yes | Yes | Yes — official OAuth |
+| YouTube Music | Yes | Yes | Yes — quota-aware |
+| Deezer | Yes | Yes | Advanced — unofficial ARL session |
+| Amazon Music | Search link | No public API | No public API |
+
 ## Quick Start
 
 ### Share a Public Playlist (No Account Needed)
 
 1. Go to [music.lab86.io](https://music.lab86.io)
-2. Paste any public Spotify or Apple Music playlist URL
+2. Paste any supported public playlist URL
 3. Get your shareable link instantly!
 
 ### Convert a Song, Album, or Artist Link (No Account Needed)
 
 1. Go to [music.lab86.io/convert](https://music.lab86.io/convert)
-2. Paste a Spotify or Apple Music song/album/artist link
-3. Get the matching link on the other service, with a confidence score
+2. Paste a supported song/album/artist link or type a song title
+3. Get matching links across Spotify, Apple Music, Deezer, TIDAL, YouTube Music, and Amazon Music
 
 ### iOS Shortcut
 
@@ -69,7 +84,7 @@ iOS Shortcut: [Download](https://www.icloud.com/shortcuts/4e940db6e96547389ab95c
 
 ### Convert Playlists
 
-1. Sign in with Spotify and/or Apple Music
+1. Connect one or more destination services
 2. Select a playlist from your library
 3. Click to convert to the other service
 4. Review matches and manually fix any unmatched tracks
@@ -86,6 +101,9 @@ Public API for integrations and shortcuts:
 | `/api/share/from-url?url=...` | GET | Same, for simpler integrations |
 | `/api/share/[id]` | GET | Get shared playlist data |
 | `/api/share/[id]` | POST | Import shared playlist (requires auth) |
+| `/api/youtube/import` | POST | Import tracks to a connected YouTube account |
+| `/api/tidal/import` | POST | Import tracks to a connected TIDAL account |
+| `/api/deezer/import` | POST | Advanced import using the connected Deezer browser session |
 
 ### Example: Convert a Song Link
 
@@ -134,7 +152,7 @@ Response:
 | UI | shadcn/ui + Tailwind CSS v4 |
 | Icons | Tabler Icons + Official Brand Logos |
 | Database | PostgreSQL + Drizzle ORM |
-| Auth | Spotify OAuth (PKCE), Apple MusicKit JS |
+| Auth | Spotify OAuth (PKCE), Apple MusicKit JS, Google OAuth, TIDAL OAuth 2.1 + PKCE |
 | Hosting | Railway |
 
 ## Self-Hosting
@@ -156,6 +174,15 @@ DATABASE_URL=postgresql://user:password@localhost:5432/playlist
 SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret
 
+# TIDAL catalog + user OAuth
+TIDAL_CLIENT_ID=your_client_id
+TIDAL_CLIENT_SECRET=your_client_secret
+
+# YouTube playlist import
+YOUTUBE_API_KEY=your_api_key
+YOUTUBE_OAUTH_CLIENT_ID=your_client_id
+YOUTUBE_OAUTH_CLIENT_SECRET=your_client_secret
+
 # Apple Music
 APPLE_TEAM_ID=ABC123DEF4
 APPLE_KEY_ID=XXXXXXXXXX
@@ -167,6 +194,12 @@ APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
 AUTH_SECRET=generate_with_openssl_rand_base64_32
 AUTH_URL=https://your-domain.com
 ```
+
+Register `{origin}/api/tidal/callback` and `{origin}/api/youtube/callback/` with
+their respective OAuth applications. Deezer does not require an application key:
+advanced import is explicitly opt-in and stores the user-provided ARL only in an
+HTTP-only browser cookie. An ARL is a full-account session secret; this unofficial
+integration may violate Deezer's terms or stop working without notice.
 
 ### Installation
 

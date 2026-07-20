@@ -3,8 +3,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IconLoader2 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo, YouTubeMusicLogo } from "@/components/icons";
+import {
+  SpotifyLogo,
+  AppleLogo,
+  YouTubeMusicLogo,
+  TidalLogo,
+  DeezerLogo,
+} from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { DeezerConnectDialog } from "@/components/deezer-connect-dialog";
+import { toast } from "sonner";
 
 interface SpotifySession {
   user: {
@@ -34,7 +42,11 @@ declare global {
 }
 
 interface ServiceConnectProps {
-  onConnectionChange?: (service: "spotify" | "apple", connected: boolean, token?: string) => void;
+  onConnectionChange?: (
+    service: "spotify" | "apple" | "youtube" | "tidal" | "deezer",
+    connected: boolean,
+    token?: string
+  ) => void;
 }
 
 export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
@@ -48,6 +60,16 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
     configured: false,
     connected: false,
   });
+  const [tidal, setTidal] = useState<{ configured: boolean; connected: boolean }>({
+    configured: false,
+    connected: false,
+  });
+  const [deezer, setDeezer] = useState<{
+    configured: boolean;
+    connected: boolean;
+    userName?: string;
+  }>({ configured: true, connected: false });
+  const [deezerDialogOpen, setDeezerDialogOpen] = useState(false);
 
   const spotifyConnected = !!spotifySession;
 
@@ -59,9 +81,40 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
       .catch(() => {});
   }, []);
 
+  // TIDAL and advanced Deezer destination status.
+  useEffect(() => {
+    fetch("/api/tidal/status")
+      .then((r) => r.json())
+      .then((d) => setTidal({ configured: !!d.configured, connected: !!d.connected }))
+      .catch(() => {});
+    fetch("/api/deezer/status")
+      .then((r) => r.json())
+      .then((d) =>
+        setDeezer({
+          configured: !!d.configured,
+          connected: !!d.connected,
+          userName: d.userName,
+        })
+      )
+      .catch(() => {});
+  }, []);
+
   const disconnectYouTube = async () => {
     await fetch("/api/youtube/status", { method: "DELETE" });
     setYoutube((y) => ({ ...y, connected: false }));
+    onConnectionChange?.("youtube", false);
+  };
+
+  const disconnectTidal = async () => {
+    await fetch("/api/tidal/status", { method: "DELETE" });
+    setTidal((current) => ({ ...current, connected: false }));
+    onConnectionChange?.("tidal", false);
+  };
+
+  const disconnectDeezer = async () => {
+    await fetch("/api/deezer/status", { method: "DELETE" });
+    setDeezer((current) => ({ ...current, connected: false, userName: undefined }));
+    onConnectionChange?.("deezer", false);
   };
 
   // Fetch Spotify session on mount
@@ -229,8 +282,9 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
     : spotifySession?.user?.email?.[0]?.toUpperCase() || "U";
 
   return (
-    <ConnectionPanel
-      spotify={{
+    <>
+      <ConnectionPanel
+        spotify={{
         connected: spotifyConnected,
         loading: spotifyLoading,
         userName: spotifySession?.user?.name,
@@ -238,23 +292,48 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
         userInitials,
         onConnect: connectSpotify,
         onDisconnect: disconnectSpotify,
-      }}
-      apple={{
+        }}
+        apple={{
         connected: appleConnected,
         loading: appleLoading,
         ready: !!musicKit,
         onConnect: connectApple,
         onDisconnect: disconnectApple,
-      }}
-      youtube={{
+        }}
+        youtube={{
         configured: youtube.configured,
         connected: youtube.connected,
         onConnect: () => {
           window.location.href = "/api/youtube/auth";
         },
         onDisconnect: disconnectYouTube,
-      }}
-    />
+        }}
+        tidal={{
+        configured: tidal.configured,
+        connected: tidal.connected,
+        onConnect: () => {
+          window.location.href = "/api/tidal/auth";
+        },
+        onDisconnect: disconnectTidal,
+        }}
+        deezer={{
+        configured: deezer.configured,
+        connected: deezer.connected,
+        userName: deezer.userName,
+        onConnect: () => setDeezerDialogOpen(true),
+        onDisconnect: disconnectDeezer,
+        }}
+      />
+      <DeezerConnectDialog
+        open={deezerDialogOpen}
+        onOpenChange={setDeezerDialogOpen}
+        onConnected={(userName) => {
+          setDeezer((current) => ({ ...current, connected: true, userName }));
+          onConnectionChange?.("deezer", true);
+          toast.success(userName ? `Connected to Deezer as ${userName}` : "Connected to Deezer");
+        }}
+      />
+    </>
   );
 }
 
@@ -331,9 +410,22 @@ interface ConnectionPanelProps {
     onConnect: () => void;
     onDisconnect: () => void;
   };
+  tidal?: {
+    configured: boolean;
+    connected: boolean;
+    onConnect: () => void;
+    onDisconnect: () => void;
+  };
+  deezer?: {
+    configured: boolean;
+    connected: boolean;
+    userName?: string;
+    onConnect: () => void;
+    onDisconnect: () => void;
+  };
 }
 
-function ConnectionPanel({ spotify, apple, youtube }: ConnectionPanelProps) {
+function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionPanelProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/60 divide-y divide-border/60">
       <ConnectionRow
@@ -420,6 +512,41 @@ function ConnectionPanel({ spotify, apple, youtube }: ConnectionPanelProps) {
           )
         }
       />
+      {tidal?.configured && (
+        <ConnectionRow
+          logo={<TidalLogo className="h-5.5 w-5.5" />}
+          tileClass="bg-neutral-950 ring-1 ring-white/15"
+          name="TIDAL"
+          status={
+            <>
+              <StatusDot connected={tidal.connected} />
+              {tidal.connected ? (
+                <span>Connected · ISRC-exact playlist import</span>
+              ) : (
+                <span>Official sign-in for private playlist imports</span>
+              )}
+            </>
+          }
+          action={
+            tidal.connected ? (
+              <button
+                onClick={tidal.onDisconnect}
+                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Disconnect
+              </button>
+            ) : (
+              <button
+                onClick={tidal.onConnect}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-neutral-950 px-4 text-sm font-medium text-white shadow-sm ring-1 ring-white/15 transition-colors hover:bg-neutral-800"
+              >
+                <TidalLogo className="h-4 w-4" />
+                Connect
+              </button>
+            )
+          }
+        />
+      )}
       {youtube?.configured && (
         <ConnectionRow
           logo={<YouTubeMusicLogo className="h-5.5 w-5.5" />}
@@ -449,6 +576,43 @@ function ConnectionPanel({ spotify, apple, youtube }: ConnectionPanelProps) {
                 className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FF0000] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#ff2222]"
               >
                 <YouTubeMusicLogo className="h-4 w-4" />
+                Connect
+              </button>
+            )
+          }
+        />
+      )}
+      {deezer?.configured && (
+        <ConnectionRow
+          logo={<DeezerLogo className="h-5.5 w-5.5" />}
+          tileClass="bg-[#A238FF]"
+          name="Deezer · Advanced"
+          status={
+            <>
+              <StatusDot connected={deezer.connected} />
+              {deezer.connected ? (
+                <span className="truncate">
+                  Connected{deezer.userName ? ` as ${deezer.userName}` : ""} · unofficial
+                </span>
+              ) : (
+                <span>Opt-in import using your browser session</span>
+              )}
+            </>
+          }
+          action={
+            deezer.connected ? (
+              <button
+                onClick={deezer.onDisconnect}
+                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Disconnect
+              </button>
+            ) : (
+              <button
+                onClick={deezer.onConnect}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#A238FF] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#8f2bea]"
+              >
+                <DeezerLogo className="h-4 w-4" />
                 Connect
               </button>
             )

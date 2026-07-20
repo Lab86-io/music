@@ -164,9 +164,12 @@ function mapArtist(doc: JsonApiDoc, resource: any): TidalItem {
   };
 }
 
-export async function getTidalTrack(id: string): Promise<TidalItem | null> {
+export async function getTidalTrack(
+  id: string,
+  countryCode = COUNTRY
+): Promise<TidalItem | null> {
   const doc = await tidalFetch(
-    `/tracks/${id}?countryCode=${COUNTRY}&include=artists,albums,albums.coverArt`
+    `/tracks/${id}?countryCode=${encodeURIComponent(countryCode)}&include=artists,albums,albums.coverArt`
   );
   if (!doc?.data) return null;
   const item = mapTrack(doc, doc.data);
@@ -188,9 +191,12 @@ export async function getTidalArtist(id: string): Promise<TidalItem | null> {
   return doc?.data ? mapArtist(doc, doc.data) : null;
 }
 
-export async function getTidalTracksByIsrc(isrc: string): Promise<TidalItem[]> {
+export async function getTidalTracksByIsrc(
+  isrc: string,
+  countryCode = COUNTRY
+): Promise<TidalItem[]> {
   const doc = await tidalFetch(
-    `/tracks?filter%5Bisrc%5D=${encodeURIComponent(isrc)}&countryCode=${COUNTRY}&include=artists,albums`
+    `/tracks?filter%5Bisrc%5D=${encodeURIComponent(isrc)}&countryCode=${encodeURIComponent(countryCode)}&include=artists,albums`
   );
   if (!doc?.data) return [];
   return (doc.data as any[]).map((r) => mapTrack(doc, r));
@@ -198,18 +204,19 @@ export async function getTidalTracksByIsrc(isrc: string): Promise<TidalItem[]> {
 
 export async function searchTidal(
   query: string,
-  type: "track" | "album" | "artist"
+  type: "track" | "album" | "artist",
+  countryCode = COUNTRY
 ): Promise<TidalItem[]> {
   const includeType = type === "track" ? "tracks" : type === "album" ? "albums" : "artists";
   const doc = await tidalFetch(
-    `/searchResults/${encodeURIComponent(query)}?countryCode=${COUNTRY}&include=${includeType}`
+    `/searchResults/${encodeURIComponent(query)}?countryCode=${encodeURIComponent(countryCode)}&include=${includeType}`
   );
   if (!doc) return [];
   const resources = (doc.included ?? []).filter((i) => i.type === includeType);
   // Search results don't nest artist/album names; fetch details for the top hits
   const top = resources.slice(0, 5);
   if (type === "track") {
-    const detailed = await Promise.all(top.map((r) => getTidalTrack(r.id)));
+    const detailed = await Promise.all(top.map((r) => getTidalTrack(r.id, countryCode)));
     return detailed.filter(Boolean) as TidalItem[];
   }
   if (type === "album") {

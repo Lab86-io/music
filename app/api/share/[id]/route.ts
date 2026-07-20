@@ -6,6 +6,7 @@ import { searchSpotifyTrack, createSpotifyPlaylist, addTracksToSpotifyPlaylist }
 import { generateAppleMusicToken, searchAppleMusicTrack, createAppleMusicPlaylist, addTracksToAppleMusicPlaylist } from "@/lib/apple-music";
 import { calculateArtistSimilarity } from "@/lib/converter";
 import type { SpotifyTrack, AppleMusicTrack } from "@/types";
+import * as stringSimilarity from "string-similarity";
 
 interface SpotifySession {
   accessToken: string;
@@ -95,6 +96,7 @@ export async function GET(
           artist: t.artist,
           album: t.album,
           albumArt: t.albumArt,
+          isrc: t.isrc,
           duration_ms: t.duration_ms,
         })),
         createdAt: shared.createdAt,
@@ -116,8 +118,6 @@ function calculateMatchConfidence(
   targetName: string,
   targetArtist: string
 ): number {
-  const stringSimilarity = require("string-similarity");
-  
   const nameSimilarity = stringSimilarity.compareTwoStrings(
     sourceTrack.name.toLowerCase(),
     targetName.toLowerCase()

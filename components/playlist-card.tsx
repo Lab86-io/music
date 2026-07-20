@@ -3,11 +3,17 @@
 import Image from "next/image";
 import { IconMusic, IconShare2 } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { SpotifyLogo, AppleLogo, YouTubeMusicLogo } from "@/components/icons";
+import {
+  SpotifyLogo,
+  AppleLogo,
+  YouTubeMusicLogo,
+  TidalLogo,
+  DeezerLogo,
+} from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
 
-export type ConvertTargetService = "spotify" | "apple" | "youtube";
+export type ConvertTargetService = "spotify" | "apple" | "youtube" | "tidal" | "deezer";
 
 export interface ConvertTarget {
   service: ConvertTargetService;
@@ -23,6 +29,8 @@ const TARGET_STYLE: Record<
   spotify: { name: "Spotify", className: "bg-[#1DB954] text-[#07210f]", Logo: SpotifyLogo },
   apple: { name: "Apple Music", className: "bg-[#FC3C44] text-white", Logo: AppleLogo },
   youtube: { name: "YouTube Music", className: "bg-[#FF0000] text-white", Logo: YouTubeMusicLogo },
+  tidal: { name: "TIDAL", className: "bg-neutral-950 text-white ring-1 ring-white/15", Logo: TidalLogo },
+  deezer: { name: "Deezer", className: "bg-[#A238FF] text-white", Logo: DeezerLogo },
 };
 
 interface PlaylistCardProps {
@@ -91,7 +99,7 @@ export function PlaylistCard({
         {/* Hover scrim + actions (always visible on touch, hover-revealed on pointer devices) */}
         <div
           className={cn(
-            "absolute inset-x-0 bottom-0 flex items-end justify-end gap-1.5 p-2 pt-10",
+            "absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-end gap-1.5 p-2 pt-10",
             "bg-gradient-to-t from-black/60 via-black/25 to-transparent",
             "transition-opacity duration-200",
             "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"

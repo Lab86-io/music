@@ -18,7 +18,7 @@ interface ConversionProgressProps {
   isConverting: boolean;
   playlistName: string;
   sourceService: string;
-  targetService: "spotify" | "apple" | "youtube";
+  targetService: "spotify" | "apple" | "youtube" | "tidal" | "deezer";
   progress?: {
     current: number;
     total: number;
@@ -63,6 +63,10 @@ export function ConversionProgress({
   const TargetIcon =
     targetService === "spotify"
       ? SpotifyLogo
+      : targetService === "tidal"
+        ? TidalLogo
+        : targetService === "deezer"
+          ? DeezerLogo
       : targetService === "youtube"
         ? YouTubeMusicLogo
         : AppleLogo;
@@ -114,14 +118,22 @@ export function ConversionProgress({
           </div>
           <IconArrowRight className="text-muted-foreground" size={20} />
           <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-            targetService === "spotify" ? "bg-[#1DB954]" : targetService === "youtube" ? "bg-[#FF0000]" : "bg-[#FC3C44]"
+            targetService === "spotify"
+              ? "bg-[#1DB954]"
+              : targetService === "tidal"
+                ? "bg-neutral-950"
+                : targetService === "deezer"
+                  ? "bg-[#A238FF]"
+                  : targetService === "youtube"
+                    ? "bg-[#FF0000]"
+                    : "bg-[#FC3C44]"
           } text-white`}>
             <TargetIcon className="h-5 w-5" />
           </div>
           <div className="ml-2 flex-1">
             <CardTitle className="text-lg">{playlistName}</CardTitle>
             <CardDescription>
-              {sourceService === "spotify" ? "Spotify" : sourceService === "deezer" ? "Deezer" : sourceService === "tidal" ? "TIDAL" : sourceService === "youtube" ? "YouTube Music" : "Apple Music"} → {targetService === "spotify" ? "Spotify" : targetService === "youtube" ? "YouTube Music" : "Apple Music"}
+              {sourceService === "spotify" ? "Spotify" : sourceService === "deezer" ? "Deezer" : sourceService === "tidal" ? "TIDAL" : sourceService === "youtube" ? "YouTube Music" : "Apple Music"} → {targetService === "spotify" ? "Spotify" : targetService === "tidal" ? "TIDAL" : targetService === "deezer" ? "Deezer" : targetService === "youtube" ? "YouTube Music" : "Apple Music"}
             </CardDescription>
           </div>
           {progress && (

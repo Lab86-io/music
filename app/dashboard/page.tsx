@@ -19,11 +19,16 @@ import {
   IconMusic, 
   IconRefresh, 
   IconLoader2,
-  IconArrowsExchange,
   IconSearch,
   IconX
 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo, YouTubeMusicLogo } from "@/components/icons";
+import {
+  SpotifyLogo,
+  AppleLogo,
+  YouTubeMusicLogo,
+  TidalLogo,
+  DeezerLogo,
+} from "@/components/icons";
 import { Header } from "@/components/header";
 import { LinkConverter } from "@/components/link-converter";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
@@ -74,6 +79,14 @@ export default function DashboardPage() {
   // YouTube connection state
   const [youtube, setYoutube] = useState<{ configured: boolean; connected: boolean }>({
     configured: false,
+    connected: false,
+  });
+  const [tidal, setTidal] = useState<{ configured: boolean; connected: boolean }>({
+    configured: false,
+    connected: false,
+  });
+  const [deezer, setDeezer] = useState<{ configured: boolean; connected: boolean }>({
+    configured: true,
     connected: false,
   });
 
@@ -144,6 +157,17 @@ export default function DashboardPage() {
     fetch("/api/youtube/status")
       .then((r) => r.json())
       .then((d) => setYoutube({ configured: !!d.configured, connected: !!d.connected }))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/tidal/status")
+      .then((r) => r.json())
+      .then((d) => setTidal({ configured: !!d.configured, connected: !!d.connected }))
+      .catch(() => {});
+    fetch("/api/deezer/status")
+      .then((r) => r.json())
+      .then((d) => setDeezer({ configured: !!d.configured, connected: !!d.connected }))
       .catch(() => {});
   }, []);
 
@@ -232,13 +256,23 @@ export default function DashboardPage() {
   }, [appleConnected, loadApplePlaylists]);
 
   // Handle connection changes from ServiceConnect
-  const handleConnectionChange = (service: "spotify" | "apple", connected: boolean, token?: string) => {
+  const handleConnectionChange = (
+    service: "spotify" | "apple" | "youtube" | "tidal" | "deezer",
+    connected: boolean,
+    token?: string
+  ) => {
     if (service === "apple") {
       setAppleConnected(connected);
       setAppleUserToken(token || null);
       if (connected) {
         toast.success("Connected to Apple Music");
       }
+    } else if (service === "tidal") {
+      setTidal((current) => ({ ...current, connected }));
+    } else if (service === "deezer") {
+      setDeezer((current) => ({ ...current, connected }));
+    } else if (service === "youtube") {
+      setYoutube((current) => ({ ...current, connected }));
     }
   };
 
@@ -249,22 +283,29 @@ export default function DashboardPage() {
   };
 
   // Handle playlist conversion
-  // Convert straight to YouTube: the server fetches source tracks, creates a
-  // private YouTube playlist, and matches by title (quota-aware).
-  const convertToYouTube = async (
+  // Server-side destinations fetch source tracks, match them, and create a
+  // private playlist without shipping provider tokens through the client.
+  const convertToExternal = async (
     playlistName: string,
     sourceService: "spotify" | "apple",
-    playlistId: string
+    playlistId: string,
+    targetService: "youtube" | "tidal" | "deezer"
   ) => {
+    const serviceName =
+      targetService === "youtube"
+        ? "YouTube Music"
+        : targetService === "tidal"
+          ? "TIDAL"
+          : "Deezer";
     setIsConverting(true);
-    setConversionPlaylist({ name: playlistName, source: sourceService, target: "youtube" });
+    setConversionPlaylist({ name: playlistName, source: sourceService, target: targetService });
     setConversionResult(null);
     setConversionProgress(null);
     setCurrentTrack(null);
     setRecentTracks([]);
 
     try {
-      const response = await fetch("/api/youtube/import", {
+      const response = await fetch(`/api/${targetService}/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -278,7 +319,7 @@ export default function DashboardPage() {
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
-        toast.error(data.error || "YouTube conversion failed");
+        toast.error(data.error || `${serviceName} conversion failed`);
         setConversionResult({
           success: false,
           newPlaylistId: "",
@@ -293,10 +334,17 @@ export default function DashboardPage() {
         stats: {
           total: data.total,
           matched: data.added,
-          isrcMatches: 0,
-          fuzzyMatches: data.added,
+          isrcMatches: data.isrcMatches ?? 0,
+          fuzzyMatches: data.fuzzyMatches ?? data.added,
           unmatched: data.total - data.added,
-          averageConfidence: 0,
+          averageConfidence:
+            data.added > 0
+              ? Math.round(
+                  (((data.isrcMatches ?? 0) * 100 +
+                    (data.fuzzyMatches ?? data.added) * 70) /
+                    data.added)
+                )
+              : 0,
         },
         matches: [],
       });
@@ -304,13 +352,15 @@ export default function DashboardPage() {
         toast.warning(
           `Added ${data.added}/${data.total} tracks — daily YouTube quota ran out; convert the rest tomorrow.`
         );
+      } else if (data.warning) {
+        toast.warning(`Added ${data.added}/${data.total} tracks to ${serviceName} — ${data.warning}`);
       } else {
-        toast.success(`Added ${data.added}/${data.total} tracks to YouTube Music`);
+        toast.success(`Added ${data.added}/${data.total} tracks to ${serviceName}`);
       }
       window.open(data.playlistUrl, "_blank");
     } catch (error) {
-      console.error("YouTube conversion failed:", error);
-      toast.error("YouTube conversion failed. Please try again.");
+      console.error(`${serviceName} conversion failed:`, error);
+      toast.error(`${serviceName} conversion failed. Please try again.`);
     } finally {
       setIsConverting(false);
     }
@@ -340,9 +390,21 @@ export default function DashboardPage() {
       toast.error("Please connect your YouTube account first");
       return;
     }
+    if (targetService === "tidal" && !tidal.connected) {
+      toast.error("Please connect your TIDAL account first");
+      return;
+    }
+    if (targetService === "deezer" && !deezer.connected) {
+      toast.error("Connect Deezer from the advanced connection panel first");
+      return;
+    }
 
-    if (targetService === "youtube") {
-      await convertToYouTube(playlistName, sourceService, playlistId);
+    if (
+      targetService === "youtube" ||
+      targetService === "tidal" ||
+      targetService === "deezer"
+    ) {
+      await convertToExternal(playlistName, sourceService, playlistId, targetService);
       return;
     }
 
@@ -398,7 +460,6 @@ export default function DashboardPage() {
 
         for (const line of lines) {
           if (line.startsWith("event: ")) {
-            const eventType = line.slice(7);
             continue;
           }
           if (line.startsWith("data: ")) {
@@ -495,6 +556,18 @@ export default function DashboardPage() {
                 <span className="text-xs font-medium">YouTube</span>
               </Badge>
             )}
+            {tidal.connected && (
+              <Badge variant="outline" className="gap-1.5 border-neutral-500/30 bg-neutral-500/10 px-3 py-1.5">
+                <TidalLogo className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">TIDAL</span>
+              </Badge>
+            )}
+            {deezer.connected && (
+              <Badge variant="outline" className="gap-1.5 border-[#A238FF]/30 bg-[#A238FF]/10 px-3 py-1.5">
+                <DeezerLogo className="h-3.5 w-3.5 text-[#A238FF]" />
+                <span className="text-xs font-medium">Deezer</span>
+              </Badge>
+            )}
           </div>
         </Header>
         
@@ -506,7 +579,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Connection Cards (collapsed state) */}
-          {(!spotifyConnected || !appleConnected) && (
+          {(!spotifyConnected ||
+            !appleConnected ||
+            (youtube.configured && !youtube.connected) ||
+            (tidal.configured && !tidal.connected) ||
+            (deezer.configured && !deezer.connected)) && (
             <div className="mb-4">
               <ServiceConnect onConnectionChange={handleConnectionChange} />
             </div>
@@ -542,7 +619,8 @@ export default function DashboardPage() {
                 />
                 {conversionResult?.success &&
                   conversionResult.matches.length > 0 &&
-                  conversionPlaylist.target !== "youtube" && (
+                  (conversionPlaylist.target === "spotify" ||
+                    conversionPlaylist.target === "apple") && (
                   <TrackMatchReport
                     matches={conversionResult.matches}
                     targetService={conversionPlaylist.target}
@@ -668,11 +746,25 @@ export default function DashboardPage() {
                                   disabled: isConverting || !appleConnected,
                                   disabledReason: appleConnected ? undefined : "Connect Apple Music first",
                                 },
+                                ...(tidal.configured
+                                  ? [{
+                                      service: "tidal" as const,
+                                      disabled: isConverting || !tidal.connected,
+                                      disabledReason: tidal.connected ? undefined : "Connect TIDAL first",
+                                    }]
+                                  : []),
                                 ...(youtube.configured
                                   ? [{
                                       service: "youtube" as const,
                                       disabled: isConverting || !youtube.connected,
                                       disabledReason: youtube.connected ? undefined : "Connect YouTube first",
+                                    }]
+                                  : []),
+                                ...(deezer.configured
+                                  ? [{
+                                      service: "deezer" as const,
+                                      disabled: isConverting || !deezer.connected,
+                                      disabledReason: deezer.connected ? undefined : "Connect Deezer (advanced) first",
                                     }]
                                   : []),
                               ]}
@@ -716,11 +808,25 @@ export default function DashboardPage() {
                                   disabled: isConverting || !spotifyConnected,
                                   disabledReason: spotifyConnected ? undefined : "Connect Spotify first",
                                 },
+                                ...(tidal.configured
+                                  ? [{
+                                      service: "tidal" as const,
+                                      disabled: isConverting || !tidal.connected,
+                                      disabledReason: tidal.connected ? undefined : "Connect TIDAL first",
+                                    }]
+                                  : []),
                                 ...(youtube.configured
                                   ? [{
                                       service: "youtube" as const,
                                       disabled: isConverting || !youtube.connected,
                                       disabledReason: youtube.connected ? undefined : "Connect YouTube first",
+                                    }]
+                                  : []),
+                                ...(deezer.configured
+                                  ? [{
+                                      service: "deezer" as const,
+                                      disabled: isConverting || !deezer.connected,
+                                      disabledReason: deezer.connected ? undefined : "Connect Deezer (advanced) first",
                                     }]
                                   : []),
                               ]}
