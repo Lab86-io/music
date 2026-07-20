@@ -6,6 +6,7 @@ import { ServiceConnect } from "@/components/service-connect";
 import { Header } from "@/components/header";
 import { LinkConverter } from "@/components/link-converter";
 import { Equalizer } from "@/components/animated-icons";
+import { DancingLetters } from "@/components/dancing-letters";
 import {
   SpotifyLogo,
   AppleLogo,
@@ -69,8 +70,9 @@ export default function HomePage() {
               <AmazonMusicLogo className="h-3.5 w-3.5 text-[#25D1DA]" />
               <span>5 music services</span>
             </div>
-            <h1 className="text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-[3.25rem]">
-              Music links that play <span className="text-primary">everywhere</span>
+            <h1 className="font-display text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-[3.25rem]">
+              Music links that play{" "}
+              <DancingLetters text="everywhere" className="text-primary" />
             </h1>
             <p className="mx-auto mt-4 max-w-lg text-balance text-base text-muted-foreground sm:text-lg">
               Paste one link — song, album, artist, or playlist. Get matches on Spotify,

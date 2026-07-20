@@ -457,7 +457,7 @@ export default function DashboardPage() {
           {/* Playlists */}
           {(spotifyConnected || appleConnected) && (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <h1 className="text-xl font-semibold tracking-tight">Your library</h1>
+              <h1 className="font-display text-xl font-semibold tracking-tight">Your library</h1>
               <div className="sticky top-[57px] z-20 mt-1 -mx-1 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-1 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div className="flex gap-1 shrink-0">
                   {spotifyConnected && (

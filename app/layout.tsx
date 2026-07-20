@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
-import { Figtree } from "next/font/google";
+import { Figtree, Averia_Serif_Libre } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/lib/auth";
 import "./globals.css";
 
-const figtree = Figtree({ 
-  subsets: ["latin"], 
+const figtree = Figtree({
+  subsets: ["latin"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+// Display face for titles and branding only — not body copy
+const averia = Averia_Serif_Libre({
+  subsets: ["latin"],
+  weight: ["300", "400", "700"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -54,7 +62,7 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" className={figtree.variable} suppressHydrationWarning>
+    <html lang="en" className={`${figtree.variable} ${averia.variable}`} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />

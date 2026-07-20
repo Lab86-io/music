@@ -20,7 +20,7 @@ export function Header({ children }: HeaderProps) {
             height={28}
             className="rounded-md"
           />
-          <span className="font-semibold text-sm">Playlist Converter</span>
+          <span className="font-display text-sm font-bold">Playlist Converter</span>
         </Link>
         <div className="flex items-center gap-2">
           {children}
