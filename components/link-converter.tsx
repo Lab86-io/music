@@ -24,6 +24,7 @@ import {
   SpotifyLogo,
   AppleLogo,
   DeezerLogo,
+  TidalLogo,
   YouTubeMusicLogo,
   AmazonMusicLogo,
 } from "@/components/icons";
@@ -57,6 +58,12 @@ const BRAND: Record<
     chip: "bg-[#FC3C44]/12 text-[#c2202b] dark:text-[#ff6b71]",
     button: "bg-[#FC3C44] text-white hover:bg-[#ff4f56]",
   },
+  tidal: {
+    name: "TIDAL",
+    color: "",
+    chip: "bg-foreground/10 text-foreground",
+    button: "bg-foreground text-background hover:opacity-90",
+  },
   deezer: {
     name: "Deezer",
     color: "#A238FF",
@@ -86,13 +93,16 @@ function ServiceLogo({
   className?: string;
   colored?: boolean;
 }) {
-  const style = colored ? { color: BRAND[service].color } : undefined;
+  const brandColor = BRAND[service].color;
+  const style = colored && brandColor ? { color: brandColor } : undefined;
   const props = { className, style };
   switch (service) {
     case "spotify":
       return <SpotifyLogo {...props} />;
     case "apple":
       return <AppleLogo {...props} />;
+    case "tidal":
+      return <TidalLogo {...props} />;
     case "deezer":
       return <DeezerLogo {...props} />;
     case "youtube":
@@ -127,6 +137,18 @@ type ConvertApiResponse = ConversionResponse | PlaylistShareResponse;
 interface HistoryItem {
   timestamp: number;
   result: ConversionResponse;
+}
+
+interface SearchCandidate {
+  title: string;
+  artist: string;
+  album?: string;
+  artworkUrl?: string;
+  url: string;
+}
+
+function looksLikeUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim()) || /^[\w.-]+\.[a-z]{2,}\//i.test(value.trim());
 }
 
 function formatDuration(ms?: number) {
@@ -596,6 +618,7 @@ export function LinkConverter({
   const [result, setResult] = useState<ConvertApiResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [autoRan, setAutoRan] = useState(false);
+  const [candidates, setCandidates] = useState<SearchCandidate[] | null>(null);
 
   useEffect(() => {
     setHistory(loadHistory());
@@ -605,17 +628,43 @@ export function LinkConverter({
   const isAmazon = useMemo(() => isAmazonMusicUrl(url), [url]);
   const isDeezerShort = useMemo(() => isDeezerShortLink(url), [url]);
 
-  const handleConvert = async () => {
-    if (!url.trim() || isConverting) return;
+  const isSearchMode = url.trim().length > 0 && !looksLikeUrl(url) && !parseMusicUrl(url);
+
+  const runTextSearch = async () => {
     setIsConverting(true);
     setError(null);
     setResult(null);
+    setCandidates(null);
+    try {
+      const response = await fetch(`/api/convert/search?q=${encodeURIComponent(url.trim())}`);
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || "Search failed. Please try again.");
+        return;
+      }
+      if (!data.results?.length) {
+        setError("No songs found for that search. Try adding the artist name.");
+        return;
+      }
+      setCandidates(data.results);
+    } catch {
+      setError("Search failed. Please try again.");
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  const convertUrl = async (targetUrl: string) => {
+    setIsConverting(true);
+    setError(null);
+    setResult(null);
+    setCandidates(null);
 
     try {
       const response = await fetch("/api/convert/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: targetUrl }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -642,6 +691,15 @@ export function LinkConverter({
     } finally {
       setIsConverting(false);
     }
+  };
+
+  const handleConvert = async () => {
+    if (!url.trim() || isConverting) return;
+    if (isSearchMode) {
+      await runTextSearch();
+      return;
+    }
+    await convertUrl(url);
   };
 
   const clearHistory = () => {
@@ -692,7 +750,7 @@ export function LinkConverter({
           placeholder={
             compact
               ? "Convert a music link…"
-              : "Paste a music link — song, album, artist, or playlist…"
+              : "Paste a music link — or type a song name…"
           }
           aria-label="Music link to convert"
           className={cn(
@@ -730,6 +788,11 @@ export function LinkConverter({
               <Vinyl spinning className={compact ? "h-4 w-4" : "h-4.5 w-4.5"} />
               {!compact && <span className="hidden sm:inline">Matching…</span>}
             </>
+          ) : isSearchMode ? (
+            <>
+              {!compact && <span className="hidden sm:inline">Search</span>}
+              <IconSearch size={compact ? 15 : 17} />
+            </>
           ) : (
             <>
               {!compact && <span className="hidden sm:inline">Convert</span>}
@@ -763,6 +826,11 @@ export function LinkConverter({
               <IconArrowRight size={12} className="opacity-60" />
               {detected.type === "playlist" ? "48-hour share link" : "links for every service"}
             </span>
+          ) : isSearchMode ? (
+            <span className="animate-rise-in inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <IconSearch size={12} />
+              Song search — press Enter to find &ldquo;{url.trim().slice(0, 40)}&rdquo;
+            </span>
           ) : isDeezerShort ? (
             <span
               className={cn(
@@ -780,7 +848,7 @@ export function LinkConverter({
             </span>
           ) : (
             <span className="text-xs text-muted-foreground/70">
-              Works with Spotify, Apple Music, Deezer, and YouTube Music links
+              Works with Spotify, Apple Music, Deezer, TIDAL, and YouTube Music links
             </span>
           ))}
       </div>
@@ -792,10 +860,48 @@ export function LinkConverter({
         </div>
       )}
 
+      {candidates && (
+        <div className="animate-rise-in mt-4 overflow-hidden rounded-2xl border border-border/70">
+          <p className="border-b border-border/60 bg-muted/40 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Pick the right song
+          </p>
+          <ul className="divide-y divide-border/50">
+            {candidates.map((candidate) => (
+              <li key={candidate.url}>
+                <button
+                  onClick={() => convertUrl(candidate.url)}
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
+                >
+                  {candidate.artworkUrl ? (
+                    <Image
+                      src={candidate.artworkUrl}
+                      alt=""
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 shrink-0 rounded-md object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 shrink-0 rounded-md bg-muted" />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{candidate.title}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {candidate.artist}
+                      {candidate.album ? ` · ${candidate.album}` : ""}
+                    </span>
+                  </span>
+                  <IconArrowRight size={15} className="shrink-0 text-muted-foreground/60" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {isConverting && (
         <p className="animate-rise-in mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <IconLoader2 size={15} className="animate-spin" />
-          Searching four catalogs…
+          Searching five catalogs…
         </p>
       )}
 

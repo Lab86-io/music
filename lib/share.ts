@@ -3,6 +3,7 @@ import { db, sharedPlaylists } from "@/lib/db";
 import { getPublicSpotifyPlaylist } from "@/lib/spotify";
 import { getPublicAppleMusicPlaylist } from "@/lib/apple-music";
 import { getDeezerPlaylist, type DeezerTrack } from "@/lib/deezer";
+import { getTidalPlaylist, getTidalTracksByIds, type TidalItem } from "@/lib/tidal";
 import { getServiceName, type ParsedPlaylistUrl } from "@/lib/url-parser";
 import type { SpotifyTrack, AppleMusicTrack } from "@/types";
 
@@ -56,6 +57,17 @@ function extractDeezerTrackData(track: DeezerTrack): SharedTrack {
   };
 }
 
+function extractTidalTrackData(track: TidalItem): SharedTrack {
+  return {
+    name: track.title,
+    artist: track.artist,
+    album: track.album || "",
+    albumArt: track.artworkUrl,
+    isrc: track.isrc,
+    duration_ms: track.duration,
+  };
+}
+
 function extractAppleTrackData(track: AppleMusicTrack): SharedTrack {
   // Apple Music artwork URLs have {w}x{h} placeholders - replace with small size
   const albumArt = track.attributes.artwork?.url
@@ -98,6 +110,19 @@ export async function createShareFromParsedUrl(
         403
       );
     }
+  } else if (parsed.service === "tidal") {
+    const playlist = await getTidalPlaylist(parsed.playlistId);
+    if (!playlist) {
+      throw new ShareError(
+        "Could not access this TIDAL playlist. Make sure it's public.",
+        403
+      );
+    }
+    playlistName = playlist.name;
+    playlistImage = playlist.image;
+    createdByName = null;
+    const tidalTracks = await getTidalTracksByIds(playlist.trackIds);
+    tracks = tidalTracks.map(extractTidalTrackData);
   } else if (parsed.service === "deezer") {
     const playlist = await getDeezerPlaylist(parsed.playlistId);
     if (!playlist) {

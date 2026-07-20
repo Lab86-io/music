@@ -9,7 +9,7 @@
  */
 
 export interface ParsedPlaylistUrl {
-  service: "spotify" | "apple" | "deezer";
+  service: "spotify" | "apple" | "deezer" | "tidal";
   playlistId: string;
   storefront?: string; // For Apple Music regional catalogs (e.g., "us", "gb", "jp")
 }
@@ -59,6 +59,15 @@ export function parsePlaylistUrl(url: string): ParsedPlaylistUrl | null {
       }
     }
 
+    // Deezer / TIDAL playlists share the generic parser
+    const generic = parseMusicUrl(url);
+    if (
+      generic?.type === "playlist" &&
+      (generic.service === "deezer" || generic.service === "tidal")
+    ) {
+      return { service: generic.service, playlistId: generic.id };
+    }
+
     return null;
   } catch {
     // Invalid URL
@@ -71,7 +80,7 @@ export function parsePlaylistUrl(url: string): ParsedPlaylistUrl | null {
 // ---------------------------------------------------------------------------
 
 export type MusicLinkType = "track" | "album" | "artist" | "playlist";
-export type MusicService = "spotify" | "apple" | "deezer" | "youtube" | "amazon";
+export type MusicService = "spotify" | "apple" | "deezer" | "tidal" | "youtube" | "amazon";
 
 export interface ParsedMusicUrl {
   service: MusicService;
@@ -179,6 +188,26 @@ export function parseMusicUrl(url: string): ParsedMusicUrl | null {
     }
 
     if (
+      parsed.hostname === "tidal.com" ||
+      parsed.hostname === "www.tidal.com" ||
+      parsed.hostname === "listen.tidal.com"
+    ) {
+      // Formats: tidal.com/browse/track/123, listen.tidal.com/album/456,
+      // tidal.com/playlist/{uuid}, optional /browse and locale-free
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const rest = parts[0] === "browse" ? parts.slice(1) : parts;
+      const kind = rest[0];
+      const id = rest[1];
+      if (kind === "playlist" && id && /^[0-9a-fA-F-]{16,40}$/.test(id)) {
+        return { service: "tidal", type: "playlist", id };
+      }
+      if ((kind === "track" || kind === "album" || kind === "artist") && id && /^\d+$/.test(id)) {
+        return { service: "tidal", type: kind as MusicLinkType, id };
+      }
+      return null;
+    }
+
+    if (
       parsed.hostname === "music.youtube.com" ||
       parsed.hostname === "www.youtube.com" ||
       parsed.hostname === "youtube.com" ||
@@ -218,6 +247,7 @@ export function isValidPlaylistUrl(url: string): boolean {
 export function getServiceName(parsed: ParsedPlaylistUrl): string {
   if (parsed.service === "spotify") return "Spotify";
   if (parsed.service === "deezer") return "Deezer";
+  if (parsed.service === "tidal") return "TIDAL";
   return "Apple Music";
 }
 

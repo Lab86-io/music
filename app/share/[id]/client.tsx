@@ -17,7 +17,7 @@ import {
   IconPlayerPlay,
   IconShare
 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { SpotifyLogo, AppleLogo, YouTubeMusicLogo } from "@/components/icons";
 import { Header } from "@/components/header";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,7 @@ interface SharedPlaylist {
   id: string;
   playlistName: string;
   playlistImage?: string;
-  sourceService: "spotify" | "apple";
+  sourceService: string;
   trackCount: number;
   tracks: { 
     name: string; 
@@ -112,6 +112,11 @@ export default function SharePageClient() {
 
   // Import states
   const [importing, setImporting] = useState(false);
+  const [youtube, setYoutube] = useState<{ configured: boolean; connected: boolean }>({
+    configured: false,
+    connected: false,
+  });
+  const [ytImporting, setYtImporting] = useState(false);
   const [importTarget, setImportTarget] = useState<"spotify" | "apple" | null>(null);
   
   // Streaming progress states
@@ -119,6 +124,45 @@ export default function SharePageClient() {
   const [currentTrack, setCurrentTrack] = useState<CurrentTrack | undefined>();
   const [recentTracks, setRecentTracks] = useState<CurrentTrack[]>([]);
   const [conversionResult, setConversionResult] = useState<ConversionResult | undefined>();
+
+  // YouTube availability (button only appears once OAuth is configured server-side)
+  useEffect(() => {
+    fetch("/api/youtube/status")
+      .then((r) => r.json())
+      .then((d) => setYoutube({ configured: !!d.configured, connected: !!d.connected }))
+      .catch(() => {});
+  }, []);
+
+  const handleYouTubeImport = async () => {
+    if (!sharedPlaylist || ytImporting) return;
+    setYtImporting(true);
+    try {
+      const response = await fetch("/api/youtube/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: sharedPlaylist.playlistName,
+          tracks: sharedPlaylist.tracks.map((t) => ({ name: t.name, artist: t.artist })),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        toast.error(data.error || "YouTube import failed");
+        return;
+      }
+      const summary = `Added ${data.added}/${data.total} tracks to YouTube`;
+      if (data.quotaExceeded) {
+        toast.warning(`${summary} — daily YouTube quota ran out; try the rest tomorrow.`);
+      } else {
+        toast.success(summary);
+      }
+      window.open(data.playlistUrl, "_blank");
+    } catch {
+      toast.error("YouTube import failed");
+    } finally {
+      setYtImporting(false);
+    }
+  };
 
   // Fetch shared playlist data
   useEffect(() => {
@@ -545,6 +589,37 @@ export default function SharePageClient() {
                 </Button>
               )}
             </div>
+
+            {/* YouTube Music Button (shown when OAuth is configured) */}
+            {youtube.configured && (
+              <div className="flex items-center gap-3">
+                {youtube.connected ? (
+                  <Button
+                    onClick={handleYouTubeImport}
+                    disabled={ytImporting || importing}
+                    className="flex-1 gap-2 bg-[#FF0000] hover:bg-[#e60000] text-white"
+                  >
+                    {ytImporting ? (
+                      <IconLoader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <YouTubeMusicLogo className="h-4 w-4" />
+                    )}
+                    {ytImporting ? "Importing..." : "Import to YouTube Music"}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      window.location.href = "/api/youtube/auth";
+                    }}
+                    variant="outline"
+                    className="flex-1 gap-2"
+                  >
+                    <YouTubeMusicLogo className="h-4 w-4" />
+                    Connect YouTube to Import
+                  </Button>
+                )}
+              </div>
+            )}
 
             <p className="text-xs text-muted-foreground text-center pt-2">
               This share link expires after 48 hours.

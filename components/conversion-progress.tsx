@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { IconLoader2, IconCheck, IconX, IconArrowRight, IconAlertTriangle } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { SpotifyLogo, AppleLogo, DeezerLogo, TidalLogo } from "@/components/icons";
 
 interface CurrentTrack {
   name: string;
@@ -17,7 +17,7 @@ interface CurrentTrack {
 interface ConversionProgressProps {
   isConverting: boolean;
   playlistName: string;
-  sourceService: "spotify" | "apple";
+  sourceService: string;
   targetService: "spotify" | "apple";
   progress?: {
     current: number;
@@ -50,7 +50,14 @@ export function ConversionProgress({
   recentTracks = [],
   result,
 }: ConversionProgressProps) {
-  const SourceIcon = sourceService === "spotify" ? SpotifyLogo : AppleLogo;
+  const SourceIcon =
+    sourceService === "spotify"
+      ? SpotifyLogo
+      : sourceService === "deezer"
+        ? DeezerLogo
+        : sourceService === "tidal"
+          ? TidalLogo
+          : AppleLogo;
   const TargetIcon = targetService === "spotify" ? SpotifyLogo : AppleLogo;
 
   const progressValue = progress ? (progress.current / progress.total) * 100 : 0;
@@ -86,7 +93,13 @@ export function ConversionProgress({
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-            sourceService === "spotify" ? "bg-[#1DB954]" : "bg-[#FC3C44]"
+            sourceService === "spotify"
+              ? "bg-[#1DB954]"
+              : sourceService === "deezer"
+                ? "bg-[#A238FF]"
+                : sourceService === "tidal"
+                  ? "bg-neutral-900"
+                  : "bg-[#FC3C44]"
           } text-white`}>
             <SourceIcon className="h-5 w-5" />
           </div>
@@ -99,7 +112,7 @@ export function ConversionProgress({
           <div className="ml-2 flex-1">
             <CardTitle className="text-lg">{playlistName}</CardTitle>
             <CardDescription>
-              {sourceService === "spotify" ? "Spotify" : "Apple Music"} → {targetService === "spotify" ? "Spotify" : "Apple Music"}
+              {sourceService === "spotify" ? "Spotify" : sourceService === "deezer" ? "Deezer" : sourceService === "tidal" ? "TIDAL" : "Apple Music"} → {targetService === "spotify" ? "Spotify" : "Apple Music"}
             </CardDescription>
           </div>
           {progress && (

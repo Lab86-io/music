@@ -43,6 +43,18 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "is5-ssl.mzstatic.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.dzcdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "resources.tidal.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+      },
     ],
   },
 };

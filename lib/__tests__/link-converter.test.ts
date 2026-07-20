@@ -105,6 +105,36 @@ describe("parseMusicUrl", () => {
     });
   });
 
+  describe("TIDAL URLs", () => {
+    it("parses browse and listen track/album/artist URLs", () => {
+      expect(parseMusicUrl("https://tidal.com/browse/track/140293853")).toEqual({
+        service: "tidal",
+        type: "track",
+        id: "140293853",
+      });
+      expect(parseMusicUrl("https://listen.tidal.com/album/140293842")).toEqual({
+        service: "tidal",
+        type: "album",
+        id: "140293842",
+      });
+      expect(parseMusicUrl("https://tidal.com/artist/15686")).toEqual({
+        service: "tidal",
+        type: "artist",
+        id: "15686",
+      });
+    });
+
+    it("parses playlist UUID URLs", () => {
+      expect(
+        parseMusicUrl("https://tidal.com/browse/playlist/36ea71a8-445e-41a4-82ab-6628c581535d")
+      ).toEqual({
+        service: "tidal",
+        type: "playlist",
+        id: "36ea71a8-445e-41a4-82ab-6628c581535d",
+      });
+    });
+  });
+
   describe("YouTube URLs", () => {
     it("parses YouTube Music watch URLs", () => {
       expect(parseMusicUrl("https://music.youtube.com/watch?v=dQw4w9WgXcQ")).toEqual({

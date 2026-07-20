@@ -29,7 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? "Spotify"
       : playlist.sourceService === "deezer"
         ? "Deezer"
-        : "Apple Music";
+        : playlist.sourceService === "tidal"
+          ? "TIDAL"
+          : "Apple Music";
   const sharerName = playlist.createdByName || "Someone";
   
   const title = `${sharerName} shared "${playlist.playlistName}" with you`;

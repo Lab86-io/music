@@ -56,6 +56,15 @@ export function AmazonMusicLogo(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function TidalLogo(props: SVGProps<SVGSVGElement>) {
+  // TIDAL diamond mark
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12.012 3.992L8.008 7.996 4.004 3.992 0 7.996l4.004 4.004L8.008 8l4.004 4.004L8.008 16.008l4.004 4.004 4.004-4.004L12.012 12l4.004-4.004-4.004-4.004zm4.004 4.004l4.004-4.004L24.023 8l-4.004 4.004-4.003-4.008z" />
+    </svg>
+  );
+}
+
 export function MusicNote(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>

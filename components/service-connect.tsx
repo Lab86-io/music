@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IconLoader2 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { SpotifyLogo, AppleLogo, YouTubeMusicLogo } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface SpotifySession {
@@ -44,8 +44,25 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleUserToken, setAppleUserToken] = useState<string | null>(null);
   const [musicKit, setMusicKit] = useState<MusicKitInstance | null>(null);
+  const [youtube, setYoutube] = useState<{ configured: boolean; connected: boolean }>({
+    configured: false,
+    connected: false,
+  });
 
   const spotifyConnected = !!spotifySession;
+
+  // YouTube status (row only appears once OAuth env vars are configured)
+  useEffect(() => {
+    fetch("/api/youtube/status")
+      .then((r) => r.json())
+      .then((d) => setYoutube({ configured: !!d.configured, connected: !!d.connected }))
+      .catch(() => {});
+  }, []);
+
+  const disconnectYouTube = async () => {
+    await fetch("/api/youtube/status", { method: "DELETE" });
+    setYoutube((y) => ({ ...y, connected: false }));
+  };
 
   // Fetch Spotify session on mount
   useEffect(() => {
@@ -229,6 +246,14 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
         onConnect: connectApple,
         onDisconnect: disconnectApple,
       }}
+      youtube={{
+        configured: youtube.configured,
+        connected: youtube.connected,
+        onConnect: () => {
+          window.location.href = "/api/youtube/auth";
+        },
+        onDisconnect: disconnectYouTube,
+      }}
     />
   );
 }
@@ -300,9 +325,15 @@ interface ConnectionPanelProps {
     onConnect: () => void;
     onDisconnect: () => void;
   };
+  youtube?: {
+    configured: boolean;
+    connected: boolean;
+    onConnect: () => void;
+    onDisconnect: () => void;
+  };
 }
 
-function ConnectionPanel({ spotify, apple }: ConnectionPanelProps) {
+function ConnectionPanel({ spotify, apple, youtube }: ConnectionPanelProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/60 divide-y divide-border/60">
       <ConnectionRow
@@ -389,6 +420,41 @@ function ConnectionPanel({ spotify, apple }: ConnectionPanelProps) {
           )
         }
       />
+      {youtube?.configured && (
+        <ConnectionRow
+          logo={<YouTubeMusicLogo className="h-5.5 w-5.5" />}
+          tileClass="bg-[#FF0000]"
+          name="YouTube Music"
+          status={
+            <>
+              <StatusDot connected={youtube.connected} />
+              {youtube.connected ? (
+                <span>Connected</span>
+              ) : (
+                <span>Import shared playlists into YouTube</span>
+              )}
+            </>
+          }
+          action={
+            youtube.connected ? (
+              <button
+                onClick={youtube.onDisconnect}
+                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Disconnect
+              </button>
+            ) : (
+              <button
+                onClick={youtube.onConnect}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FF0000] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#ff2222]"
+              >
+                <YouTubeMusicLogo className="h-4 w-4" />
+                Connect
+              </button>
+            )
+          }
+        />
+      )}
     </div>
   );
 }

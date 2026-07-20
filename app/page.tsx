@@ -11,6 +11,7 @@ import {
   SpotifyLogo,
   AppleLogo,
   DeezerLogo,
+  TidalLogo,
   YouTubeMusicLogo,
   AmazonMusicLogo,
 } from "@/components/icons";
@@ -66,17 +67,18 @@ export default function HomePage() {
               <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
               <Equalizer className="h-3 text-primary" />
               <DeezerLogo className="h-3.5 w-3.5 text-[#A238FF]" />
+              <TidalLogo className="h-3.5 w-3.5" />
               <YouTubeMusicLogo className="h-3.5 w-3.5 text-[#FF0000]" />
               <AmazonMusicLogo className="h-3.5 w-3.5 text-[#25D1DA]" />
-              <span>5 music services</span>
+              <span>6 music services</span>
             </div>
             <h1 className="font-display text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-[3.25rem]">
               Music links that play{" "}
               <DancingLetters text="everywhere" className="text-primary" />
             </h1>
             <p className="mx-auto mt-4 max-w-lg text-balance text-base text-muted-foreground sm:text-lg">
-              Paste one link — song, album, artist, or playlist. Get matches on Spotify,
-              Apple Music, Deezer, YouTube Music, and Amazon Music. No account needed.
+              Paste a link or type a song name. Get matches on Spotify, Apple Music,
+              Deezer, TIDAL, YouTube Music, and Amazon Music. No account needed.
             </p>
           </section>
 

@@ -27,6 +27,15 @@ import {
   type DeezerArtist,
 } from "./deezer";
 import {
+  getTidalTrack,
+  getTidalAlbum,
+  getTidalArtist,
+  getTidalTracksByIsrc,
+  searchTidal,
+  isTidalConfigured,
+  type TidalItem,
+} from "./tidal";
+import {
   getYouTubeVideoInfo,
   parseYouTubeTitle,
   searchYouTubeMusic,
@@ -306,6 +315,20 @@ function mapDeezerArtistMeta(a: DeezerArtist): LinkMetadata {
   };
 }
 
+function mapTidalMeta(item: TidalItem): LinkMetadata {
+  return {
+    type: item.type,
+    title: item.title,
+    artist: item.artist,
+    album: item.album,
+    isrc: item.isrc,
+    artworkUrl: item.artworkUrl,
+    releaseDate: item.releaseDate,
+    duration: item.duration,
+    url: item.url,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Query generation (most specific -> most permissive)
 // ---------------------------------------------------------------------------
@@ -455,6 +478,28 @@ async function findDeezerMatch(source: LinkMetadata): Promise<DirectMatch | null
   return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
 }
 
+async function findTidalMatch(source: LinkMetadata): Promise<DirectMatch | null> {
+  if (!isTidalConfigured()) return null;
+
+  if (source.type === "track" && source.isrc) {
+    const hits = await getTidalTracksByIsrc(source.isrc);
+    for (const hit of hits) {
+      const meta = mapTidalMeta(hit);
+      if (artistSimilarity(source.artist, meta.artist) >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
+        return { metadata: meta, score: 1, method: "isrc" };
+      }
+    }
+  }
+
+  let best: DirectMatch | null = null;
+  for (const query of buildPlainQueries(source)) {
+    const items = await searchTidal(query, source.type as "track" | "album" | "artist");
+    best = pickBest(source, items.map(mapTidalMeta), best);
+    if (best && best.score >= EARLY_EXIT_SCORE) break;
+  }
+  return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
+}
+
 /**
  * YouTube Music: direct video match for tracks (needs YOUTUBE_API_KEY),
  * otherwise a pre-filled search link. Albums/artists always get search links.
@@ -551,6 +596,21 @@ async function fetchSourceMetadata(parsed: ParsedMusicUrl): Promise<LinkMetadata
     }
     return null;
   }
+  if (parsed.service === "tidal") {
+    if (parsed.type === "track") {
+      const t = await getTidalTrack(parsed.id);
+      return t ? mapTidalMeta(t) : null;
+    }
+    if (parsed.type === "album") {
+      const a = await getTidalAlbum(parsed.id);
+      return a ? mapTidalMeta(a) : null;
+    }
+    if (parsed.type === "artist") {
+      const a = await getTidalArtist(parsed.id);
+      return a ? mapTidalMeta(a) : null;
+    }
+    return null;
+  }
   if (parsed.service === "youtube") {
     const info = await getYouTubeVideoInfo(parsed.id);
     if (!info) return null;
@@ -569,7 +629,7 @@ async function fetchSourceMetadata(parsed: ParsedMusicUrl): Promise<LinkMetadata
 // Public entry point
 // ---------------------------------------------------------------------------
 
-const LINK_ORDER: MusicService[] = ["spotify", "apple", "deezer", "youtube", "amazon"];
+const LINK_ORDER: MusicService[] = ["spotify", "apple", "deezer", "tidal", "youtube", "amazon"];
 
 function toServiceLink(service: MusicService, match: DirectMatch | null): ServiceLink | null {
   if (!match) return null;
@@ -632,6 +692,10 @@ export async function convertMusicLink(parsed: ParsedMusicUrl): Promise<LinkConv
       lookups.push(
         findDeezerMatch(source).then((m) => void results.set("deezer", toServiceLink("deezer", m)))
       );
+    } else if (service === "tidal") {
+      lookups.push(
+        findTidalMatch(source).then((m) => void results.set("tidal", toServiceLink("tidal", m)))
+      );
     } else if (service === "youtube") {
       lookups.push(findYouTubeLink(source).then((l) => void results.set("youtube", l)));
     } else if (service === "amazon") {
@@ -651,10 +715,10 @@ export async function convertMusicLink(parsed: ParsedMusicUrl): Promise<LinkConv
   // Apple Music (and vice versa); everything else prefers Spotify.
   const preference: MusicService[] =
     parsed.service === "spotify"
-      ? ["apple", "deezer", "youtube"]
+      ? ["apple", "deezer", "tidal", "youtube"]
       : parsed.service === "apple"
-        ? ["spotify", "deezer", "youtube"]
-        : ["spotify", "apple", "deezer", "youtube"];
+        ? ["spotify", "deezer", "tidal", "youtube"]
+        : ["spotify", "apple", "deezer", "tidal", "youtube"];
   const primary =
     preference
       .map((s) => links.find((l) => l.service === s && l.kind === "direct"))

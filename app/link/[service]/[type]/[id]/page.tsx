@@ -10,7 +10,7 @@ import type { MusicService, MusicLinkType } from "@/lib/url-parser";
 
 export const dynamic = "force-dynamic";
 
-const VALID_SERVICES = ["spotify", "apple", "deezer", "youtube"] as const;
+const VALID_SERVICES = ["spotify", "apple", "deezer", "tidal", "youtube"] as const;
 const VALID_TYPES = ["track", "album", "artist"] as const;
 
 interface PageParams {
@@ -57,7 +57,7 @@ export async function generateMetadata({
   const { source, type } = result;
   const title =
     type === "artist" ? source.title : `${source.title} — ${source.artist}`;
-  const description = `Listen to this ${type} on Spotify, Apple Music, Deezer, YouTube Music, or Amazon Music. One link, every service.`;
+  const description = `Listen to this ${type} on Spotify, Apple Music, Deezer, TIDAL, YouTube Music, or Amazon Music. One link, every service.`;
   return {
     title,
     description,

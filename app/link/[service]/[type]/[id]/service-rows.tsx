@@ -1,11 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { IconCheck, IconCopy, IconExternalLink, IconLink, IconSearch } from "@tabler/icons-react";
+import QRCode from "qrcode";
+import {
+  IconCheck,
+  IconCopy,
+  IconExternalLink,
+  IconLink,
+  IconQrcode,
+  IconSearch,
+  IconX,
+} from "@tabler/icons-react";
 import {
   SpotifyLogo,
   AppleLogo,
   DeezerLogo,
+  TidalLogo,
   YouTubeMusicLogo,
   AmazonMusicLogo,
 } from "@/components/icons";
@@ -16,17 +26,21 @@ const BRAND: Record<MusicService, { name: string; color: string }> = {
   spotify: { name: "Spotify", color: "#1DB954" },
   apple: { name: "Apple Music", color: "#FC3C44" },
   deezer: { name: "Deezer", color: "#A238FF" },
+  tidal: { name: "TIDAL", color: "" },
   youtube: { name: "YouTube Music", color: "#FF0000" },
   amazon: { name: "Amazon Music", color: "#25D1DA" },
 };
 
 function Logo({ service, className }: { service: MusicService; className?: string }) {
-  const props = { className, style: { color: BRAND[service].color } };
+  const brandColor = BRAND[service].color;
+  const props = { className, style: brandColor ? { color: brandColor } : undefined };
   switch (service) {
     case "spotify":
       return <SpotifyLogo {...props} />;
     case "apple":
       return <AppleLogo {...props} />;
+    case "tidal":
+      return <TidalLogo {...props} />;
     case "deezer":
       return <DeezerLogo {...props} />;
     case "youtube":
@@ -85,20 +99,60 @@ export function ServiceRow({
 
 export function CopyPageUrlButton({ className }: { className?: string }) {
   const [copied, setCopied] = useState(false);
+  const [qr, setQr] = useState<string | null>(null);
+
+  const toggleQr = async () => {
+    if (qr) {
+      setQr(null);
+      return;
+    }
+    try {
+      const dataUrl = await QRCode.toDataURL(window.location.href, {
+        width: 480,
+        margin: 1,
+        color: { dark: "#000000", light: "#ffffff" },
+      });
+      setQr(dataUrl);
+    } catch {
+      // QR generation failed — copy still works
+    }
+  };
+
   return (
-    <button
-      onClick={async () => {
-        await navigator.clipboard.writeText(window.location.href);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1800);
-      }}
-      className={cn(
-        "inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-all hover:brightness-105 active:scale-[0.98]",
-        className
+    <div className={cn("flex flex-col items-center gap-4", className)}>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={async () => {
+            await navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1800);
+          }}
+          className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-all hover:brightness-105 active:scale-[0.98]"
+        >
+          {copied ? <IconCheck size={15} /> : <IconLink size={15} />}
+          {copied ? "Copied!" : "Copy this page's link"}
+        </button>
+        <button
+          onClick={toggleQr}
+          aria-label={qr ? "Hide QR code" : "Show QR code"}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground backdrop-blur transition-colors hover:border-border hover:text-foreground"
+        >
+          {qr ? <IconX size={16} /> : <IconQrcode size={16} />}
+        </button>
+      </div>
+      {qr && (
+        <div className="animate-rise-in flex flex-col items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qr}
+            alt="QR code for this page"
+            width={176}
+            height={176}
+            className="h-44 w-44 rounded-xl border border-border/70 bg-white p-2 shadow-lg"
+          />
+          <p className="text-xs text-muted-foreground">Scan to open on your phone</p>
+        </div>
       )}
-    >
-      {copied ? <IconCheck size={15} /> : <IconLink size={15} />}
-      {copied ? "Copied!" : "Copy this page's link"}
-    </button>
+    </div>
   );
 }
