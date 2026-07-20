@@ -39,7 +39,11 @@ import {
   getYouTubeVideoInfo,
   parseYouTubeTitle,
   searchYouTubeMusic,
+  searchYouTubeChannel,
+  searchYouTubeAlbumPlaylist,
   youtubeMusicWatchUrl,
+  youtubeMusicChannelUrl,
+  youtubeMusicPlaylistUrl,
   youtubeMusicSearchUrl,
 } from "./youtube";
 
@@ -501,8 +505,9 @@ async function findTidalMatch(source: LinkMetadata): Promise<DirectMatch | null>
 }
 
 /**
- * YouTube Music: direct video match for tracks (needs YOUTUBE_API_KEY),
- * otherwise a pre-filled search link. Albums/artists always get search links.
+ * YouTube Music: direct matches for tracks (videos), albums (auto-generated
+ * OLAK5uy_ playlists), and artists (channels) via the Data API; falls back to
+ * a pre-filled search link when the key is missing or nothing matches well.
  */
 async function findYouTubeLink(source: LinkMetadata): Promise<ServiceLink> {
   const query =
@@ -512,7 +517,57 @@ async function findYouTubeLink(source: LinkMetadata): Promise<ServiceLink> {
     url: youtubeMusicSearchUrl(query),
     kind: "search",
   };
-  if (source.type !== "track") return searchLink;
+
+  if (source.type === "artist") {
+    const hit = await searchYouTubeChannel(source.title);
+    if (!hit) return searchLink;
+    const score = similarity(source.title, hit.title);
+    if (score < 0.5) return searchLink;
+    return {
+      service: "youtube",
+      url: youtubeMusicChannelUrl(hit.channelId),
+      kind: "direct",
+      confidence: Math.round(Math.min(score, 1) * 100),
+      matchMethod: "fuzzy",
+      metadata: {
+        type: "artist",
+        title: hit.title,
+        artist: hit.title,
+        url: youtubeMusicChannelUrl(hit.channelId),
+      },
+    };
+  }
+
+  if (source.type === "album") {
+    const hit = await searchYouTubeAlbumPlaylist(`${source.title} ${primaryArtist(source.artist)} album`);
+    if (!hit) return searchLink;
+    // Album playlists are usually titled "Artist - Album (Full Album)"; strip
+    // the noise and compare against both "Album" and "Artist Album".
+    const cleanedTitle = hit.title
+      .replace(/[([]?\s*(?:full\s*album|complete|official|hq|hd|\d{4})\s*[)\]]?/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const combined = `${primaryArtist(source.artist)} ${source.title}`;
+    const score = Math.max(
+      titleSimilarity(source.title, cleanedTitle) * 0.7 +
+        artistSimilarity(source.artist, hit.channel || hit.title) * 0.3,
+      titleSimilarity(combined, cleanedTitle)
+    );
+    if (score < 0.5) return searchLink;
+    return {
+      service: "youtube",
+      url: youtubeMusicPlaylistUrl(hit.playlistId),
+      kind: "direct",
+      confidence: Math.round(Math.min(score, 1) * 100),
+      matchMethod: "fuzzy",
+      metadata: {
+        type: "album",
+        title: hit.title,
+        artist: hit.channel,
+        url: youtubeMusicPlaylistUrl(hit.playlistId),
+      },
+    };
+  }
 
   const hit = await searchYouTubeMusic(query);
   if (!hit) return searchLink;

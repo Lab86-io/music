@@ -83,8 +83,82 @@ export async function searchYouTubeMusic(
   }
 }
 
+/**
+ * Search for an artist channel. YT Music artist pages are channels
+ * (music.youtube.com/channel/{id}).
+ */
+export async function searchYouTubeChannel(
+  query: string
+): Promise<{ channelId: string; title: string } | null> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const params = new URLSearchParams({
+      part: "snippet",
+      type: "channel",
+      maxResults: "3",
+      q: query,
+      key: apiKey,
+    });
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    const item = data?.items?.[0];
+    if (!item?.id?.channelId) return null;
+    return { channelId: item.id.channelId, title: item.snippet?.channelTitle ?? "" };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Search for an album's auto-generated playlist (OLAK5uy_…), which YT Music
+ * renders as the album page. Prefers results from "Artist - Topic" channels.
+ */
+export async function searchYouTubeAlbumPlaylist(
+  query: string
+): Promise<{ playlistId: string; title: string; channel: string } | null> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const params = new URLSearchParams({
+      part: "snippet",
+      type: "playlist",
+      maxResults: "5",
+      q: query,
+      key: apiKey,
+    });
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    const items: any[] = data?.items ?? [];
+    const pick =
+      items.find(
+        (i) =>
+          i?.id?.playlistId?.startsWith("OLAK5uy_") ||
+          /- Topic$/i.test(i?.snippet?.channelTitle ?? "")
+      ) ?? items[0];
+    if (!pick?.id?.playlistId) return null;
+    return {
+      playlistId: pick.id.playlistId,
+      title: pick.snippet?.title ?? "",
+      channel: (pick.snippet?.channelTitle ?? "").replace(/\s*-\s*Topic$/i, ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function youtubeMusicWatchUrl(videoId: string): string {
   return `https://music.youtube.com/watch?v=${videoId}`;
+}
+
+export function youtubeMusicChannelUrl(channelId: string): string {
+  return `https://music.youtube.com/channel/${channelId}`;
+}
+
+export function youtubeMusicPlaylistUrl(playlistId: string): string {
+  return `https://music.youtube.com/playlist?list=${playlistId}`;
 }
 
 export function youtubeMusicSearchUrl(query: string): string {

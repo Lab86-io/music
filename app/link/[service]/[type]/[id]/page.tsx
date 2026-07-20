@@ -37,7 +37,8 @@ const getCachedConversion = unstable_cache(
       return null;
     }
   },
-  ["universal-link-conversion"],
+  // v2: bumped to flush results cached before YouTube direct matching existed
+  ["universal-link-conversion-v2"],
   { revalidate: 60 * 60 * 24 }
 );
 

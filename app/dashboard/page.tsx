@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { ServiceConnect } from "@/components/service-connect";
-import { PlaylistCard } from "@/components/playlist-card";
+import { PlaylistCard, type ConvertTargetService } from "@/components/playlist-card";
 import { PlaylistSkeletonList } from "@/components/playlist-skeleton";
 import { ConversionProgress } from "@/components/conversion-progress";
 import { TrackMatchReport } from "@/components/track-match-report";
@@ -23,7 +23,7 @@ import {
   IconSearch,
   IconX
 } from "@tabler/icons-react";
-import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { SpotifyLogo, AppleLogo, YouTubeMusicLogo } from "@/components/icons";
 import { Header } from "@/components/header";
 import { LinkConverter } from "@/components/link-converter";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
@@ -71,6 +71,12 @@ export default function DashboardPage() {
   const [appleConnected, setAppleConnected] = useState(false);
   const [appleUserToken, setAppleUserToken] = useState<string | null>(null);
 
+  // YouTube connection state
+  const [youtube, setYoutube] = useState<{ configured: boolean; connected: boolean }>({
+    configured: false,
+    connected: false,
+  });
+
   // Playlists state
   const [spotifyPlaylists, setSpotifyPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [applePlaylists, setApplePlaylists] = useState<AppleMusicPlaylist[]>([]);
@@ -82,7 +88,7 @@ export default function DashboardPage() {
   const [conversionPlaylist, setConversionPlaylist] = useState<{
     name: string;
     source: "spotify" | "apple";
-    target: "spotify" | "apple";
+    target: ConvertTargetService;
   } | null>(null);
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
   const [conversionProgress, setConversionProgress] = useState<{ current: number; total: number } | null>(null);
@@ -132,6 +138,14 @@ export default function DashboardPage() {
       setActiveTab("apple");
     }
   }, [spotifyConnected, appleConnected]);
+
+  // YouTube availability
+  useEffect(() => {
+    fetch("/api/youtube/status")
+      .then((r) => r.json())
+      .then((d) => setYoutube({ configured: !!d.configured, connected: !!d.connected }))
+      .catch(() => {});
+  }, []);
 
   // Fetch Spotify session on mount
   useEffect(() => {
@@ -235,10 +249,79 @@ export default function DashboardPage() {
   };
 
   // Handle playlist conversion
-  const handleConvert = async (playlist: SpotifyPlaylist | AppleMusicPlaylist) => {
+  // Convert straight to YouTube: the server fetches source tracks, creates a
+  // private YouTube playlist, and matches by title (quota-aware).
+  const convertToYouTube = async (
+    playlistName: string,
+    sourceService: "spotify" | "apple",
+    playlistId: string
+  ) => {
+    setIsConverting(true);
+    setConversionPlaylist({ name: playlistName, source: sourceService, target: "youtube" });
+    setConversionResult(null);
+    setConversionProgress(null);
+    setCurrentTrack(null);
+    setRecentTracks([]);
+
+    try {
+      const response = await fetch("/api/youtube/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: playlistName,
+          source: { service: sourceService, playlistId },
+          appleUserToken:
+            sourceService === "apple"
+              ? appleUserToken || sessionStorage.getItem("appleUserToken")
+              : undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        toast.error(data.error || "YouTube conversion failed");
+        setConversionResult({
+          success: false,
+          newPlaylistId: "",
+          stats: { total: 0, matched: 0, isrcMatches: 0, fuzzyMatches: 0, unmatched: 0, averageConfidence: 0 },
+          matches: [],
+        });
+        return;
+      }
+      setConversionResult({
+        success: true,
+        newPlaylistId: data.playlistId,
+        stats: {
+          total: data.total,
+          matched: data.added,
+          isrcMatches: 0,
+          fuzzyMatches: data.added,
+          unmatched: data.total - data.added,
+          averageConfidence: 0,
+        },
+        matches: [],
+      });
+      if (data.quotaExceeded) {
+        toast.warning(
+          `Added ${data.added}/${data.total} tracks — daily YouTube quota ran out; convert the rest tomorrow.`
+        );
+      } else {
+        toast.success(`Added ${data.added}/${data.total} tracks to YouTube Music`);
+      }
+      window.open(data.playlistUrl, "_blank");
+    } catch (error) {
+      console.error("YouTube conversion failed:", error);
+      toast.error("YouTube conversion failed. Please try again.");
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  const handleConvert = async (
+    playlist: SpotifyPlaylist | AppleMusicPlaylist,
+    targetService: ConvertTargetService
+  ) => {
     const isSpotifyPlaylist = "tracks" in playlist && "owner" in playlist;
     const sourceService = isSpotifyPlaylist ? "spotify" : "apple";
-    const targetService = isSpotifyPlaylist ? "apple" : "spotify";
     const playlistId = playlist.id;
     const playlistName = isSpotifyPlaylist
       ? (playlist as SpotifyPlaylist).name
@@ -251,6 +334,15 @@ export default function DashboardPage() {
     }
     if (targetService === "spotify" && !spotifyConnected) {
       toast.error("Please connect your Spotify account first");
+      return;
+    }
+    if (targetService === "youtube" && !youtube.connected) {
+      toast.error("Please connect your YouTube account first");
+      return;
+    }
+
+    if (targetService === "youtube") {
+      await convertToYouTube(playlistName, sourceService, playlistId);
       return;
     }
 
@@ -397,6 +489,12 @@ export default function DashboardPage() {
                 <span className="text-xs font-medium">Apple Music</span>
               </Badge>
             )}
+            {youtube.connected && (
+              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#FF0000]/30 bg-[#FF0000]/10">
+                <YouTubeMusicLogo className="h-3.5 w-3.5 text-[#FF0000]" />
+                <span className="text-xs font-medium">YouTube</span>
+              </Badge>
+            )}
           </div>
         </Header>
         
@@ -442,7 +540,9 @@ export default function DashboardPage() {
                     newPlaylistId: conversionResult.newPlaylistId,
                   } : undefined}
                 />
-                {conversionResult?.success && conversionResult.matches.length > 0 && (
+                {conversionResult?.success &&
+                  conversionResult.matches.length > 0 &&
+                  conversionPlaylist.target !== "youtube" && (
                   <TrackMatchReport
                     matches={conversionResult.matches}
                     targetService={conversionPlaylist.target}
@@ -562,10 +662,22 @@ export default function DashboardPage() {
                               key={playlist.id}
                               playlist={playlist}
                               source="spotify"
-                              targetService="apple"
+                              targets={[
+                                {
+                                  service: "apple",
+                                  disabled: isConverting || !appleConnected,
+                                  disabledReason: appleConnected ? undefined : "Connect Apple Music first",
+                                },
+                                ...(youtube.configured
+                                  ? [{
+                                      service: "youtube" as const,
+                                      disabled: isConverting || !youtube.connected,
+                                      disabledReason: youtube.connected ? undefined : "Connect YouTube first",
+                                    }]
+                                  : []),
+                              ]}
                               onConvert={handleConvert}
                               onShare={(p) => handleShare(p, "spotify")}
-                              disabled={isConverting || !appleConnected}
                               shareDisabled={isConverting}
                             />
                           ))
@@ -598,10 +710,22 @@ export default function DashboardPage() {
                               key={playlist.id}
                               playlist={playlist}
                               source="apple"
-                              targetService="spotify"
+                              targets={[
+                                {
+                                  service: "spotify",
+                                  disabled: isConverting || !spotifyConnected,
+                                  disabledReason: spotifyConnected ? undefined : "Connect Spotify first",
+                                },
+                                ...(youtube.configured
+                                  ? [{
+                                      service: "youtube" as const,
+                                      disabled: isConverting || !youtube.connected,
+                                      disabledReason: youtube.connected ? undefined : "Connect YouTube first",
+                                    }]
+                                  : []),
+                              ]}
                               onConvert={handleConvert}
                               onShare={(p) => handleShare(p, "apple")}
-                              disabled={isConverting || !spotifyConnected}
                               shareDisabled={isConverting}
                             />
                           ))

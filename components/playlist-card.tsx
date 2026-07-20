@@ -3,17 +3,35 @@
 import Image from "next/image";
 import { IconMusic, IconShare2 } from "@tabler/icons-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { SpotifyLogo, AppleLogo } from "@/components/icons";
+import { SpotifyLogo, AppleLogo, YouTubeMusicLogo } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
+
+export type ConvertTargetService = "spotify" | "apple" | "youtube";
+
+export interface ConvertTarget {
+  service: ConvertTargetService;
+  disabled?: boolean;
+  /** Shown in the tooltip when disabled (e.g. "Connect Apple Music first") */
+  disabledReason?: string;
+}
+
+const TARGET_STYLE: Record<
+  ConvertTargetService,
+  { name: string; className: string; Logo: typeof SpotifyLogo }
+> = {
+  spotify: { name: "Spotify", className: "bg-[#1DB954] text-[#07210f]", Logo: SpotifyLogo },
+  apple: { name: "Apple Music", className: "bg-[#FC3C44] text-white", Logo: AppleLogo },
+  youtube: { name: "YouTube Music", className: "bg-[#FF0000] text-white", Logo: YouTubeMusicLogo },
+};
 
 interface PlaylistCardProps {
   playlist: SpotifyPlaylist | AppleMusicPlaylist;
   source: "spotify" | "apple";
-  onConvert: (playlist: SpotifyPlaylist | AppleMusicPlaylist) => void;
+  onConvert: (playlist: SpotifyPlaylist | AppleMusicPlaylist, target: ConvertTargetService) => void;
   onShare?: (playlist: SpotifyPlaylist | AppleMusicPlaylist) => void;
-  targetService: "spotify" | "apple";
-  disabled?: boolean;
+  /** Destinations offered on hover, in order. */
+  targets: ConvertTarget[];
   shareDisabled?: boolean;
 }
 
@@ -22,8 +40,7 @@ export function PlaylistCard({
   source,
   onConvert,
   onShare,
-  targetService,
-  disabled,
+  targets,
   shareDisabled,
 }: PlaylistCardProps) {
   const isSpotify = source === "spotify";
@@ -42,8 +59,6 @@ export function PlaylistCard({
     : (playlist as AppleMusicPlaylist).attributes.artwork?.url
         ?.replace("{w}", "400")
         .replace("{h}", "400");
-
-  const targetName = targetService === "spotify" ? "Spotify" : "Apple Music";
 
   return (
     <div className="group">
@@ -94,25 +109,32 @@ export function PlaylistCard({
               <TooltipContent>Create a 48-hour share link</TooltipContent>
             </Tooltip>
           )}
-          <Tooltip>
-            <TooltipTrigger
-              onClick={() => onConvert(playlist)}
-              disabled={disabled}
-              className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-full text-white shadow-md transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
-                targetService === "spotify"
-                  ? "bg-[#1DB954] text-[#07210f]"
-                  : "bg-[#FC3C44]"
-              )}
-            >
-              {targetService === "spotify" ? (
-                <SpotifyLogo className="h-4 w-4" />
-              ) : (
-                <AppleLogo className="h-4 w-4" />
-              )}
-            </TooltipTrigger>
-            <TooltipContent>Convert to {targetName}</TooltipContent>
-          </Tooltip>
+          {targets.map((target) => {
+            const style = TARGET_STYLE[target.service];
+            return (
+              <Tooltip key={target.service}>
+                <TooltipTrigger
+                  onClick={() => {
+                    if (!target.disabled) onConvert(playlist, target.service);
+                  }}
+                  aria-disabled={target.disabled}
+                  className={cn(
+                    "inline-flex h-8 w-8 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 active:scale-95",
+                    // Keep disabled targets hoverable so the tooltip can explain why
+                    target.disabled && "cursor-not-allowed opacity-45",
+                    style.className
+                  )}
+                >
+                  <style.Logo className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {target.disabled
+                    ? (target.disabledReason ?? `Connect ${style.name} first`)
+                    : `Convert to ${style.name}`}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
         </div>
       </div>
 
