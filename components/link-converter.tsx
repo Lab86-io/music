@@ -13,9 +13,12 @@ import {
   IconAlertTriangle,
   IconLink,
   IconSearch,
+  IconWorld,
+  IconClipboard,
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
 } from "@tabler/icons-react";
+import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   SpotifyLogo,
@@ -106,6 +109,8 @@ interface ConversionResponse {
   source: LinkMetadata;
   links: ServiceLink[];
   primary: ServiceLink | null;
+  /** Universal landing page listing every service */
+  pageUrl?: string;
 }
 
 interface PlaylistShareResponse {
@@ -373,6 +378,22 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
                 <IconExternalLink size={14} />
               </a>
               <CopyIconButton value={primary.url} label="Copy link" />
+              {result.pageUrl && (
+                <Tooltip>
+                  <TooltipTrigger
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(result.pageUrl!);
+                      toast.success("Universal link copied — one page, every service");
+                    }}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground transition-colors hover:text-foreground hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <IconWorld size={16} />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Copy universal link — a page where anyone picks their service
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {meta.previewUrl && <PreviewButton url={meta.previewUrl} />}
               <div className="ml-auto hidden sm:block">
                 <ConfidenceMeter link={primary} />
@@ -561,16 +582,20 @@ function HistoryRow({ item }: { item: HistoryItem }) {
 export function LinkConverter({
   showHistory = true,
   compact = false,
+  initialUrl,
 }: {
   showHistory?: boolean;
   /** Smaller input + no reserved detection space — for utility placement (dashboard). */
   compact?: boolean;
+  /** Prefill and auto-convert (used by share-sheet and deep links). */
+  initialUrl?: string;
 }) {
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(initialUrl ?? "");
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ConvertApiResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [autoRan, setAutoRan] = useState(false);
 
   useEffect(() => {
     setHistory(loadHistory());
@@ -624,6 +649,24 @@ export function LinkConverter({
     setHistory([]);
   };
 
+  const pasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text?.trim()) setUrl(text.trim());
+    } catch {
+      // Clipboard read denied/unavailable — user can paste manually
+    }
+  };
+
+  // Auto-convert when arriving via share sheet or deep link (?url=)
+  useEffect(() => {
+    if (initialUrl && !autoRan) {
+      setAutoRan(true);
+      handleConvert();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrl, autoRan]);
+
   const detectedBrand = detected ? BRAND[detected.service] : null;
 
   return (
@@ -657,6 +700,21 @@ export function LinkConverter({
             compact ? "h-9 text-sm" : "h-11 text-[15px]"
           )}
         />
+        {!url.trim() && !isConverting && (
+          <Tooltip>
+            <TooltipTrigger
+              onClick={pasteFromClipboard}
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1 rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                compact ? "h-8 px-2.5 text-xs" : "h-9 px-3 text-xs font-medium"
+              )}
+            >
+              <IconClipboard size={compact ? 13 : 14} />
+              Paste
+            </TooltipTrigger>
+            <TooltipContent>Paste from clipboard</TooltipContent>
+          </Tooltip>
+        )}
         <button
           onClick={handleConvert}
           disabled={!url.trim() || isConverting}

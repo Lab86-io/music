@@ -1,8 +1,8 @@
 {
   "name": "Playlist Converter",
   "short_name": "Playlists",
-  "description": "Convert playlists between Spotify and Apple Music",
-  "start_url": "/dashboard",
+  "description": "Convert songs, albums, artists, and playlists across Spotify, Apple Music, Deezer, YouTube Music, and Amazon Music",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#09090b",
@@ -17,6 +17,14 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/convert",
+    "method": "GET",
+    "params": {
+      "url": "url",
+      "text": "text",
+      "title": "title"
+    }
+  }
 }
-

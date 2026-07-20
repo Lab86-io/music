@@ -8,7 +8,21 @@ export const metadata: Metadata = {
     "Convert Spotify and Apple Music song, album, and artist links to the other service instantly. No sign-in required.",
 };
 
-export default function ConvertPage() {
+function extractUrl(params: { [key: string]: string | string[] | undefined }): string | undefined {
+  const direct = typeof params.url === "string" ? params.url : undefined;
+  if (direct?.startsWith("http")) return direct;
+  // Android share sheets often put the link inside shared text
+  const text = typeof params.text === "string" ? params.text : "";
+  const match = text.match(/https?:\/\/\S+/);
+  return match?.[0];
+}
+
+export default async function ConvertPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const sharedUrl = extractUrl(await searchParams);
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -22,7 +36,7 @@ export default function ConvertPage() {
             </p>
           </section>
           <section className="mx-auto max-w-2xl pb-16 pt-8">
-            <LinkConverter />
+            <LinkConverter initialUrl={sharedUrl} />
           </section>
         </div>
       </main>

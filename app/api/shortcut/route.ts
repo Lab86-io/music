@@ -80,6 +80,8 @@ async function handleShortcut(rawUrl: string, redirect: boolean, request: Reques
     artist: result.primary.metadata?.artist ?? result.source.artist,
     confidence: result.primary.confidence,
     links: linkMap,
+    // One URL that works for everyone — a landing page listing every service
+    pageUrl: `${baseUrlFromRequest(request)}/link/${parsed.service}/${parsed.type}/${parsed.id}`,
   });
 }
 

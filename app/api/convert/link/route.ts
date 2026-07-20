@@ -53,6 +53,9 @@ async function handleConvert(rawUrl: string, request: Request) {
   return NextResponse.json({
     kind: "conversion",
     ...result,
+    sourceId: parsed.id,
+    // Universal landing page listing every service — the link to share
+    pageUrl: `${baseUrlFromRequest(request)}/link/${parsed.service}/${parsed.type}/${parsed.id}`,
     // matchedUrl kept for backward compatibility with older clients/shortcuts
     matchedUrl: result.primary?.url ?? null,
   });
