@@ -197,7 +197,7 @@ export function DancingLetters({ text, className, letterClassName }: DancingLett
                 transformStyle: "preserve-3d",
               }}
             >
-              {letter}
+              {letter === " " ? " " : letter}
             </m.span>
           );
         })}

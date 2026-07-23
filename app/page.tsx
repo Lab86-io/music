@@ -73,8 +73,8 @@ export default function HomePage() {
               <span>6 music services</span>
             </div>
             <h1 className="font-display text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-[3.25rem]">
-              I made a music converter. I use it{" "}
-              <DancingLetters text="myself" className="text-primary" />.
+              I made a music converter.{" "}
+              <DancingLetters text="I use it myself" className="text-primary" />.
             </h1>
             <p className="mx-auto mt-4 max-w-lg text-balance text-base text-muted-foreground sm:text-lg">
               Paste a link or type a song name. Get matches on Spotify, Apple Music,
