@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -481,9 +482,12 @@ export default function SharePageClient() {
           <CardHeader className="pb-4">
             <div className="flex items-start gap-4">
               {sharedPlaylist.playlistImage ? (
-                <img 
+                <Image
                   src={sharedPlaylist.playlistImage} 
                   alt={sharedPlaylist.playlistName}
+                  width={64}
+                  height={64}
+                  unoptimized
                   className="h-16 w-16 rounded-lg object-cover shrink-0"
                 />
               ) : (
@@ -547,9 +551,12 @@ export default function SharePageClient() {
                       {index + 1}
                     </span>
                     {track.albumArt ? (
-                      <img 
+                      <Image
                         src={track.albumArt} 
                         alt={track.album}
+                        width={40}
+                        height={40}
+                        unoptimized
                         className="h-10 w-10 rounded object-cover"
                       />
                     ) : (
