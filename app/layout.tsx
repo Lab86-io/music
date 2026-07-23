@@ -27,6 +27,8 @@ export const metadata: Metadata = {
   },
   description: "I made a universal music service converter",
   metadataBase: new URL("https://music.lab86.io"),
+  // Absolute canonical also de-duplicates the playlist.jakoblangtry.com mirror
+  alternates: { canonical: "/" },
   icons: {
     icon: [
       { url: "/icon.png", type: "image/png", sizes: "192x192" },
@@ -52,6 +54,19 @@ export const metadata: Metadata = {
     title: "Lab86 Music",
     statusBarStyle: "black-translucent",
   },
+};
+
+const siteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Lab86 Music",
+  alternateName: "Lab86 Convert",
+  url: "https://music.lab86.io/",
+  applicationCategory: "MultimediaApplication",
+  operatingSystem: "Web",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  description:
+    "Convert songs, albums, artists, and playlists between Spotify, Apple Music, Deezer, TIDAL, YouTube Music, and Amazon Music.",
 };
 
 export default async function RootLayout({
@@ -95,6 +110,10 @@ export default async function RootLayout({
           src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"
           async
           data-web-components
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
       </head>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">

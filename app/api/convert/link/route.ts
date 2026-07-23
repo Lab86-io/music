@@ -3,6 +3,7 @@ import { parseMusicUrl, isAmazonMusicUrl, isDeezerShortLink } from "@/lib/url-pa
 import { convertMusicLink } from "@/lib/link-converter";
 import { resolveDeezerShortLink } from "@/lib/deezer";
 import { createShareFromParsedUrl, baseUrlFromRequest, ShareError } from "@/lib/share";
+import { recordUniversalLink } from "@/lib/universal-links";
 
 /**
  * Universal link conversion endpoint.
@@ -50,6 +51,7 @@ async function handleConvert(rawUrl: string, request: Request) {
   }
 
   const result = await convertMusicLink(parsed);
+  recordUniversalLink(parsed.service, parsed.type, parsed.id, result).catch(() => {});
   return NextResponse.json({
     kind: "conversion",
     ...result,

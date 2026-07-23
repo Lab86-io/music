@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, varchar, primaryKey } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -61,8 +61,26 @@ export const sharedPlaylists = pgTable("shared_playlists", {
   expiresAt: timestamp("expires_at"), // Links expire after 48 hours (nullable for existing data)
 });
 
+// Every universal link page ever rendered, so the sitemap can enumerate them.
+// Upserted on render; (service, type, itemId) mirrors the /link/... URL params.
+export const universalLinks = pgTable(
+  "universal_links",
+  {
+    service: varchar("service", { length: 20 }).notNull(),
+    type: varchar("type", { length: 20 }).notNull(),
+    itemId: varchar("item_id", { length: 64 }).notNull(),
+    title: varchar("title", { length: 500 }).notNull(),
+    artist: varchar("artist", { length: 500 }),
+    artworkUrl: text("artwork_url"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.service, table.type, table.itemId] })]
+);
+
 export type User = typeof users.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type ConversionHistory = typeof conversionHistory.$inferSelect;
 export type SharedPlaylist = typeof sharedPlaylists.$inferSelect;
+export type UniversalLink = typeof universalLinks.$inferSelect;

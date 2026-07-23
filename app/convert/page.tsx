@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Convert a Link",
   description:
     "Convert Spotify and Apple Music song, album, and artist links to the other service instantly. No sign-in required.",
+  alternates: { canonical: "/convert" },
 };
 
 function extractUrl(params: { [key: string]: string | string[] | undefined }): string | undefined {

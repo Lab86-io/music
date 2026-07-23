@@ -17,9 +17,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .limit(1);
   
   if (!result.length) {
-    return { 
+    return {
       title: "Playlist Not Found",
       description: "This share link doesn't exist or has expired.",
+      robots: { index: false, follow: false },
     };
   }
   
@@ -42,6 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    // Share links expire after 48 hours; never index them
+    robots: { index: false, follow: false },
     openGraph: {
       title,
       description: `${playlist.trackCount} tracks from ${sourceLabel}`,
