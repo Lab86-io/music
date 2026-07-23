@@ -63,7 +63,7 @@ export default function TuneMyMusicAlternativePage() {
         <p>
           I made this converter for myself and run it as a personal project, so free is not
           a trial. There is no account, no ad banner, no capped preview of a paid feature.
-          The only hard limit in the whole system is YouTube's own daily API quota.
+          The only hard limit in the whole system is YouTube&apos;s own daily API quota.
         </p>
       </SeoSection>
     </SeoLanding>

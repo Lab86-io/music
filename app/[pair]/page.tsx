@@ -228,7 +228,7 @@ export default async function ConversionPairPage({ params }: PageProps) {
               <Link href="/" className="font-medium text-foreground hover:underline">
                 home page
               </Link>
-              . Songs match by ISRC, the recording industry's unique recording ID, with a
+              . Songs match by ISRC, the recording industry&apos;s unique recording ID, with a
               title and artist comparison as fallback and a visible confidence score.{" "}
               {targetNote(to)}
             </p>
