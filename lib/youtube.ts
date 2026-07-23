@@ -12,6 +12,16 @@ export interface YouTubeVideoInfo {
   channel: string;
 }
 
+interface YouTubeSearchItem {
+  id?: {
+    playlistId?: string;
+  };
+  snippet?: {
+    title?: string;
+    channelTitle?: string;
+  };
+}
+
 const NOISE_PATTERNS =
   /\s*[([](?:official\s*)?(?:music\s*)?(?:video|audio|lyric(?:s)?(?:\s*video)?|visuali[sz]er|4k(?:\s*remaster(?:ed)?)?|hd|hq|remaster(?:ed)?(?:\s*\d{4})?)[)\]]\s*/gi;
 
@@ -131,7 +141,7 @@ export async function searchYouTubeAlbumPlaylist(
     const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
     if (!response.ok) return null;
     const data = await response.json();
-    const items: any[] = data?.items ?? [];
+    const items = (data?.items ?? []) as YouTubeSearchItem[];
     const pick =
       items.find(
         (i) =>
@@ -181,8 +191,6 @@ export interface YouTubePlaylist {
   image: string | null;
   tracks: YouTubePlaylistTrack[];
 }
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Read a public YouTube / YouTube Music playlist using the API key.

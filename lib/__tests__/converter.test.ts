@@ -1,6 +1,21 @@
 import { describe, it, expect } from "vitest";
 import { calculateArtistSimilarity, getConversionStats, MIN_MATCH_CONFIDENCE } from "@/lib/converter";
-import type { TrackMatch } from "@/types";
+import type { SpotifyTrack, TrackMatch } from "@/types";
+
+function spotifyTrack(id: string, name: string, artist: string): SpotifyTrack {
+  return {
+    id,
+    name,
+    artists: [{ id: `artist-${id}`, name: artist }],
+    album: {
+      id: `album-${id}`,
+      name: "Test Album",
+      images: [],
+    },
+    duration_ms: 180_000,
+    uri: `spotify:track:${id}`,
+  };
+}
 
 describe("calculateArtistSimilarity", () => {
   it("returns high similarity for exact matches", () => {
@@ -28,14 +43,14 @@ describe("getConversionStats", () => {
   it("calculates correct stats for all matched tracks", () => {
     const matches: TrackMatch[] = [
       {
-        sourceTrack: { name: "Track 1", artist: "Artist 1" } as any,
-        targetTrack: { id: "1" } as any,
+        sourceTrack: spotifyTrack("source-1", "Track 1", "Artist 1"),
+        targetTrack: spotifyTrack("target-1", "Track 1", "Artist 1"),
         matchConfidence: 95,
         matchMethod: "isrc",
       },
       {
-        sourceTrack: { name: "Track 2", artist: "Artist 2" } as any,
-        targetTrack: { id: "2" } as any,
+        sourceTrack: spotifyTrack("source-2", "Track 2", "Artist 2"),
+        targetTrack: spotifyTrack("target-2", "Track 2", "Artist 2"),
         matchConfidence: 85,
         matchMethod: "fuzzy",
       },
@@ -53,13 +68,13 @@ describe("getConversionStats", () => {
   it("calculates correct stats with unmatched tracks", () => {
     const matches: TrackMatch[] = [
       {
-        sourceTrack: { name: "Track 1", artist: "Artist 1" } as any,
-        targetTrack: { id: "1" } as any,
+        sourceTrack: spotifyTrack("source-1", "Track 1", "Artist 1"),
+        targetTrack: spotifyTrack("target-1", "Track 1", "Artist 1"),
         matchConfidence: 95,
         matchMethod: "isrc",
       },
       {
-        sourceTrack: { name: "Track 2", artist: "Artist 2" } as any,
+        sourceTrack: spotifyTrack("source-2", "Track 2", "Artist 2"),
         targetTrack: null,
         matchConfidence: 0,
         matchMethod: "none",
@@ -75,9 +90,9 @@ describe("getConversionStats", () => {
   it("counts low confidence matches as unmatched", () => {
     const matches: TrackMatch[] = [
       {
-        sourceTrack: { name: "Track 1", artist: "Artist 1" } as any,
-        targetTrack: { id: "1" } as any,
-        matchConfidence: 50, // Below MIN_MATCH_CONFIDENCE (70)
+        sourceTrack: spotifyTrack("source-1", "Track 1", "Artist 1"),
+        targetTrack: spotifyTrack("target-1", "Track 1", "Artist 1"),
+        matchConfidence: MIN_MATCH_CONFIDENCE - 20,
         matchMethod: "fuzzy",
       },
     ];

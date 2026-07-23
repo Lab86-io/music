@@ -1,7 +1,6 @@
 "use client";
 
 import { useTheme } from "./theme-provider";
-import { Button } from "@/components/ui/button";
 import { IconSun, IconMoon, IconDeviceDesktop } from "@tabler/icons-react";
 import {
   DropdownMenu,
