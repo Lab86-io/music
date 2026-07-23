@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getRecentUniversalLinks } from "@/lib/universal-links";
 import { CONVERSION_PAIRS } from "@/lib/seo-pairs";
+import { SEO_PAGES } from "@/lib/seo-pages";
 
 const BASE = "https://music.lab86.io";
 
@@ -13,9 +14,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/convert`, changeFrequency: "weekly", priority: 0.9 },
   ];
 
-  const pairRoutes: MetadataRoute.Sitemap = CONVERSION_PAIRS.map((pair) => ({
-    url: `${BASE}/${pair.slug}`,
-    changeFrequency: "monthly",
+  const pairRoutes: MetadataRoute.Sitemap = [
+    ...CONVERSION_PAIRS.map((pair) => ({ url: `${BASE}/${pair.slug}` })),
+    ...SEO_PAGES.map((page) => ({ url: `${BASE}/${page.slug}` })),
+  ].map((entry) => ({
+    ...entry,
+    changeFrequency: "monthly" as const,
     priority: 0.8,
   }));
 

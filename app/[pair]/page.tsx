@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/header";
 import { LinkConverter } from "@/components/link-converter";
-import { CONVERSION_PAIRS, findPair, type ConversionPair } from "@/lib/seo-pairs";
+import { CONVERSION_PAIRS, findPair, type ConversionPair, type SeoService } from "@/lib/seo-pairs";
+import { SEO_PAGES } from "@/lib/seo-pages";
 
 export const dynamicParams = false;
 
@@ -17,9 +18,27 @@ interface PageProps {
 
 function pageDescription(pair: ConversionPair): string {
   if (pair.to.id === "amazon") {
-    return `Free ${pair.from.name} to ${pair.to.name} converter. Paste a song, album, or artist link from ${pair.from.name} and get a matching ${pair.to.name} link. No account needed.`;
+    return `Free ${pair.from.name} to ${pair.to.name} converter. Paste a song, album, or artist link from ${pair.from.name} and get a matching ${pair.to.name} link. No account, no limits, no ads.`;
   }
-  return `Free ${pair.from.name} to ${pair.to.name} converter. Paste a song, album, artist, or playlist link from ${pair.from.name} and get the ${pair.to.name} match. No account needed.`;
+  return `Free ${pair.from.name} to ${pair.to.name} converter for songs, albums, artists, and playlists. Exact ISRC matching, no account for single links, no ads.`;
+}
+
+/** What happens when converting INTO this service. */
+function targetNote(to: SeoService): string {
+  switch (to.id) {
+    case "spotify":
+      return "Playlist imports into Spotify use the normal Spotify sign in. A free Spotify account is enough.";
+    case "apple":
+      return "Playlist imports into Apple Music sign in through MusicKit, Apple's own web player, so nothing unofficial touches your account.";
+    case "tidal":
+      return "The TIDAL connection is official OAuth, and imports match by ISRC, so playlists come across exact.";
+    case "youtube":
+      return "YouTube imports use Google sign in. YouTube's API has a small daily quota, so a very long playlist can take more than one day to finish.";
+    case "deezer":
+      return "Deezer closed its developer program, so playlist imports use an opt-in browser session connection I label Advanced. Single links need nothing.";
+    case "amazon":
+      return "Amazon has no public catalog API, so results are pre-filled Amazon Music searches. The right result is almost always the first one.";
+  }
 }
 
 interface FaqItem {
@@ -32,17 +51,17 @@ function buildFaq(pair: ConversionPair): FaqItem[] {
   const faq: FaqItem[] = [];
 
   faq.push({
-    question: "Do I need an account?",
+    question: "Is this free? Do I need an account?",
     answer:
       to.id === "amazon"
-        ? "No. Songs, albums, and artists convert without any sign in. Amazon Music has no public API, so the result is a pre-filled Amazon search that lands on the right item."
-        : `No. Songs, albums, and artists convert without any sign in. Converting a full playlist into ${to.name} needs a sign in so the playlist can be created in your library.`,
+        ? "Yes, free, with no ads and no caps. Songs, albums, and artists convert without any sign in. Amazon Music has no public API, so the result is a pre-filled Amazon search that lands on the right item."
+        : `Yes, free, with no ads and no caps on link conversion. Songs, albums, and artists convert without any sign in. Converting a full playlist into ${to.name} needs a quick sign in so the playlist can be created in your own library.`,
   });
 
   faq.push({
     question: "How accurate are the matches?",
     answer:
-      "Songs match by ISRC first, the recording industry's unique ID for a recording, so most matches are exact. When a catalog does not report an ISRC, the converter compares title, artist, and album and shows a confidence score.",
+      "Songs match by ISRC first, the recording industry's unique ID for a recording, so most matches are exact rather than guessed. When a catalog does not report an ISRC, the converter compares title, artist, and album and shows a confidence score so you can judge the match yourself.",
   });
 
   if (to.id === "amazon") {
@@ -54,13 +73,66 @@ function buildFaq(pair: ConversionPair): FaqItem[] {
   } else if (from.id === "youtube") {
     faq.push({
       question: `Can I convert a whole ${from.name} playlist to ${to.name}?`,
-      answer: `Yes. Paste the playlist link to get a 48 hour share page anyone can import from. YouTube playlists carry no track IDs, so tracks match by title and accuracy can vary.`,
+      answer: `Yes. Paste the playlist link to get a 48 hour share page anyone can import from, or sign in and convert it straight into ${to.name}. YouTube playlists carry no track IDs, so tracks match by title and accuracy can vary.`,
     });
   } else {
     faq.push({
       question: `Can I convert a whole ${from.name} playlist to ${to.name}?`,
-      answer: `Yes. Paste the playlist link to get a 48 hour share page, or sign in and convert it straight into your ${to.name} library. Matching is ISRC first, so playlists come across accurately.`,
+      answer: `Yes. Paste the playlist link to get a 48 hour share page, or sign in and convert it straight into your ${to.name} library. Matching is ISRC first, so playlists come across accurately, and you get a per-track report for anything that needs attention.`,
     });
+  }
+
+  faq.push({
+    question: "Does it handle albums and artists too?",
+    answer:
+      to.id === "amazon"
+        ? `Yes. Album and artist links from ${from.name} become matching Amazon Music searches, and every conversion also gets a universal page that lists all six services with a QR code.`
+        : `Yes. Album links map to the same album on ${to.name} and artist links map to the artist page. Every conversion also gets a universal page that lists all six services with a QR code, handy for sharing with people who use something else entirely.`,
+  });
+
+  switch (to.id) {
+    case "spotify":
+      faq.push({
+        question: "Do I need Spotify Premium?",
+        answer:
+          "No. Link conversion needs nothing at all, and playlist imports work with a free Spotify account.",
+      });
+      break;
+    case "apple":
+      faq.push({
+        question: "Do I need an Apple Music subscription?",
+        answer:
+          "Converting links needs nothing. Importing a playlist into your library needs an active Apple Music subscription, because Apple only lets subscribers save music.",
+      });
+      break;
+    case "tidal":
+      faq.push({
+        question: "Is the TIDAL connection official?",
+        answer:
+          "Yes. It uses TIDAL's official OAuth sign in, the same flow the TIDAL app uses, and imports are ISRC exact.",
+      });
+      break;
+    case "youtube":
+      faq.push({
+        question: "Why do long playlists pause partway?",
+        answer:
+          "YouTube's Data API has a small daily quota, roughly 60 track additions a day. If a playlist is longer than that, the import stops at the quota and you can convert the rest the next day. The playlist it already created stays in your library.",
+      });
+      break;
+    case "deezer":
+      faq.push({
+        question: "Why is the Deezer connection labeled Advanced?",
+        answer:
+          "Deezer stopped accepting new developer apps, so there is no official sign in to offer. The Advanced connection uses your own browser session value, stored only in an HTTP-only cookie, never in a database. It is opt-in and clearly marked because it is unofficial.",
+      });
+      break;
+    case "amazon":
+      faq.push({
+        question: "Why do I get a search instead of a direct link?",
+        answer:
+          "Amazon Music has no public catalog API, so no converter can produce true direct links. A pre-filled search is the honest version of this feature, and in practice the first result is the right one.",
+      });
+      break;
   }
 
   return faq;
@@ -70,7 +142,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { pair: slug } = await params;
   const pair = findPair(slug);
   if (!pair) return {};
-  const title = `Convert ${pair.from.name} to ${pair.to.name}`;
+  const title = `${pair.from.name} to ${pair.to.name} Converter`;
   const description = pageDescription(pair);
   return {
     title,
@@ -88,6 +160,19 @@ export default async function ConversionPairPage({ params }: PageProps) {
   const { from, to } = pair;
   const faq = buildFaq(pair);
   const others = CONVERSION_PAIRS.filter((p) => p.slug !== pair.slug);
+
+  const steps =
+    to.id === "amazon"
+      ? [
+          `Copy a link in ${from.name}. Songs, albums, and artists all work.`,
+          "Paste it in the box above. No account, nothing to install.",
+          `Open the pre-filled ${to.name} search. The right result is almost always first.`,
+        ]
+      : [
+          `Copy a link in ${from.name}. Songs, albums, artists, and playlists all work.`,
+          "Paste it in the box above. Single links need no account at all.",
+          `Open the ${to.name} match, copy it, or sign in once to import a playlist straight into your library.`,
+        ];
 
   const faqJsonLd = {
     "@context": "https://schema.org",
@@ -128,18 +213,24 @@ export default async function ConversionPairPage({ params }: PageProps) {
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               How it works
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            <ol className="mt-2 space-y-2">
+              {steps.map((step, index) => (
+                <li key={step} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                    {index + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               This is the same converter that runs on the{" "}
               <Link href="/" className="font-medium text-foreground hover:underline">
                 home page
               </Link>
-              . It looks the song up on {from.name}, then finds the same recording on{" "}
-              {to.name}
-              {to.id === "amazon"
-                ? " with a pre-filled search, since Amazon has no public catalog API"
-                : " by ISRC, with a title and artist comparison as fallback"}
-              . Albums and artists convert too, and every result comes with a universal
-              page that lists all six services at once.
+              . Songs match by ISRC, the recording industry's unique recording ID, with a
+              title and artist comparison as fallback and a visible confidence score.{" "}
+              {targetNote(to)}
             </p>
           </section>
 
@@ -171,6 +262,16 @@ export default async function ConversionPairPage({ params }: PageProps) {
                     className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
                   >
                     {other.from.name} to {other.to.name}
+                  </Link>
+                </li>
+              ))}
+              {SEO_PAGES.map((page) => (
+                <li key={page.slug}>
+                  <Link
+                    href={`/${page.slug}`}
+                    className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+                  >
+                    {page.label}
                   </Link>
                 </li>
               ))}
