@@ -15,12 +15,12 @@ export function Header({ children }: HeaderProps) {
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Image
             src="/logo.png"
-            alt="Playlist Converter"
+            alt="Lab86 Convert"
             width={28}
             height={28}
             className="rounded-md"
           />
-          <span className="font-display text-sm font-bold">Playlist Converter</span>
+          <span className="font-display text-sm font-bold">Lab86 Convert</span>
         </Link>
         <div className="flex items-center gap-2">
           {children}

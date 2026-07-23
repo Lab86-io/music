@@ -57,7 +57,7 @@ export async function generateMetadata({
   if (!result) return { title: "Link not found" };
   const { source, type } = result;
   const title =
-    type === "artist" ? source.title : `${source.title} — ${source.artist}`;
+    type === "artist" ? source.title : `${source.title} by ${source.artist}`;
   const description = `Listen to this ${type} on Spotify, Apple Music, Deezer, TIDAL, YouTube Music, or Amazon Music. One link, every service.`;
   return {
     title,
@@ -165,9 +165,9 @@ export default async function UniversalLinkPage({
             <p className="mt-10 text-center text-xs text-muted-foreground">
               Made with{" "}
               <Link href="/" className="font-medium text-foreground hover:underline">
-                Playlist Converter
-              </Link>{" "}
-              — paste any music link, get every service.
+                Lab86 Convert
+              </Link>
+              . Paste any music link, get every service.
             </p>
           </div>
         </div>

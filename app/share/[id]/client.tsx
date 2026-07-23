@@ -191,9 +191,9 @@ export default function SharePageClient() {
       }
       const summary = `Added ${data.added}/${data.total} tracks to ${serviceName}`;
       if (data.quotaExceeded) {
-        toast.warning(`${summary} — daily YouTube quota ran out; try the rest tomorrow.`);
+        toast.warning(`${summary}. Daily YouTube quota ran out; try the rest tomorrow.`);
       } else if (data.warning) {
-        toast.warning(`${summary} — ${data.warning}`);
+        toast.warning(`${summary} (${data.warning})`);
       } else {
         toast.success(summary);
       }
@@ -260,7 +260,7 @@ export default function SharePageClient() {
 
         const mk = await window.MusicKit.configure({
           developerToken: data.data.token,
-          app: { name: "Playlist Converter", build: "1.0.0" },
+          app: { name: "Lab86 Convert", build: "1.0.0" },
         });
         
         setMusicKit(mk);
@@ -531,8 +531,8 @@ export default function SharePageClient() {
                 </div>
                 {sharedPlaylist.sourceService === "youtube" && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    YouTube playlists have no track IDs, so tracks are matched by title —
-                    accuracy may vary.
+                    YouTube playlists have no track IDs, so tracks are matched by title
+                    and accuracy may vary.
                   </p>
                 )}
               </div>

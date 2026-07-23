@@ -210,7 +210,7 @@ function ConfidenceMeter({ link }: { link: ServiceLink }) {
   if (link.confidence == null) return null;
   const explanation =
     link.matchMethod === "isrc"
-      ? "Exact recording match — both services report the same ISRC code for this recording."
+      ? "Exact recording match. Both services report the same ISRC code for this recording."
       : "Matched by comparing title, artist, and album across catalogs.";
   const tone =
     link.confidence >= 80
@@ -297,8 +297,8 @@ function ServicePill({ link }: { link: ServiceLink }) {
       </TooltipTrigger>
       <TooltipContent>
         {link.kind === "direct"
-          ? `Open on ${brand.name}${link.confidence != null ? ` — ${link.confidence}% match` : ""}`
-          : `${brand.name} has no public catalog API — opens a pre-filled search`}
+          ? `Open on ${brand.name}${link.confidence != null ? `, ${link.confidence}% match` : ""}`
+          : `${brand.name} has no public catalog API, so this opens a pre-filled search`}
       </TooltipContent>
     </Tooltip>
   );
@@ -405,14 +405,14 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
                   <TooltipTrigger
                     onClick={async () => {
                       await navigator.clipboard.writeText(result.pageUrl!);
-                      toast.success("Universal link copied — one page, every service");
+                      toast.success("Universal link copied. One page, every service.");
                     }}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground transition-colors hover:text-foreground hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <IconWorld size={16} />
                   </TooltipTrigger>
                   <TooltipContent>
-                    Copy universal link — a page where anyone picks their service
+                    Copy universal link, a page where anyone picks their service
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -750,7 +750,7 @@ export function LinkConverter({
           placeholder={
             compact
               ? "Convert a music link…"
-              : "Paste a music link — or type a song name…"
+              : "Convert or search"
           }
           aria-label="Music link to convert"
           className={cn(
@@ -829,7 +829,7 @@ export function LinkConverter({
           ) : isSearchMode ? (
             <span className="animate-rise-in inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <IconSearch size={12} />
-              Song search — press Enter to find &ldquo;{url.trim().slice(0, 40)}&rdquo;
+              Song search. Press Enter to find &ldquo;{url.trim().slice(0, 40)}&rdquo;
             </span>
           ) : isDeezerShort ? (
             <span
@@ -839,12 +839,12 @@ export function LinkConverter({
               )}
             >
               <DeezerLogo className="h-3.5 w-3.5" />
-              Deezer link — we&apos;ll resolve it
+              Deezer link
             </span>
           ) : isAmazon ? (
             <span className="animate-rise-in text-xs text-muted-foreground/80">
-              Amazon Music has no public API — paste from Spotify, Apple Music, Deezer, or
-              YouTube Music instead
+              Amazon Music has no public API. Paste from Spotify, Apple Music, Deezer, or
+              YouTube Music instead.
             </span>
           ) : (
             <span className="text-xs text-muted-foreground/70">

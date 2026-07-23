@@ -24,7 +24,7 @@ async function handleConvert(rawUrl: string, request: Request) {
   const parsed = parseMusicUrl(url);
   if (!parsed) {
     const message = isAmazonMusicUrl(url)
-      ? "Amazon Music links can't be read — Amazon has no public catalog API. Paste the same item from Spotify, Apple Music, Deezer, or YouTube Music instead."
+      ? "Amazon Music links can't be read. Amazon has no public catalog API, so paste the same item from Spotify, Apple Music, Deezer, or YouTube Music instead."
       : "Unrecognized URL. Paste a Spotify, Apple Music, Deezer, or YouTube Music link.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
@@ -32,7 +32,7 @@ async function handleConvert(rawUrl: string, request: Request) {
   if (parsed.type === "playlist") {
     if (parsed.service === "amazon") {
       return NextResponse.json(
-        { error: "Amazon Music playlists can't be read — no public API." },
+        { error: "Amazon Music playlists can't be read (no public API)." },
         { status: 400 }
       );
     }

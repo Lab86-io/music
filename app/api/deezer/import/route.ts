@@ -100,7 +100,7 @@ export async function POST(request: Request) {
   const session = await validateArl(arl);
   if (!session) {
     return NextResponse.json(
-      { error: "Your Deezer session expired — reconnect with a fresh ARL" },
+      { error: "Your Deezer session expired. Reconnect with a fresh ARL" },
       { status: 401 }
     );
   }
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
   const playlistId = await createDeezerPlaylist(
     session,
     name,
-    "Imported with Playlist Converter (music.lab86.io)"
+    "Imported with Lab86 Convert (music.lab86.io)"
   );
   if (!playlistId) {
     return NextResponse.json(

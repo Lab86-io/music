@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const session = await validateArl(arl);
   if (!session) {
     return NextResponse.json(
-      { error: "Deezer rejected that ARL — copy a fresh one from your deezer.com cookies" },
+      { error: "Deezer rejected that ARL. Copy a fresh one from your deezer.com cookies" },
       { status: 401 }
     );
   }

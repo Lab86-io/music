@@ -152,7 +152,7 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
         const mk = await window.MusicKit.configure({
           developerToken: data.data.token,
           app: {
-            name: "Playlist Converter",
+            name: "Lab86 Convert",
             build: "1.0.0",
           },
         });

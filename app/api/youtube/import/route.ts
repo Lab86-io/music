@@ -92,7 +92,7 @@ export async function POST(request: Request) {
   const playlistId = await createYouTubePlaylist(
     session,
     name,
-    "Imported with Playlist Converter (music.lab86.io)"
+    "Imported with Lab86 Convert (music.lab86.io)"
   );
   if (!playlistId) {
     return NextResponse.json(

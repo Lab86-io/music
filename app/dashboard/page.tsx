@@ -350,10 +350,10 @@ export default function DashboardPage() {
       });
       if (data.quotaExceeded) {
         toast.warning(
-          `Added ${data.added}/${data.total} tracks — daily YouTube quota ran out; convert the rest tomorrow.`
+          `Added ${data.added}/${data.total} tracks. Daily YouTube quota ran out; convert the rest tomorrow.`
         );
       } else if (data.warning) {
-        toast.warning(`Added ${data.added}/${data.total} tracks to ${serviceName} — ${data.warning}`);
+        toast.warning(`Added ${data.added}/${data.total} tracks to ${serviceName} (${data.warning})`);
       } else {
         toast.success(`Added ${data.added}/${data.total} tracks to ${serviceName}`);
       }

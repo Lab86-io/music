@@ -22,10 +22,10 @@ const averia = Averia_Serif_Libre({
 
 export const metadata: Metadata = {
   title: {
-    default: "Playlist Converter | Spotify ↔ Apple Music",
-    template: "%s | Playlist Converter",
+    default: "Lab86 Music",
+    template: "%s | Lab86 Music",
   },
-  description: "Convert playlists, songs, albums, and artists between Spotify and Apple Music seamlessly. Share playlists across platforms with friends.",
+  description: "I made a universal music service converter",
   metadataBase: new URL("https://music.lab86.io"),
   icons: {
     icon: [
@@ -36,20 +36,20 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   openGraph: {
     type: "website",
-    siteName: "Playlist Converter",
-    title: "Playlist Converter | Spotify ↔ Apple Music",
-    description: "Convert your playlists between Spotify and Apple Music seamlessly.",
-    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Playlist Converter" }],
+    siteName: "Lab86 Music",
+    title: "Lab86 Music",
+    description: "I made a music converter",
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Lab86 Music" }],
   },
   twitter: {
     card: "summary",
-    title: "Playlist Converter",
-    description: "Convert playlists between Spotify and Apple Music",
+    title: "Lab86 Music",
+    description: "I made a music converter",
     images: ["/icon-512.png"],
   },
   appleWebApp: {
     capable: true,
-    title: "Playlist Converter",
+    title: "Lab86 Music",
     statusBarStyle: "black-translucent",
   },
 };

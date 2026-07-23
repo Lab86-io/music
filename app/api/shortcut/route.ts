@@ -26,7 +26,7 @@ async function handleShortcut(rawUrl: string, redirect: boolean, request: Reques
   const parsed = parseMusicUrl(url);
   if (!parsed) {
     const message = isAmazonMusicUrl(url)
-      ? "Amazon Music links can't be read — share from Spotify, Apple Music, Deezer, or YouTube Music instead."
+      ? "Amazon Music links can't be read. Share from Spotify, Apple Music, Deezer, or YouTube Music instead."
       : "Unrecognized URL. Share a Spotify, Apple Music, Deezer, or YouTube Music link.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
@@ -34,7 +34,7 @@ async function handleShortcut(rawUrl: string, redirect: boolean, request: Reques
   if (parsed.type === "playlist") {
     if (parsed.service === "amazon") {
       return NextResponse.json(
-        { error: "Amazon Music playlists can't be read — no public API." },
+        { error: "Amazon Music playlists can't be read (no public API)." },
         { status: 400 }
       );
     }

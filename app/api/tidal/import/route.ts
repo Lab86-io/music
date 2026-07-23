@@ -141,7 +141,7 @@ export async function POST(request: Request) {
   const created = await createTidalPlaylist(
     session,
     name,
-    "Imported with Playlist Converter (music.lab86.io)"
+    "Imported with Lab86 Convert (music.lab86.io)"
   );
   if (!created.id) {
     return NextResponse.json(
