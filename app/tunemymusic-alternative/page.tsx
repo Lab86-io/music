@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Text } from "@astryxdesign/core/Text";
 import { SeoLanding, SeoSection, type SeoFaqItem } from "@/components/seo-landing";
 
 export const metadata: Metadata = {
@@ -51,20 +52,20 @@ export default function TuneMyMusicAlternativePage() {
       faq={FAQ}
     >
       <SeoSection heading="The honest comparison">
-        <p>
+        <Text as="p">
           TuneMyMusic is good at what it charges for: migrating a whole library at once
           across a long list of services. If that is what you need, pay for it. This tool
           covers the everyday cases for free: convert a playlist, convert a link someone
           sent you, share a playlist with someone on a different service, and get exact
           ISRC matches with a visible confidence score instead of silent guesses.
-        </p>
+        </Text>
       </SeoSection>
       <SeoSection heading="What free means here">
-        <p>
+        <Text as="p">
           I made this converter for myself and run it as a personal project, so free is not
           a trial. There is no account, no ad banner, no capped preview of a paid feature.
           The only hard limit in the whole system is YouTube&apos;s own daily API quota.
-        </p>
+        </Text>
       </SeoSection>
     </SeoLanding>
   );

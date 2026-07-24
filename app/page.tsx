@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
 import { ServiceConnect } from "@/components/service-connect";
-import { Header } from "@/components/header";
 import { LinkConverter } from "@/components/link-converter";
 import { Equalizer } from "@/components/animated-icons";
 import { DancingLetters } from "@/components/dancing-letters";
@@ -42,64 +44,61 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="flex items-center justify-center py-20">
-          <IconLoader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </div>
+      <Stack className="min-h-screen bg-body">
+        <Stack className="flex items-center justify-center py-20">
+          <IconLoader2 className="h-8 w-8 animate-spin text-accent" />
+        </Stack>
+      </Stack>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-
-      <main className="relative">
+    <Stack className="min-h-screen bg-body">
+      <Stack className="relative">
         {/* Faint staff-line texture behind the hero */}
-        <div aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-[26rem]" />
+        <Stack aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-96" />
 
-        <div className="container relative mx-auto px-4">
+        <Stack className="container relative mx-auto px-4">
           {/* Hero */}
-          <section className="mx-auto max-w-2xl pb-2 pt-14 text-center sm:pt-20">
-            <div className="mb-7 inline-flex items-center gap-2.5 rounded-full border border-border/70 bg-background/70 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
-              <SpotifyLogo className="h-3.5 w-3.5 text-[#1DB954]" />
-              <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
-              <Equalizer className="h-3 text-primary" />
-              <DeezerLogo className="h-3.5 w-3.5 text-[#A238FF]" />
+          <Stack as="section" className="mx-auto max-w-2xl pb-2 pt-14 text-center sm:pt-20">
+            <Stack className="mb-7 inline-flex items-center gap-2.5 rounded-full border border-border/70 bg-body/70 px-3.5 py-1.5 text-xs font-medium text-secondary backdrop-blur">
+              <SpotifyLogo className="h-3.5 w-3.5 text-green-vivid" />
+              <AppleLogo className="h-3.5 w-3.5 text-red-vivid" />
+              <Equalizer className="h-3 text-accent" />
+              <DeezerLogo className="h-3.5 w-3.5 text-purple-vivid" />
               <TidalLogo className="h-3.5 w-3.5" />
-              <YouTubeMusicLogo className="h-3.5 w-3.5 text-[#FF0000]" />
-              <AmazonMusicLogo className="h-3.5 w-3.5 text-[#25D1DA]" />
-              <span>6 music services</span>
-            </div>
-            <h1 className="font-display text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-[3.25rem]">
+              <YouTubeMusicLogo className="h-3.5 w-3.5 text-red-vivid" />
+              <AmazonMusicLogo className="h-3.5 w-3.5 text-cyan-vivid" />
+              <Text>6 music services</Text>
+            </Stack>
+            <Heading level={1} type="display-1" textWrap="balance" className="font-display">
               I made a music converter.{" "}
-              <DancingLetters text="I use it myself" className="text-primary" />.
-            </h1>
-            <p className="mx-auto mt-4 max-w-lg text-balance text-base text-muted-foreground sm:text-lg">
+              <DancingLetters text="I use it myself" className="text-accent" />.
+            </Heading>
+            <Text as="p" className="mx-auto mt-4 max-w-lg text-balance text-base text-secondary sm:text-lg">
               Paste a link or type a song name. Get matches on Spotify, Apple Music,
               Deezer, TIDAL, YouTube Music, and Amazon Music. No account needed.
-            </p>
-          </section>
+            </Text>
+          </Stack>
 
           {/* The one input */}
-          <section className="mx-auto max-w-2xl pb-4 pt-8">
+          <Stack as="section" className="mx-auto max-w-2xl pb-4 pt-8">
             <LinkConverter />
-          </section>
+          </Stack>
 
           {/* Sign-in, demoted below the tool */}
-          <section className="mx-auto max-w-2xl pb-16 pt-14">
-            <div className="mb-6 flex items-center gap-4">
-              <div className="h-px flex-1 bg-border/70" />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <Stack as="section" className="mx-auto max-w-2xl pb-16 pt-14">
+            <Stack className="mb-6 flex items-center gap-4">
+              <Stack className="h-px flex-1 bg-border/70" />
+              <Text type="supporting" color="secondary" weight="semibold" className="uppercase">
                 Or sign in to convert full playlists
-              </span>
-              <div className="h-px flex-1 bg-border/70" />
-            </div>
+              </Text>
+              <Stack className="h-px flex-1 bg-border/70" />
+            </Stack>
             <ServiceConnect />
-          </section>
-        </div>
-      </main>
-    </div>
+          </Stack>
+        </Stack>
+      </Stack>
+    </Stack>
   );
 }

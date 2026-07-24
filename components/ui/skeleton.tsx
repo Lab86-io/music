@@ -1,13 +1,8 @@
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { Skeleton as AstryxSkeleton } from "@astryxdesign/core/Skeleton";
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="skeleton"
-      className={cn("bg-muted rounded-xl animate-pulse", className)}
-      {...props}
-    />
-  )
+  return <AstryxSkeleton className={className} {...props} />;
 }
 
-export { Skeleton }
+export { Skeleton };

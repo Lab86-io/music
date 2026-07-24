@@ -1,5 +1,7 @@
-import Link from "next/link";
-import { Header } from "@/components/header";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Link } from "@astryxdesign/core/Link";
+import { Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
 import { LinkConverter } from "@/components/link-converter";
 import { CONVERSION_PAIRS } from "@/lib/seo-pairs";
 import { SEO_PAGES } from "@/lib/seo-pages";
@@ -37,74 +39,73 @@ export function SeoLanding({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <Stack className="min-h-screen bg-body">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <main className="relative">
-        <div aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-72" />
-        <div className="container relative mx-auto px-4">
-          <section className="mx-auto max-w-2xl pt-12 text-center sm:pt-16">
-            <h1 className="font-display text-balance text-3xl font-bold tracking-tight sm:text-4xl">
+      <Stack className="relative">
+        <Stack aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-72" />
+        <Stack className="container relative mx-auto px-4">
+          <Stack as="section" className="mx-auto max-w-2xl pt-12 text-center sm:pt-16">
+            <Heading level={1} className="font-display text-balance text-3xl font-bold tracking-tight sm:text-4xl">
               {h1}
-            </h1>
-            <p className="mx-auto mt-3 max-w-md text-balance text-muted-foreground">{sub}</p>
-          </section>
+            </Heading>
+            <Text as="p" className="mx-auto mt-3 max-w-md text-balance text-secondary">{sub}</Text>
+          </Stack>
 
-          <section className="mx-auto max-w-2xl pb-10 pt-8">
+          <Stack as="section" className="mx-auto max-w-2xl pb-10 pt-8">
             <LinkConverter showHistory={false} />
-          </section>
+          </Stack>
 
           {children}
 
-          <section className="mx-auto max-w-2xl pb-10">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <Stack as="section" className="mx-auto max-w-2xl pb-10">
+            <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Common questions
-            </h2>
+            </Heading>
             <dl className="mt-2 space-y-4">
               {faq.map((item) => (
-                <div key={item.question}>
+                <Stack key={item.question}>
                   <dt className="text-sm font-semibold">{item.question}</dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  <dd className="mt-1 text-sm leading-relaxed text-secondary">
                     {item.answer}
                   </dd>
-                </div>
+                </Stack>
               ))}
             </dl>
-          </section>
+          </Stack>
 
-          <section className="mx-auto max-w-2xl pb-16">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <Stack as="section" className="mx-auto max-w-2xl pb-16">
+            <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Every direction
-            </h2>
-            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+            </Heading>
+            <Stack as="ul" className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
               {CONVERSION_PAIRS.map((pair) => (
-                <li key={pair.slug}>
+                <Stack as="li" key={pair.slug}>
                   <Link
                     href={`/${pair.slug}`}
-                    className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+                    className="text-xs text-secondary transition-colors hover:text-primary hover:underline"
                   >
                     {pair.from.name} to {pair.to.name}
                   </Link>
-                </li>
+                </Stack>
               ))}
               {SEO_PAGES.filter((page) => page.slug !== slug).map((page) => (
-                <li key={page.slug}>
+                <Stack as="li" key={page.slug}>
                   <Link
                     href={`/${page.slug}`}
-                    className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+                    className="text-xs text-secondary transition-colors hover:text-primary hover:underline"
                   >
                     {page.label}
                   </Link>
-                </li>
+                </Stack>
               ))}
-            </ul>
-          </section>
-        </div>
-      </main>
-    </div>
+            </Stack>
+          </Stack>
+        </Stack>
+      </Stack>
+    </Stack>
   );
 }
 
@@ -116,13 +117,13 @@ export function SeoSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mx-auto max-w-2xl pb-10">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+    <Stack as="section" className="mx-auto max-w-2xl pb-10">
+      <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
         {heading}
-      </h2>
-      <div className="mt-2 space-y-3 text-sm leading-relaxed text-muted-foreground">
+      </Heading>
+      <Stack className="mt-2 space-y-3 text-sm leading-relaxed text-secondary">
         {children}
-      </div>
-    </section>
+      </Stack>
+    </Stack>
   );
 }

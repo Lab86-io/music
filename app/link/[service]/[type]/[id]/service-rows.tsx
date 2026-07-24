@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import QRCode from "qrcode";
+import { Button } from "@astryxdesign/core/Button";
+import { Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
 import {
   IconCheck,
   IconCopy,
@@ -22,18 +25,17 @@ import {
 import { cn } from "@/lib/utils";
 import type { MusicService } from "@/lib/url-parser";
 
-const BRAND: Record<MusicService, { name: string; color: string }> = {
-  spotify: { name: "Spotify", color: "#1DB954" },
-  apple: { name: "Apple Music", color: "#FC3C44" },
-  deezer: { name: "Deezer", color: "#A238FF" },
-  tidal: { name: "TIDAL", color: "" },
-  youtube: { name: "YouTube Music", color: "#FF0000" },
-  amazon: { name: "Amazon Music", color: "#25D1DA" },
+const BRAND: Record<MusicService, { name: string; logo: string }> = {
+  spotify: { name: "Spotify", logo: "text-green-vivid" },
+  apple: { name: "Apple Music", logo: "text-red-vivid" },
+  deezer: { name: "Deezer", logo: "text-purple-vivid" },
+  tidal: { name: "TIDAL", logo: "text-primary" },
+  youtube: { name: "YouTube Music", logo: "text-red-vivid" },
+  amazon: { name: "Amazon Music", logo: "text-cyan-vivid" },
 };
 
 function Logo({ service, className }: { service: MusicService; className?: string }) {
-  const brandColor = BRAND[service].color;
-  const props = { className, style: brandColor ? { color: brandColor } : undefined };
+  const props = { className: cn(className, BRAND[service].logo) };
   switch (service) {
     case "spotify":
       return <SpotifyLogo {...props} />;
@@ -65,35 +67,37 @@ export function ServiceRow({
   const brand = BRAND[service];
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl border border-border/70 bg-background/70 py-2.5 pl-4 pr-2 backdrop-blur transition-colors hover:border-border hover:bg-background/90">
+    <Stack className="group flex items-center gap-3 rounded-xl border border-border/70 bg-body/70 py-2.5 pl-4 pr-2 backdrop-blur transition-colors hover:border-border hover:bg-body/90">
       <Logo service={service} className="h-6 w-6 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium leading-tight">{brand.name}</p>
-        <p className="text-[11px] text-muted-foreground">
+      <Stack className="min-w-0 flex-1">
+        <Text as="p" className="text-sm font-medium leading-tight">{brand.name}</Text>
+        <Text as="p" type="supporting" color="secondary">
           {kind === "search" ? "Opens search" : isSource ? "Original link" : "Direct match"}
-        </p>
-      </div>
-      <button
+        </Text>
+      </Stack>
+      <Button
+        label={`Copy ${brand.name} link`}
+        isIconOnly
+        icon={copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
         onClick={async () => {
           await navigator.clipboard.writeText(url);
           setCopied(true);
           setTimeout(() => setCopied(false), 1800);
         }}
-        aria-label={`Copy ${brand.name} link`}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground/70 opacity-0 transition-all hover:bg-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
-      >
-        {copied ? <IconCheck size={15} className="text-primary" /> : <IconCopy size={15} />}
-      </button>
-      <a
+        variant="ghost"
+        size="sm"
+        className="opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+      />
+      <Button
+        label={kind === "search" ? "Search" : "Open"}
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border/70 bg-background px-3.5 text-xs font-semibold transition-colors hover:bg-muted"
-      >
-        {kind === "search" ? "Search" : "Open"}
-        {kind === "search" ? <IconSearch size={12} /> : <IconExternalLink size={12} />}
-      </a>
-    </div>
+        endContent={kind === "search" ? <IconSearch size={12} /> : <IconExternalLink size={12} />}
+        variant="secondary"
+        size="sm"
+      />
+    </Stack>
   );
 }
 
@@ -119,40 +123,39 @@ export function CopyPageUrlButton({ className }: { className?: string }) {
   };
 
   return (
-    <div className={cn("flex flex-col items-center gap-4", className)}>
-      <div className="flex items-center gap-2">
-        <button
+    <Stack className={cn("flex flex-col items-center gap-4", className)}>
+      <Stack className="flex items-center gap-2">
+        <Button
+          label={copied ? "Copied!" : "Copy this page's link"}
+          icon={copied ? <IconCheck size={15} /> : <IconLink size={15} />}
           onClick={async () => {
             await navigator.clipboard.writeText(window.location.href);
             setCopied(true);
             setTimeout(() => setCopied(false), 1800);
           }}
-          className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-all hover:brightness-105 active:scale-[0.98]"
-        >
-          {copied ? <IconCheck size={15} /> : <IconLink size={15} />}
-          {copied ? "Copied!" : "Copy this page's link"}
-        </button>
-        <button
+          variant="primary"
+        />
+        <Button
+          label={qr ? "Hide QR code" : "Show QR code"}
+          isIconOnly
+          icon={qr ? <IconX size={16} /> : <IconQrcode size={16} />}
           onClick={toggleQr}
-          aria-label={qr ? "Hide QR code" : "Show QR code"}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground backdrop-blur transition-colors hover:border-border hover:text-foreground"
-        >
-          {qr ? <IconX size={16} /> : <IconQrcode size={16} />}
-        </button>
-      </div>
+          variant="secondary"
+        />
+      </Stack>
       {qr && (
-        <div className="animate-rise-in flex flex-col items-center gap-2">
+        <Stack className="animate-rise-in flex flex-col items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={qr}
             alt="QR code for this page"
             width={176}
             height={176}
-            className="h-44 w-44 rounded-xl border border-border/70 bg-white p-2 shadow-lg"
+            className="h-44 w-44 rounded-xl border border-border bg-on-dark p-2 shadow-lg"
           />
-          <p className="text-xs text-muted-foreground">Scan to open on your phone</p>
-        </div>
+          <Text as="p" className="text-xs text-secondary">Scan to open on your phone</Text>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
 }

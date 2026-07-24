@@ -1,22 +1,18 @@
 import type { Metadata } from "next";
-import { Figtree, Averia_Serif_Libre } from "next/font/google";
+import { Averia_Serif_Libre } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
+import { AppShell } from "@astryxdesign/core/AppShell";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { Header } from "@/components/header";
 import { auth } from "@/lib/auth";
+import "./layers.css";
 import "./globals.css";
-
-const figtree = Figtree({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
 
 // Display face for titles and branding only — not body copy
 const averia = Averia_Serif_Libre({
   subsets: ["latin"],
   weight: ["300", "400", "700"],
-  variable: "--font-display",
+  variable: "--font-music-display",
   display: "swap",
 });
 
@@ -77,19 +73,25 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" className={`${figtree.variable} ${averia.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      data-theme="system"
+      data-astryx-theme="matcha"
+      className={averia.variable}
+      suppressHydrationWarning
+    >
       <head>
-        <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('theme');
-                  if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    document.documentElement.classList.add('dark');
-                  }
+                  var stored = localStorage.getItem('theme');
+                  var theme = stored === 'light' || stored === 'dark'
+                    ? stored
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  document.documentElement.dataset.theme = theme;
+                  document.documentElement.dataset.astryxTheme = 'matcha';
                 } catch (e) {}
               })();
             `,
@@ -116,11 +118,17 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
       </head>
-      <body className="font-sans antialiased min-h-screen bg-background text-foreground">
+      <body className="font-sans antialiased">
         <ThemeProvider>
           <SessionProvider session={session}>
-            {children}
-            <Toaster richColors position="bottom-right" />
+            <AppShell
+              topNav={<Header />}
+              height="auto"
+              variant="surface"
+              contentPadding={0}
+            >
+              {children}
+            </AppShell>
           </SessionProvider>
         </ThemeProvider>
       </body>

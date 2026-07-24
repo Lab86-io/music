@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Text } from "@astryxdesign/core/Text";
 import { SeoLanding, SeoSection, type SeoFaqItem } from "@/components/seo-landing";
 
 export const metadata: Metadata = {
@@ -51,20 +52,20 @@ export default function SoundiizAlternativePage() {
       faq={FAQ}
     >
       <SeoSection heading="Where each tool fits">
-        <p>
+        <Text as="p">
           Soundiiz earns its subscription if you need your whole library mirrored across
           platforms continuously. Most people need something smaller: move this playlist
           there, open that link in my app, send this album to a friend on Apple Music. That
           smaller job is what this converter does, completely free, with exact ISRC matching
           and a report you can check instead of trusting a progress bar.
-        </p>
+        </Text>
       </SeoSection>
       <SeoSection heading="Built for links, not lock-in">
-        <p>
+        <Text as="p">
           Everything here produces a link you can hand to anyone: a converted track, a
           universal page listing all six services, a QR code, a 48 hour playlist share page.
           No account exists on this site, so there is nothing to migrate away from later.
-        </p>
+        </Text>
       </SeoSection>
     </SeoLanding>
   );

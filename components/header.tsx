@@ -1,32 +1,45 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { TopNav, TopNavHeading, TopNavItem } from "@astryxdesign/core/TopNav";
+import { HStack } from "@astryxdesign/core/Stack";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-interface HeaderProps {
-  children?: React.ReactNode;
-}
+export function Header() {
+  const pathname = usePathname();
 
-export function Header({ children }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
-      <div className="container mx-auto px-4 py-2.5 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+    <TopNav
+      label="Music navigation"
+      heading={
+        <TopNavHeading
+          heading="Music"
+          headingHref="/"
+          logo={
           <Image
             src="/logo.png"
-            alt="Lab86 Convert"
+                alt=""
             width={28}
             height={28}
-            className="rounded-md"
+                className="rounded-sm"
           />
-          <span className="font-display text-sm font-bold">Lab86 Convert</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          {children}
+          }
+        />
+      }
+      startContent={
+        <HStack gap={1}>
+          <TopNavItem label="Convert" href="/convert" isSelected={pathname === "/convert"} />
+          <TopNavItem
+            label="Playlists"
+            href="/dashboard"
+            isSelected={pathname.startsWith("/dashboard")}
+          />
+        </HStack>
+      }
+      endContent={
           <ThemeToggle />
-        </div>
-      </div>
-    </header>
+      }
+    />
   );
 }

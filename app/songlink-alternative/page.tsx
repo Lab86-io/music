@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Text } from "@astryxdesign/core/Text";
 import { SeoLanding, SeoSection, type SeoFaqItem } from "@/components/seo-landing";
 
 export const metadata: Metadata = {
@@ -51,21 +52,21 @@ export default function SonglinkAlternativePage() {
       faq={FAQ}
     >
       <SeoSection heading="What you get">
-        <p>
+        <Text as="p">
           Every song, album, or artist you convert gets a permanent universal page listing
           the direct match on Spotify, Apple Music, Deezer, TIDAL, and YouTube Music, plus an
           Amazon Music search. Send that one page to a group chat and everyone opens it in
           their own app. Each page carries proper preview cards for iMessage, Slack, and
           social, and a QR code for handing a song to someone in person.
-        </p>
+        </Text>
       </SeoSection>
       <SeoSection heading="The part smart-link tools skip">
-        <p>
+        <Text as="p">
           Songlink stops at single songs and albums. This converts whole playlists too:
           paste a playlist link and get a 48 hour share page anyone can import into their own
           service, or sign in and move playlists between your own accounts directly with
           ISRC-exact matching.
-        </p>
+        </Text>
       </SeoSection>
     </SeoLanding>
   );

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { ServiceConnect } from "@/components/service-connect";
 import { PlaylistCard, type ConvertTargetService } from "@/components/playlist-card";
 import { PlaylistSkeletonList } from "@/components/playlist-skeleton";
@@ -10,17 +10,19 @@ import { ConversionProgress } from "@/components/conversion-progress";
 import { TrackMatchReport } from "@/components/track-match-report";
 import { ShareDialog } from "@/components/share-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { Badge as AstryxBadge } from "@astryxdesign/core/Badge";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Tab, TabList } from "@astryxdesign/core/TabList";
+import { Stack, VStack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   IconMusic, 
   IconRefresh, 
   IconLoader2,
-  IconSearch,
-  IconX
+  IconSearch
 } from "@tabler/icons-react";
 import {
   SpotifyLogo,
@@ -29,7 +31,6 @@ import {
   TidalLogo,
   DeezerLogo,
 } from "@/components/icons";
-import { Header } from "@/components/header";
 import { LinkConverter } from "@/components/link-converter";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
 
@@ -527,56 +528,53 @@ export default function DashboardPage() {
 
   if (sessionLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <IconLoader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Stack className="flex min-h-screen items-center justify-center">
+        <IconLoader2 className="h-8 w-8 animate-spin text-accent" />
+      </Stack>
     );
   }
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background">
-        <Header>
-          <div className="hidden sm:flex items-center gap-2">
+      <Stack className="min-h-screen bg-body">
+        <Stack className="container mx-auto px-4 py-4 pb-12">
+          <Stack className="hidden sm:flex items-center gap-2">
             {spotifyConnected && (
-              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#1DB954]/30 bg-[#1DB954]/10">
-                <SpotifyLogo className="h-3.5 w-3.5 text-[#1DB954]" />
-                <span className="text-xs font-medium">Spotify</span>
+              <Badge variant="outline" className="gap-1.5 border-green-ring bg-green-subtle px-3 py-1.5">
+                <SpotifyLogo className="h-3.5 w-3.5 text-green-vivid" />
+                <Text className="text-xs font-medium">Spotify</Text>
               </Badge>
             )}
             {appleConnected && (
-              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#FC3C44]/30 bg-[#FC3C44]/10">
-                <AppleLogo className="h-3.5 w-3.5 text-[#FC3C44]" />
-                <span className="text-xs font-medium">Apple Music</span>
+              <Badge variant="outline" className="gap-1.5 border-red-ring bg-red-subtle px-3 py-1.5">
+                <AppleLogo className="h-3.5 w-3.5 text-red-vivid" />
+                <Text className="text-xs font-medium">Apple Music</Text>
               </Badge>
             )}
             {youtube.connected && (
-              <Badge variant="outline" className="gap-1.5 py-1.5 px-3 border-[#FF0000]/30 bg-[#FF0000]/10">
-                <YouTubeMusicLogo className="h-3.5 w-3.5 text-[#FF0000]" />
-                <span className="text-xs font-medium">YouTube</span>
+              <Badge variant="outline" className="gap-1.5 border-red-ring bg-red-subtle px-3 py-1.5">
+                <YouTubeMusicLogo className="h-3.5 w-3.5 text-red-vivid" />
+                <Text className="text-xs font-medium">YouTube</Text>
               </Badge>
             )}
             {tidal.connected && (
-              <Badge variant="outline" className="gap-1.5 border-neutral-500/30 bg-neutral-500/10 px-3 py-1.5">
+              <Badge variant="outline" className="gap-1.5 border-gray-ring bg-gray-subtle px-3 py-1.5">
                 <TidalLogo className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">TIDAL</span>
+                <Text className="text-xs font-medium">TIDAL</Text>
               </Badge>
             )}
             {deezer.connected && (
-              <Badge variant="outline" className="gap-1.5 border-[#A238FF]/30 bg-[#A238FF]/10 px-3 py-1.5">
-                <DeezerLogo className="h-3.5 w-3.5 text-[#A238FF]" />
-                <span className="text-xs font-medium">Deezer</span>
+              <Badge variant="outline" className="gap-1.5 border-purple-ring bg-purple-subtle px-3 py-1.5">
+                <DeezerLogo className="h-3.5 w-3.5 text-purple-vivid" />
+                <Text className="text-xs font-medium">Deezer</Text>
               </Badge>
             )}
-          </div>
-        </Header>
-        
-        <div className="container mx-auto px-4 py-4 pb-12">
+          </Stack>
 
           {/* Universal link converter — compact utility placement */}
-          <div className="mb-4">
+          <Stack className="mb-4">
             <LinkConverter showHistory={false} compact />
-          </div>
+          </Stack>
 
           {/* Connection Cards (collapsed state) */}
           {(!spotifyConnected ||
@@ -584,25 +582,25 @@ export default function DashboardPage() {
             (youtube.configured && !youtube.connected) ||
             (tidal.configured && !tidal.connected) ||
             (deezer.configured && !deezer.connected)) && (
-            <div className="mb-4">
+            <Stack className="mb-4">
               <ServiceConnect onConnectionChange={handleConnectionChange} />
-            </div>
+            </Stack>
           )}
 
           {/* Conversion Progress/Result */}
           {(isConverting || conversionResult) && conversionPlaylist && (
-            <section className="mb-6">
-              <div className="mb-1.5 flex items-center justify-between">
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <Stack as="section" className="mb-6">
+              <Stack className="mb-1.5 flex items-center justify-between">
+                <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
                   {isConverting ? "Converting playlist" : "Conversion complete"}
-                </h2>
+                </Heading>
                 {conversionResult && (
                   <Button variant="ghost" size="sm" onClick={clearConversion}>
                     Dismiss
                   </Button>
                 )}
-              </div>
-              <div className="space-y-2">
+              </Stack>
+              <Stack className="space-y-2">
                 <ConversionProgress
                   isConverting={isConverting}
                   playlistName={conversionPlaylist.name}
@@ -628,73 +626,44 @@ export default function DashboardPage() {
                     appleUserToken={appleUserToken || sessionStorage.getItem("appleUserToken") || undefined}
                   />
                 )}
-              </div>
-            </section>
+              </Stack>
+            </Stack>
           )}
 
           {/* Playlists */}
           {(spotifyConnected || appleConnected) && (
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <h1 className="font-display text-xl font-semibold tracking-tight">Your library</h1>
-              <div className="sticky top-[57px] z-20 mt-1 -mx-1 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-1 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-                <div className="flex gap-1 shrink-0">
+            <VStack gap={3}>
+              <Heading level={1} className="font-display text-xl font-semibold tracking-tight">Your library</Heading>
+              <Stack className="sticky top-14 z-20 mt-1 -mx-1 flex items-center justify-between gap-2 border-b border-border bg-body/90 px-1 backdrop-blur">
+                <TabList
+                  value={activeTab}
+                  onChange={(value) => setActiveTab(value as "spotify" | "apple")}
+                  size="sm"
+                  hasDivider
+                >
                   {spotifyConnected && (
-                    <button
-                      onClick={() => setActiveTab("spotify")}
-                      className={cn(
-                        "relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
-                        activeTab === "spotify"
-                          ? "text-[#1DB954]"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <SpotifyLogo className="h-4 w-4" />
-                      <span className="hidden sm:inline">Spotify</span>
-                      <span className={cn(
-                        "rounded-full px-1.5 py-0.5 text-xs tabular-nums",
-                        activeTab === "spotify"
-                          ? "bg-[#1DB954]/15 text-[#1DB954]"
-                          : "bg-muted text-muted-foreground"
-                      )}>
-                        {spotifyPlaylists.length}
-                      </span>
-                      {activeTab === "spotify" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1DB954]" />
-                      )}
-                    </button>
+                    <Tab
+                      value="spotify"
+                      label="Spotify"
+                      icon={<SpotifyLogo className="h-4 w-4" />}
+                      endContent={<AstryxBadge variant="green" label={spotifyPlaylists.length} />}
+                    />
                   )}
                   {appleConnected && (
-                    <button
-                      onClick={() => setActiveTab("apple")}
-                      className={cn(
-                        "relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
-                        activeTab === "apple"
-                          ? "text-[#FC3C44]"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <AppleLogo className="h-4 w-4" />
-                      <span className="hidden sm:inline">Apple Music</span>
-                      <span className={cn(
-                        "rounded-full px-1.5 py-0.5 text-xs tabular-nums",
-                        activeTab === "apple"
-                          ? "bg-[#FC3C44]/15 text-[#FC3C44]"
-                          : "bg-muted text-muted-foreground"
-                      )}>
-                        {applePlaylists.length}
-                      </span>
-                      {activeTab === "apple" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FC3C44]" />
-                      )}
-                    </button>
+                    <Tab
+                      value="apple"
+                      label="Apple Music"
+                      icon={<AppleLogo className="h-4 w-4" />}
+                      endContent={<AstryxBadge variant="red" label={applePlaylists.length} />}
+                    />
                   )}
-                </div>
-                <div className="flex items-center gap-1.5">
+                </TabList>
+                <Stack className="flex items-center gap-1.5">
                   <Tooltip>
                     <TooltipTrigger
                       onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}
                       disabled={activeTab === "spotify" ? loadingSpotify : loadingApple}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shrink-0"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium text-secondary transition-colors hover:bg-accent-muted hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-bg disabled:pointer-events-none disabled:opacity-50 shrink-0"
                     >
                       <IconRefresh
                         size={14}
@@ -703,29 +672,23 @@ export default function DashboardPage() {
                     </TooltipTrigger>
                     <TooltipContent>Refresh playlists</TooltipContent>
                   </Tooltip>
-                  <div className="relative w-36">
-                    <IconSearch size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search..."
+                  <TextInput
+                      label="Search playlists"
+                      isLabelHidden
+                      placeholder="Search…"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-7 pr-7 h-7 text-xs"
+                      onChange={setSearchQuery}
+                      startIcon={<IconSearch size={14} />}
+                      hasClear
+                      size="sm"
+                      width={176}
                     />
-                    {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        <IconX size={12} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+                </Stack>
+              </Stack>
 
               {/* Spotify Playlists */}
-              <TabsContent value="spotify" className="mt-3">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5">
+              {activeTab === "spotify" && (
+                <Stack className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5">
                       {loadingSpotify ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
@@ -774,20 +737,20 @@ export default function DashboardPage() {
                             />
                           ))
                         ) : (
-                          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                            <IconMusic size={28} className="mb-2.5 text-muted-foreground/50" />
-                            <p className="text-sm text-muted-foreground">
+                          <Stack className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                            <IconMusic size={28} className="mb-2.5 text-secondary/50" />
+                            <Text as="p" className="text-sm text-secondary">
                               {searchQuery ? "No playlists match your search" : "No playlists found"}
-                            </p>
-                          </div>
+                            </Text>
+                          </Stack>
                         );
                       })()}
-                </div>
-              </TabsContent>
+                </Stack>
+              )}
 
               {/* Apple Music Playlists */}
-              <TabsContent value="apple" className="mt-3">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5">
+              {activeTab === "apple" && (
+                <Stack className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-5">
                       {loadingApple ? (
                         <PlaylistSkeletonList count={6} />
                       ) : (() => {
@@ -836,21 +799,21 @@ export default function DashboardPage() {
                             />
                           ))
                         ) : (
-                          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                            <IconMusic size={28} className="mb-2.5 text-muted-foreground/50" />
-                            <p className="text-sm text-muted-foreground">
+                          <Stack className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                            <IconMusic size={28} className="mb-2.5 text-secondary/50" />
+                            <Text as="p" className="text-sm text-secondary">
                               {searchQuery ? "No playlists match your search" : "No playlists found"}
-                            </p>
-                          </div>
+                            </Text>
+                          </Stack>
                         );
                       })()}
-                </div>
-              </TabsContent>
-            </Tabs>
+                </Stack>
+              )}
+            </VStack>
           )}
 
-        </div>
-      </div>
+        </Stack>
+      </Stack>
 
       {/* Share Dialog */}
       {sharingPlaylist && (

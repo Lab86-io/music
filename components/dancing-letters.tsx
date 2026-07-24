@@ -6,6 +6,7 @@
 
 import { m, LazyMotion, domAnimation, useReducedMotion } from "motion/react";
 import { useState, useCallback, useEffect } from "react";
+import { Text } from "@astryxdesign/core/Text";
 import { cn } from "@/lib/utils";
 
 interface DancingLettersProps {
@@ -23,7 +24,6 @@ const letterAnimations = [
       scaleY: [1, 0.75, 1.25, 0.85, 1.05, 0.95, 1],
     },
     transition: { duration: 0.8, ease: "easeInOut" },
-    transformOrigin: "center center",
   },
   // 2. The Hinge (falling effect)
   {
@@ -32,7 +32,6 @@ const letterAnimations = [
       y: [0, 10, -5, 5, -2, 0],
     },
     transition: { duration: 1.2, ease: [0.175, 0.885, 0.32, 1.275] },
-    transformOrigin: "bottom left",
   },
   // 3. Squash and Jump
   {
@@ -41,7 +40,6 @@ const letterAnimations = [
       y: [0, 20, -40, 0],
     },
     transition: { duration: 0.6, ease: "easeOut" },
-    transformOrigin: "bottom center",
   },
   // 4. Backflip
   {
@@ -54,7 +52,6 @@ const letterAnimations = [
       ease: "easeOut",
       times: [0, 0.12, 0.24, 0.36, 0.48, 0.6, 0.85, 1],
     },
-    transformOrigin: "50% 80%",
   },
   // 5. Elastic Slide
   {
@@ -62,7 +59,6 @@ const letterAnimations = [
       x: [0, -20, 15, -10, 5, 0],
     },
     transition: { duration: 0.8, ease: "easeInOut" },
-    transformOrigin: "center center",
   },
   // 6. Impact Shake
   {
@@ -72,7 +68,6 @@ const letterAnimations = [
       rotate: [0, -1, 1, -0.5, 0.5, 0],
     },
     transition: { duration: 0.5, ease: "linear" },
-    transformOrigin: "center center",
   },
   // 7. Pop (Scale)
   {
@@ -80,7 +75,6 @@ const letterAnimations = [
       scale: [1, 1.4, 1],
     },
     transition: { duration: 0.5, ease: "easeInOut" },
-    transformOrigin: "center center",
   },
   // 8. Levitate
   {
@@ -89,8 +83,18 @@ const letterAnimations = [
       scale: [1, 1.1, 1],
     },
     transition: { duration: 1.2, ease: "easeInOut" },
-    transformOrigin: "center center",
   },
+] as const;
+
+const letterOrigins = [
+  "origin-center",
+  "origin-bottom-left",
+  "origin-bottom",
+  "origin-bottom",
+  "origin-center",
+  "origin-center",
+  "origin-center",
+  "origin-center",
 ] as const;
 
 export function DancingLetters({ text, className, letterClassName }: DancingLettersProps) {
@@ -132,14 +136,13 @@ export function DancingLetters({ text, className, letterClassName }: DancingLett
   }, []);
 
   if (reducedMotion) {
-    return <span className={className}>{text}</span>;
+    return <Text className={className}>{text}</Text>;
   }
 
   return (
     <LazyMotion features={domAnimation}>
       <m.span
-        className={cn("inline-flex select-none", className)}
-        style={{ perspective: "1000px" }}
+        className={cn("inline-flex select-none perspective-distant", className)}
         initial="hidden"
         animate="visible"
         variants={{
@@ -188,14 +191,11 @@ export function DancingLetters({ text, className, letterClassName }: DancingLett
                 if (definition === "active") handleAnimationComplete(id);
               }}
               className={cn(
-                "relative inline-block cursor-pointer",
+                "relative inline-block cursor-pointer transform-3d",
+                letterOrigins[id % letterOrigins.length],
                 letterClassName,
                 isActive ? "z-10" : "z-0"
               )}
-              style={{
-                transformOrigin: anim.transformOrigin,
-                transformStyle: "preserve-3d",
-              }}
             >
               {letter === " " ? " " : letter}
             </m.span>

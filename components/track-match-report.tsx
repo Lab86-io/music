@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@astryxdesign/core/SegmentedControl";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +22,7 @@ import {
   IconLoader2,
   IconPlus
 } from "@tabler/icons-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 const MIN_CONFIDENCE = 70;
 
@@ -76,9 +83,9 @@ export function TrackMatchReport({
   const unmatchedCount = matches.filter((m, i) => !isMatched(m, i)).length;
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 90) return "text-emerald-600 dark:text-emerald-400";
-    if (confidence >= MIN_CONFIDENCE) return "text-amber-600 dark:text-amber-400";
-    return "text-red-600 dark:text-red-400";
+    if (confidence >= 90) return "text-success";
+    if (confidence >= MIN_CONFIDENCE) return "text-warning";
+    return "text-error";
   };
 
   const handleSearch = async (trackName: string, artistName: string, index: number) => {
@@ -192,60 +199,58 @@ export function TrackMatchReport({
   ];
 
   return (
-    <section className="rounded-xl border border-border/70 bg-card/60">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
-        <div>
-          <h3 className="text-sm font-semibold leading-tight">Track matching</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+    <Stack as="section" className="rounded-xl border border-border/70 bg-card/60">
+      <Stack className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+        <Stack>
+          <Heading level={3} className="text-sm font-semibold leading-tight">Track matching</Heading>
+          <Text as="p" className="mt-0.5 text-xs text-secondary">
             {matchedCount} added
             {unmatchedCount > 0 ? (
               <>
                 {" · "}
-                <span className="font-medium text-amber-600 dark:text-amber-400">
+                <Text className="font-medium text-warning">
                   {unmatchedCount} need attention
-                </span>
+                </Text>
               </>
             ) : (
               " · all tracks matched"
             )}
-          </p>
-        </div>
-        <div className="flex items-center gap-0.5 rounded-full border border-border/70 bg-muted/40 p-0.5">
+          </Text>
+        </Stack>
+        <SegmentedControl
+          label="Track match filter"
+          value={filter}
+          onChange={(value) => setFilter(value as typeof filter)}
+          size="sm"
+        >
           {filterOptions.map((option) => (
-            <button
+            <SegmentedControlItem
               key={option.key}
-              onClick={() => setFilter(option.key)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                filter === option.key
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {option.label}
-              <span className="ml-1 tabular-nums opacity-60">{option.count}</span>
-            </button>
+              value={option.key}
+              label={`${option.label} ${option.count}`}
+            />
           ))}
-        </div>
-      </div>
-      <div className="p-3 sm:p-4">
-        <div className="space-y-2">
+        </SegmentedControl>
+      </Stack>
+      <Stack className="p-3 sm:p-4">
+        <Stack className="space-y-2">
           {displayedMatches.map(({ match, originalIndex }) => {
             const matched = isMatched(match, originalIndex);
             const isSearching = searchingIndex === originalIndex;
 
             return (
-              <div key={originalIndex}>
-                <div
+              <Stack key={originalIndex}>
+                <Stack
                   className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
-                    isSearching ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+                    isSearching ? "border-accent-bg bg-accent-muted" : "hover:bg-muted/50"
                   }`}
                 >
                   {/* Status Icon */}
-                  <div
+                  <Stack
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                       matched
-                        ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                        : "bg-red-500/20 text-red-600 dark:text-red-400"
+                        ? "bg-success-muted text-success"
+                        : "bg-error-muted text-error"
                     }`}
                   >
                     {matched ? (
@@ -253,36 +258,36 @@ export function TrackMatchReport({
                     ) : (
                       <IconX size={16} />
                     )}
-                  </div>
+                  </Stack>
 
                   {/* Track Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{match.sourceTrack.name}</span>
+                  <Stack className="flex-1 min-w-0">
+                    <Stack className="flex items-center gap-2">
+                      <Text className="font-medium truncate">{match.sourceTrack.name}</Text>
                       {match.targetTrack && (
                         <Badge variant="outline" className="shrink-0 text-xs">
                           {match.matchMethod === "isrc" ? "ISRC" : "Fuzzy"}
                         </Badge>
                       )}
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">
+                    </Stack>
+                    <Text as="p" className="text-sm text-secondary truncate">
                       {match.sourceTrack.artist}
-                    </p>
+                    </Text>
                     {!matched && match.targetTrack && match.matchConfidence < MIN_CONFIDENCE && (
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                      <Text as="p" className="mt-0.5 text-xs text-error">
                         Found: {match.targetTrack.name} - not added (low confidence)
-                      </p>
+                      </Text>
                     )}
-                  </div>
+                  </Stack>
 
                   {/* Confidence / Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <Stack className="flex items-center gap-2 shrink-0">
                     {match.targetTrack && (
-                      <div className="text-right">
-                        <span className={`font-bold ${getConfidenceColor(match.matchConfidence)}`}>
+                      <Stack className="text-right">
+                        <Text className={`font-bold ${getConfidenceColor(match.matchConfidence)}`}>
                           {match.matchConfidence}%
-                        </span>
-                      </div>
+                        </Text>
+                      </Stack>
                     )}
                     {!matched && (
                       <Button
@@ -304,13 +309,13 @@ export function TrackMatchReport({
                         )}
                       </Button>
                     )}
-                  </div>
-                </div>
+                  </Stack>
+                </Stack>
 
                 {/* Search Panel */}
                 {isSearching && (
-                  <div className="mt-2 ml-0 sm:ml-11 p-3 rounded-lg border bg-muted/30 space-y-3 max-h-[50vh] overflow-y-auto">
-                    <div className="flex gap-2">
+                  <Stack className="mt-2 ml-0 sm:ml-11 p-3 rounded-lg border bg-muted/30 space-y-3 max-h-96 overflow-y-auto">
+                    <Stack className="flex gap-2">
                       <Input
                         placeholder="Search for track..."
                         value={searchQuery}
@@ -321,14 +326,14 @@ export function TrackMatchReport({
                       <Button size="sm" onClick={handleCustomSearch} className="shrink-0">
                         <IconSearch size={14} />
                       </Button>
-                    </div>
+                    </Stack>
 
                     {searchResults.length > 0 ? (
-                      <div className="space-y-2">
+                      <Stack className="space-y-2">
                         {searchResults.map((result) => (
-                          <div
+                          <Stack
                             key={result.id}
-                            className="flex items-center gap-2 sm:gap-3 p-2 rounded-lg border bg-background hover:bg-muted/50"
+                            className="flex items-center gap-2 sm:gap-3 p-2 rounded-lg border bg-body hover:bg-muted/50"
                           >
                             {result.image ? (
                               <Image
@@ -339,16 +344,16 @@ export function TrackMatchReport({
                                 className="rounded object-cover shrink-0"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
-                                <IconMusic size={16} className="text-muted-foreground" />
-                              </div>
+                              <Stack className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                                <IconMusic size={16} className="text-secondary" />
+                              </Stack>
                             )}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate text-sm">{result.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">
+                            <Stack className="flex-1 min-w-0">
+                              <Text as="p" className="font-medium truncate text-sm">{result.name}</Text>
+                              <Text as="p" className="text-xs text-secondary truncate">
                                 {result.artist} • {result.album}
-                              </p>
-                            </div>
+                              </Text>
+                            </Stack>
                             <Button
                               size="sm"
                               onClick={() => handleAddTrack(result)}
@@ -360,27 +365,27 @@ export function TrackMatchReport({
                               ) : (
                                 <>
                                   <IconPlus size={14} className="sm:mr-1" />
-                                  <span className="hidden sm:inline">Add</span>
+                                  <Text className="hidden sm:inline">Add</Text>
                                 </>
                               )}
                             </Button>
-                          </div>
+                          </Stack>
                         ))}
-                      </div>
+                      </Stack>
                     ) : searchResults.length === 0 && searchQuery ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">
+                      <Text as="p" className="text-sm text-secondary text-center py-4">
                         No results found. Try a different search.
-                      </p>
+                      </Text>
                     ) : null}
-                  </div>
+                  </Stack>
                 )}
-              </div>
+              </Stack>
             );
           })}
-        </div>
+        </Stack>
 
         {filteredMatches.length > 10 && (
-          <div className="mt-4 text-center">
+          <Stack className="mt-4 text-center">
             <Button
               variant="outline"
               onClick={() => setShowAll(!showAll)}
@@ -398,9 +403,9 @@ export function TrackMatchReport({
                 </>
               )}
             </Button>
-          </div>
+          </Stack>
         )}
-      </div>
-    </section>
+      </Stack>
+    </Stack>
   );
 }

@@ -1,3 +1,5 @@
+import { Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,29 +13,19 @@ export function Equalizer({
   className?: string;
   animate?: boolean;
 }) {
-  const bars = [
-    { height: "55%", delay: "-0.9s", duration: "1.1s" },
-    { height: "100%", delay: "-0.35s", duration: "0.9s" },
-    { height: "70%", delay: "-0.6s", duration: "1.25s" },
-    { height: "88%", delay: "-0.1s", duration: "1.05s" },
-  ];
   return (
-    <span
+    <Text
       aria-hidden
-      className={cn("inline-flex h-3.5 items-end gap-[2.5px]", className)}
+      className={cn("inline-flex h-3.5 items-end gap-0.5", className)}
     >
-      {bars.map((bar, i) => (
-        <span
+      {Array.from({ length: 4 }, (_, i) => (
+        <Stack
+          as="span"
           key={i}
-          className={cn("w-[3px] rounded-full bg-current", animate && "eq-bar")}
-          style={{
-            height: bar.height,
-            animationDelay: bar.delay,
-            animationDuration: bar.duration,
-          }}
+          className={cn("h-full w-1 rounded-full bg-current", animate && "eq-bar")}
         />
       ))}
-    </span>
+    </Text>
   );
 }
 

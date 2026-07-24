@@ -149,7 +149,7 @@ Response:
 | Layer | Technology |
 |-------|------------|
 | Framework | Next.js 16 (App Router, Turbopack) |
-| UI | shadcn/ui + Tailwind CSS v4 |
+| UI | Astryx Design System + Tailwind CSS v4 token bridge |
 | Icons | Tabler Icons + Official Brand Logos |
 | Database | PostgreSQL + Drizzle ORM |
 | Auth | Spotify OAuth (PKCE), Apple MusicKit JS, Google OAuth, TIDAL OAuth 2.1 + PKCE |

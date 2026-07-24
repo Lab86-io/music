@@ -2,7 +2,14 @@
 
 import Image from "next/image";
 import { IconMusic, IconShare2 } from "@tabler/icons-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AspectRatio } from "@astryxdesign/core/AspectRatio";
+import { Button } from "@astryxdesign/core/Button";
+import { Center } from "@astryxdesign/core/Center";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Overlay } from "@astryxdesign/core/Overlay";
+import { HStack, VStack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { MediaTheme } from "@astryxdesign/core/theme";
 import {
   SpotifyLogo,
   AppleLogo,
@@ -10,7 +17,6 @@ import {
   TidalLogo,
   DeezerLogo,
 } from "@/components/icons";
-import { cn } from "@/lib/utils";
 import type { SpotifyPlaylist, AppleMusicPlaylist } from "@/types";
 
 export type ConvertTargetService = "spotify" | "apple" | "youtube" | "tidal" | "deezer";
@@ -24,13 +30,13 @@ export interface ConvertTarget {
 
 const TARGET_STYLE: Record<
   ConvertTargetService,
-  { name: string; className: string; Logo: typeof SpotifyLogo }
+  { name: string; Logo: typeof SpotifyLogo }
 > = {
-  spotify: { name: "Spotify", className: "bg-[#1DB954] text-[#07210f]", Logo: SpotifyLogo },
-  apple: { name: "Apple Music", className: "bg-[#FC3C44] text-white", Logo: AppleLogo },
-  youtube: { name: "YouTube Music", className: "bg-[#FF0000] text-white", Logo: YouTubeMusicLogo },
-  tidal: { name: "TIDAL", className: "bg-neutral-950 text-white ring-1 ring-white/15", Logo: TidalLogo },
-  deezer: { name: "Deezer", className: "bg-[#A238FF] text-white", Logo: DeezerLogo },
+  spotify: { name: "Spotify", Logo: SpotifyLogo },
+  apple: { name: "Apple Music", Logo: AppleLogo },
+  youtube: { name: "YouTube Music", Logo: YouTubeMusicLogo },
+  tidal: { name: "TIDAL", Logo: TidalLogo },
+  deezer: { name: "Deezer", Logo: DeezerLogo },
 };
 
 interface PlaylistCardProps {
@@ -69,95 +75,79 @@ export function PlaylistCard({
         .replace("{h}", "400");
 
   return (
-    <div className="group">
-      {/* Artwork tile */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted shadow-sm transition-shadow duration-200 group-hover:shadow-[0_10px_28px_-10px_rgb(0_0_0/0.4)]">
+    <VStack gap={2}>
+      <AspectRatio ratio={1} fit="cover">
+        <Overlay
+          showOn="hover-or-focus"
+          position="bottom"
+          align="end"
+          scrim="dark"
+          content={
+            <MediaTheme mode="dark">
+              <HStack gap={1.5} wrap="wrap" hAlign="end">
+                {onShare && (
+                  <Button
+                    label="Create a 48-hour share link"
+                    icon={<IconShare2 size={14} />}
+                    isIconOnly
+                    onClick={() => onShare(playlist)}
+                    isDisabled={shareDisabled}
+                    variant="ghost"
+                    size="sm"
+                    tooltip="Create a 48-hour share link"
+                  />
+                )}
+                {targets.map((target) => {
+                  const service = TARGET_STYLE[target.service];
+                  return (
+                    <Button
+                      key={target.service}
+                      label={
+                        target.disabled
+                          ? (target.disabledReason ?? `Connect ${service.name} first`)
+                          : `Convert to ${service.name}`
+                      }
+                      icon={<service.Logo className="h-4 w-4" />}
+                      isIconOnly
+                      isDisabled={target.disabled}
+                      onClick={() => onConvert(playlist, target.service)}
+                      variant="ghost"
+                      size="sm"
+                      tooltip={
+                        target.disabled
+                          ? (target.disabledReason ?? `Connect ${service.name} first`)
+                          : `Convert to ${service.name}`
+                      }
+                    />
+                  );
+                })}
+              </HStack>
+            </MediaTheme>
+          }
+        >
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            className="object-cover"
             sizes="(max-width: 640px) 45vw, (max-width: 1280px) 25vw, 200px"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <IconMusic size={32} className="text-muted-foreground/50" />
-          </div>
+          <Center height="100%" axis="both">
+            <IconMusic size={32} className="text-secondary/50" />
+          </Center>
         )}
-
-        {/* Source service badge */}
-        <div
-          className={cn(
-            "absolute left-2 top-2 flex h-5.5 w-5.5 items-center justify-center rounded-full text-white shadow-sm",
-            isSpotify ? "bg-[#1DB954]" : "bg-[#FC3C44]"
-          )}
-        >
-          {isSpotify ? <SpotifyLogo className="h-3 w-3" /> : <AppleLogo className="h-3 w-3" />}
-        </div>
-
-        {/* Hover scrim + actions (always visible on touch, hover-revealed on pointer devices) */}
-        <div
-          className={cn(
-            "absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-end gap-1.5 p-2 pt-10",
-            "bg-gradient-to-t from-black/60 via-black/25 to-transparent",
-            "transition-opacity duration-200",
-            "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-          )}
-        >
-          {onShare && (
-            <Tooltip>
-              <TooltipTrigger
-                onClick={() => onShare(playlist)}
-                disabled={shareDisabled}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow-md backdrop-blur transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-              >
-                <IconShare2 size={14} />
-              </TooltipTrigger>
-              <TooltipContent>Create a 48-hour share link</TooltipContent>
-            </Tooltip>
-          )}
-          {targets.map((target) => {
-            const style = TARGET_STYLE[target.service];
-            return (
-              <Tooltip key={target.service}>
-                <TooltipTrigger
-                  onClick={() => {
-                    if (!target.disabled) onConvert(playlist, target.service);
-                  }}
-                  aria-disabled={target.disabled}
-                  className={cn(
-                    "inline-flex h-8 w-8 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 active:scale-95",
-                    // Keep disabled targets hoverable so the tooltip can explain why
-                    target.disabled && "cursor-not-allowed opacity-45",
-                    style.className
-                  )}
-                >
-                  <style.Logo className="h-4 w-4" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  {target.disabled
-                    ? (target.disabledReason ?? `Connect ${style.name} first`)
-                    : `Convert to ${style.name}`}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Label */}
-      <div className="mt-2 px-0.5">
-        <h3
-          className="truncate text-sm font-medium leading-snug text-foreground"
-          title={name}
-        >
+        </Overlay>
+      </AspectRatio>
+      <VStack gap={0}>
+        <Heading level={3} maxLines={1}>
           {name}
-        </h3>
-        <p className="text-xs text-muted-foreground">
+        </Heading>
+        <Text type="supporting">
           {trackCount > 0 ? `${trackCount} tracks` : "Playlist"}
-        </p>
-      </div>
-    </div>
+        </Text>
+      </VStack>
+    </VStack>
   );
 }

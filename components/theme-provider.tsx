@@ -1,6 +1,14 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import NextLink from "next/link";
+import { Theme as AstryxTheme } from "@astryxdesign/core/theme";
+import { LinkProvider } from "@astryxdesign/core/Link";
+import { InternationalizationProvider } from "@astryxdesign/core/i18n";
+import { LayerProvider } from "@astryxdesign/core/Layer";
+import { ToastViewport, useToast } from "@astryxdesign/core/Toast";
+import { matchaTheme } from "@astryxdesign/theme-matcha/built";
+import { MUSIC_TOAST_EVENT, type MusicToastDetail } from "@/lib/toast";
 
 type Theme = "light" | "dark" | "system";
 
@@ -64,10 +72,41 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, resolvedTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <AstryxTheme theme={matchaTheme} mode={theme}>
+      <InternationalizationProvider locale="en-US">
+        <LinkProvider component={NextLink}>
+          <LayerProvider toast={{ position: "bottomEnd", maxVisible: 4 }}>
+            <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, resolvedTheme }}>
+              <AstryxToastBridge />
+              <ToastViewport position="bottomEnd" maxVisible={4}>
+                {children}
+              </ToastViewport>
+            </ThemeContext.Provider>
+          </LayerProvider>
+        </LinkProvider>
+      </InternationalizationProvider>
+    </AstryxTheme>
   );
+}
+
+function AstryxToastBridge() {
+  const showToast = useToast();
+
+  useEffect(() => {
+    const handleToast = (event: Event) => {
+      const detail = (event as CustomEvent<MusicToastDetail>).detail;
+      showToast({
+        body: detail.message,
+        type: detail.kind === "error" ? "error" : "info",
+        uniqueID: detail.id,
+      });
+    };
+
+    window.addEventListener(MUSIC_TOAST_EVENT, handleToast);
+    return () => window.removeEventListener(MUSIC_TOAST_EVENT, handleToast);
+  }, [showToast]);
+
+  return null;
 }
 
 export function useTheme() {
@@ -77,4 +116,3 @@ export function useTheme() {
   }
   return context;
 }
-

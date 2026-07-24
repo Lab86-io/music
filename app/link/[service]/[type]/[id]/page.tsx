@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Link } from "@astryxdesign/core/Link";
+import { Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/header";
 import { ServiceRow, CopyPageUrlButton } from "./service-rows";
 import { loadConversion, type PageParams } from "./conversion";
 
@@ -98,13 +100,12 @@ export default async function UniversalLinkPage({
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <Stack className="min-h-screen bg-body">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(musicJsonLd) }}
       />
-      <main className="relative overflow-hidden">
+      <Stack className="relative overflow-hidden">
         {/* Artwork-derived full-bleed backdrop */}
         {source.artworkUrl && (
           <>
@@ -117,12 +118,12 @@ export default async function UniversalLinkPage({
               sizes="100vw"
               className="scale-125 object-cover opacity-25 blur-3xl saturate-150 dark:opacity-20"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
+            <Stack className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
           </>
         )}
 
-        <div className="container relative mx-auto px-4">
-          <div className="mx-auto flex max-w-md flex-col items-center pb-16 pt-10 sm:pt-14">
+        <Stack className="container relative mx-auto px-4">
+          <Stack className="mx-auto flex max-w-md flex-col items-center pb-16 pt-10 sm:pt-14">
             {source.artworkUrl && (
               <Image
                 src={source.artworkUrl}
@@ -133,42 +134,42 @@ export default async function UniversalLinkPage({
                 className={
                   type === "artist"
                     ? "h-56 w-56 rounded-full object-cover shadow-2xl"
-                    : "h-56 w-56 rounded-2xl object-cover shadow-2xl"
+                    : "h-56 w-56 rounded-xl object-cover shadow-2xl"
                 }
               />
             )}
 
-            <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            <Text as="p" type="supporting" color="secondary" weight="medium" className="mt-6 uppercase">
               {type}
-            </p>
-            <h1 className="font-display mt-1 text-balance text-center text-3xl font-bold leading-tight">
+            </Text>
+            <Heading level={1} className="font-display mt-1 text-balance text-center text-3xl font-bold leading-tight">
               {source.title}
-            </h1>
+            </Heading>
             {type !== "artist" && (
-              <p className="mt-1 text-center text-muted-foreground">
+              <Text as="p" className="mt-1 text-center text-secondary">
                 {source.artist}
                 {type === "track" && source.album ? ` · ${source.album}` : ""}
-              </p>
+              </Text>
             )}
 
-            <div className="mt-8 w-full space-y-2">
+            <Stack className="mt-8 w-full space-y-2">
               {rows.map((row) => (
                 <ServiceRow key={row.service} {...row} />
               ))}
-            </div>
+            </Stack>
 
             <CopyPageUrlButton className="mt-6" />
 
-            <p className="mt-10 text-center text-xs text-muted-foreground">
+            <Text as="p" className="mt-10 text-center text-xs text-secondary">
               Made with{" "}
-              <Link href="/" className="font-medium text-foreground hover:underline">
+              <Link href="/" className="font-medium text-primary hover:underline">
                 Lab86 Convert
               </Link>
               . Paste any music link, get every service.
-            </p>
-          </div>
-        </div>
-      </main>
-    </div>
+            </Text>
+          </Stack>
+        </Stack>
+      </Stack>
+    </Stack>
   );
 }

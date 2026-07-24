@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@astryxdesign/core/Link";
+import { Text } from "@astryxdesign/core/Text";
 import { SeoLanding, SeoSection, type SeoFaqItem } from "@/components/seo-landing";
 
 export const metadata: Metadata = {
@@ -52,29 +53,29 @@ export default function PlaylistConverterPage() {
       faq={FAQ}
     >
       <SeoSection heading="Two ways to move a playlist">
-        <p>
-          <span className="font-medium text-foreground">Share link.</span> Paste a playlist
+        <Text as="p">
+          <Text className="font-medium text-primary">Share link.</Text> Paste a playlist
           link above and get a 48 hour share page. Anyone who opens it signs in to their own
           service and imports the playlist there. Good for sending a playlist to a friend on
           a different service, no account needed on your side.
-        </p>
-        <p>
-          <span className="font-medium text-foreground">Direct import.</span>{" "}
-          <Link href="/" className="font-medium text-foreground hover:underline">
+        </Text>
+        <Text as="p">
+          <Text className="font-medium text-primary">Direct import.</Text>{" "}
+          <Link href="/" className="font-medium text-primary hover:underline">
             Sign in
           </Link>{" "}
           to your services and convert playlists from your library straight into another
           service. You watch it match track by track, then get a report of anything that
           needs attention.
-        </p>
+        </Text>
       </SeoSection>
       <SeoSection heading="Why matches are exact">
-        <p>
+        <Text as="p">
           Most converters guess by searching song titles. This one matches by ISRC, the
           unique ID the recording industry assigns to each recording, and only falls back to
           title and artist comparison when a catalog does not report one. Fallback matches
           show a confidence score instead of pretending to be certain.
-        </p>
+        </Text>
       </SeoSection>
     </SeoLanding>
   );

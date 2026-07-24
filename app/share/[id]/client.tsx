@@ -3,7 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
+import { toast } from "@/lib/toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +26,6 @@ import {
   TidalLogo,
   DeezerLogo,
 } from "@/components/icons";
-import { Header } from "@/components/header";
 import { cn } from "@/lib/utils";
 import { DeezerConnectDialog } from "@/components/deezer-connect-dialog";
 
@@ -405,38 +407,36 @@ export default function SharePageClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <IconLoader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Stack className="min-h-screen flex items-center justify-center bg-body">
+        <IconLoader2 className="h-8 w-8 animate-spin text-accent" />
+      </Stack>
     );
   }
 
   if (notFound || !sharedPlaylist) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <Stack className="min-h-screen flex items-center justify-center bg-body">
         <Card className="max-w-md w-full mx-4">
           <CardContent className="flex flex-col items-center py-12">
-            <IconX className="h-12 w-12 text-destructive mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Link Not Found</h2>
-            <p className="text-muted-foreground text-center mb-6">
+            <IconX className="h-12 w-12 text-error mb-4" />
+            <Heading level={2} className="text-xl font-semibold mb-2">Link Not Found</Heading>
+            <Text as="p" className="text-secondary text-center mb-6">
               This share link doesn&apos;t exist or has already been claimed.
-            </p>
+            </Text>
             <Button onClick={() => router.push("/dashboard")}>
               Go to Dashboard
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </Stack>
     );
   }
 
   // Show conversion progress during import
   if (importing || conversionResult) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-
-        <main className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
+      <Stack className="min-h-screen bg-body">
+        <Stack className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
           <ConversionProgress
             isConverting={importing}
             playlistName={sharedPlaylist.playlistName}
@@ -459,28 +459,26 @@ export default function SharePageClient() {
           )}
           
           {conversionResult?.success && (
-            <div className="flex justify-center">
+            <Stack className="flex justify-center">
               <Button onClick={() => router.push("/dashboard")}>
                 Go to Dashboard
               </Button>
-            </div>
+            </Stack>
           )}
-        </main>
-      </div>
+        </Stack>
+      </Stack>
     );
   }
 
   const spotifyConnected = !!spotifySession;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+    <Stack className="min-h-screen bg-body">
+      <Stack className="container mx-auto px-4 py-8 max-w-2xl">
         {/* Shared Playlist Card */}
         <Card className="mb-6">
           <CardHeader className="pb-4">
-            <div className="flex items-start gap-4">
+            <Stack className="flex items-start gap-4">
               {sharedPlaylist.playlistImage ? (
                 <Image
                   src={sharedPlaylist.playlistImage} 
@@ -491,17 +489,17 @@ export default function SharePageClient() {
                   className="h-16 w-16 rounded-lg object-cover shrink-0"
                 />
               ) : (
-                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <IconMusic className="h-8 w-8 text-muted-foreground" />
-                </div>
+                <Stack className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <IconMusic className="h-8 w-8 text-secondary" />
+                </Stack>
               )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <IconShare className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Shared Playlist</span>
-                </div>
+              <Stack className="flex-1 min-w-0">
+                <Stack className="flex items-center gap-2 mb-1">
+                  <IconShare className="h-4 w-4 text-secondary" />
+                  <Text className="text-sm text-secondary">Shared Playlist</Text>
+                </Stack>
                 <CardTitle className="text-xl truncate">{sharedPlaylist.playlistName}</CardTitle>
-                <div className="flex items-center gap-2 mt-2">
+                <Stack className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary" className="gap-1">
                     {sharedPlaylist.sourceService === "spotify" ? (
                       <SpotifyLogo className="h-3 w-3" />
@@ -528,28 +526,28 @@ export default function SharePageClient() {
                   <Badge variant="outline">
                     {sharedPlaylist.trackCount} tracks
                   </Badge>
-                </div>
+                </Stack>
                 {sharedPlaylist.sourceService === "youtube" && (
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <Text as="p" className="mt-2 text-xs text-secondary">
                     YouTube playlists have no track IDs, so tracks are matched by title
                     and accuracy may vary.
-                  </p>
+                  </Text>
                 )}
-              </div>
-            </div>
+              </Stack>
+            </Stack>
           </CardHeader>
           <CardContent>
-            <h3 className="text-sm font-medium mb-3">Track Preview</h3>
+            <Heading level={3} className="text-sm font-medium mb-3">Track Preview</Heading>
             <ScrollArea className="h-80 rounded-lg border border-border">
-              <div className="p-2 space-y-1">
+              <Stack className="p-2 space-y-1">
                 {sharedPlaylist.tracks.map((track, index) => (
-                  <div
+                  <Stack
                     key={index}
                     className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50"
                   >
-                    <span className="text-xs text-muted-foreground w-6 text-right tabular-nums">
+                    <Text className="text-xs text-secondary w-6 text-right tabular-nums">
                       {index + 1}
-                    </span>
+                    </Text>
                     {track.albumArt ? (
                       <Image
                         src={track.albumArt} 
@@ -560,24 +558,24 @@ export default function SharePageClient() {
                         className="h-10 w-10 rounded object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-                        <IconMusic className="h-5 w-5 text-muted-foreground" />
-                      </div>
+                      <Stack className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                        <IconMusic className="h-5 w-5 text-secondary" />
+                      </Stack>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{track.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">
+                    <Stack className="flex-1 min-w-0">
+                      <Text as="p" className="text-sm font-medium truncate">{track.name}</Text>
+                      <Text as="p" className="text-xs text-secondary truncate">
                         {track.artist} • {track.album}
-                      </p>
-                    </div>
+                      </Text>
+                    </Stack>
                     {track.duration_ms && (
-                      <span className="text-xs text-muted-foreground tabular-nums">
+                      <Text className="text-xs text-secondary tabular-nums">
                         {formatDuration(track.duration_ms)}
-                      </span>
+                      </Text>
                     )}
-                  </div>
+                  </Stack>
                 ))}
-              </div>
+              </Stack>
             </ScrollArea>
           </CardContent>
         </Card>
@@ -589,7 +587,7 @@ export default function SharePageClient() {
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Spotify Button */}
-            <div className="flex items-center gap-3">
+            <Stack className="flex items-center gap-3">
               {spotifyLoading ? (
                 <Button disabled className="flex-1 gap-2">
                   <IconLoader2 className="h-4 w-4 animate-spin" />
@@ -600,7 +598,7 @@ export default function SharePageClient() {
                   onClick={() => handleImport("spotify")}
                   disabled={importing}
                   className={cn(
-                    "flex-1 gap-2 bg-[#1DB954] hover:bg-[#1aa34a] text-white",
+                    "flex-1 gap-2 bg-green-ring text-on-dark hover:opacity-90",
                   )}
                 >
                   {importing && importTarget === "spotify" ? (
@@ -620,10 +618,10 @@ export default function SharePageClient() {
                   Connect Spotify to Import
                 </Button>
               )}
-            </div>
+            </Stack>
 
             {/* Apple Music Button */}
-            <div className="flex items-center gap-3">
+            <Stack className="flex items-center gap-3">
               {appleLoading ? (
                 <Button disabled className="flex-1 gap-2">
                   <IconLoader2 className="h-4 w-4 animate-spin" />
@@ -634,7 +632,7 @@ export default function SharePageClient() {
                   onClick={() => handleImport("apple")}
                   disabled={importing}
                   className={cn(
-                    "flex-1 gap-2 bg-[#FC3C44] hover:bg-[#e03540] text-white",
+                    "flex-1 gap-2 bg-red-ring text-on-dark hover:opacity-90",
                   )}
                 >
                   {importing && importTarget === "apple" ? (
@@ -654,16 +652,16 @@ export default function SharePageClient() {
                   Connect Apple Music to Import
                 </Button>
               )}
-            </div>
+            </Stack>
 
             {/* TIDAL Button (official OAuth) */}
             {tidal.configured && (
-              <div className="flex items-center gap-3">
+              <Stack className="flex items-center gap-3">
                 {tidal.connected ? (
                   <Button
                     onClick={() => handleExternalImport("tidal")}
                     disabled={Boolean(externalImporting) || importing}
-                    className="flex-1 gap-2 bg-neutral-950 text-white ring-1 ring-white/15 hover:bg-neutral-800"
+                    className="flex-1 gap-2 bg-gray-ring text-on-dark ring-1 ring-border"
                   >
                     {externalImporting === "tidal" ? (
                       <IconLoader2 className="h-4 w-4 animate-spin" />
@@ -685,17 +683,17 @@ export default function SharePageClient() {
                     Connect TIDAL to Import
                   </Button>
                 )}
-              </div>
+              </Stack>
             )}
 
             {/* YouTube Music Button (shown when OAuth is configured) */}
             {youtube.configured && (
-              <div className="flex items-center gap-3">
+              <Stack className="flex items-center gap-3">
                 {youtube.connected ? (
                   <Button
                     onClick={() => handleExternalImport("youtube")}
                     disabled={Boolean(externalImporting) || importing}
-                    className="flex-1 gap-2 bg-[#FF0000] hover:bg-[#e60000] text-white"
+                    className="flex-1 gap-2 bg-red-ring text-on-dark hover:opacity-90"
                   >
                     {externalImporting === "youtube" ? (
                       <IconLoader2 className="h-4 w-4 animate-spin" />
@@ -717,17 +715,17 @@ export default function SharePageClient() {
                     Connect YouTube to Import
                   </Button>
                 )}
-              </div>
+              </Stack>
             )}
 
             {/* Deezer Button (advanced ARL connection) */}
             {deezer.configured && (
-              <div className="flex items-center gap-3">
+              <Stack className="flex items-center gap-3">
                 {deezer.connected ? (
                   <Button
                     onClick={() => handleExternalImport("deezer")}
                     disabled={Boolean(externalImporting) || importing}
-                    className="flex-1 gap-2 bg-[#A238FF] text-white hover:bg-[#8f2bea]"
+                    className="flex-1 gap-2 bg-purple-ring text-on-dark hover:opacity-90"
                   >
                     {externalImporting === "deezer" ? (
                       <IconLoader2 className="h-4 w-4 animate-spin" />
@@ -742,19 +740,19 @@ export default function SharePageClient() {
                     variant="outline"
                     className="flex-1 gap-2"
                   >
-                    <DeezerLogo className="h-4 w-4 text-[#A238FF]" />
+                    <DeezerLogo className="h-4 w-4 text-purple-vivid" />
                     Connect Deezer (Advanced)
                   </Button>
                 )}
-              </div>
+              </Stack>
             )}
 
-            <p className="text-xs text-muted-foreground text-center pt-2">
+            <Text as="p" className="text-xs text-secondary text-center pt-2">
               This share link expires after 48 hours.
-            </p>
+            </Text>
           </CardContent>
         </Card>
-      </main>
+      </Stack>
       <DeezerConnectDialog
         open={deezerDialogOpen}
         onOpenChange={setDeezerDialogOpen}
@@ -763,6 +761,6 @@ export default function SharePageClient() {
           toast.success(userName ? `Connected to Deezer as ${userName}` : "Connected to Deezer");
         }}
       />
-    </div>
+    </Stack>
   );
 }

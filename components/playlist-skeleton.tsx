@@ -1,18 +1,19 @@
 "use client";
 
+import { Stack } from "@astryxdesign/core/Stack";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function PlaylistSkeleton() {
   return (
-    <div>
+    <Stack>
       {/* Artwork tile skeleton */}
       <Skeleton className="aspect-square w-full rounded-lg" />
       {/* Label skeleton */}
-      <div className="mt-2 space-y-1.5 px-0.5">
+      <Stack className="mt-2 space-y-1.5 px-0.5">
         <Skeleton className="h-3.5 w-3/4" />
         <Skeleton className="h-3 w-1/3" />
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 }
 

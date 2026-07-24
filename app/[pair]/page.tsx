@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Heading } from "@astryxdesign/core/Heading";
+import { Link } from "@astryxdesign/core/Link";
+import { Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/header";
 import { LinkConverter } from "@/components/link-converter";
 import { CONVERSION_PAIRS, findPair, type ConversionPair, type SeoService } from "@/lib/seo-pairs";
 import { SEO_PAGES } from "@/lib/seo-pages";
@@ -185,100 +187,99 @@ export default async function ConversionPairPage({ params }: PageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <Stack className="min-h-screen bg-body">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <main className="relative">
-        <div aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-72" />
-        <div className="container relative mx-auto px-4">
-          <section className="mx-auto max-w-2xl pt-12 text-center sm:pt-16">
-            <h1 className="font-display text-balance text-3xl font-bold tracking-tight sm:text-4xl">
+      <Stack className="relative">
+        <Stack aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-72" />
+        <Stack className="container relative mx-auto px-4">
+          <Stack as="section" className="mx-auto max-w-2xl pt-12 text-center sm:pt-16">
+            <Heading level={1} className="font-display text-balance text-3xl font-bold tracking-tight sm:text-4xl">
               Convert {from.name} to {to.name}
-            </h1>
-            <p className="mx-auto mt-3 max-w-md text-balance text-muted-foreground">
+            </Heading>
+            <Text as="p" className="mx-auto mt-3 max-w-md text-balance text-secondary">
               {to.id === "amazon"
                 ? `Paste a ${from.name} link and get the ${to.name} version. Free, no account.`
                 : `Paste a ${from.name} link and get the ${to.name} version. Free, no account, playlists included.`}
-            </p>
-          </section>
+            </Text>
+          </Stack>
 
-          <section className="mx-auto max-w-2xl pb-10 pt-8">
+          <Stack as="section" className="mx-auto max-w-2xl pb-10 pt-8">
             <LinkConverter showHistory={false} />
-          </section>
+          </Stack>
 
-          <section className="mx-auto max-w-2xl pb-10">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <Stack as="section" className="mx-auto max-w-2xl pb-10">
+            <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               How it works
-            </h2>
-            <ol className="mt-2 space-y-2">
+            </Heading>
+            <Stack as="ol" className="mt-2 space-y-2">
               {steps.map((step, index) => (
-                <li key={step} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                <Stack as="li" key={step} className="flex gap-3 text-sm leading-relaxed text-secondary">
+                  <Text className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-muted text-xs font-semibold text-accent">
                     {index + 1}
-                  </span>
+                  </Text>
                   {step}
-                </li>
+                </Stack>
               ))}
-            </ol>
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            </Stack>
+            <Text as="p" className="mt-4 text-sm leading-relaxed text-secondary">
               This is the same converter that runs on the{" "}
-              <Link href="/" className="font-medium text-foreground hover:underline">
+              <Link href="/" className="font-medium text-primary hover:underline">
                 home page
               </Link>
               . Songs match by ISRC, the recording industry&apos;s unique recording ID, with a
               title and artist comparison as fallback and a visible confidence score.{" "}
               {targetNote(to)}
-            </p>
-          </section>
+            </Text>
+          </Stack>
 
-          <section className="mx-auto max-w-2xl pb-10">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <Stack as="section" className="mx-auto max-w-2xl pb-10">
+            <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Common questions
-            </h2>
+            </Heading>
             <dl className="mt-2 space-y-4">
               {faq.map((item) => (
-                <div key={item.question}>
+                <Stack key={item.question}>
                   <dt className="text-sm font-semibold">{item.question}</dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  <dd className="mt-1 text-sm leading-relaxed text-secondary">
                     {item.answer}
                   </dd>
-                </div>
+                </Stack>
               ))}
             </dl>
-          </section>
+          </Stack>
 
-          <section className="mx-auto max-w-2xl pb-16">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <Stack as="section" className="mx-auto max-w-2xl pb-16">
+            <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Other directions
-            </h2>
-            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+            </Heading>
+            <Stack as="ul" className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
               {others.map((other) => (
-                <li key={other.slug}>
+                <Stack as="li" key={other.slug}>
                   <Link
                     href={`/${other.slug}`}
-                    className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+                    className="text-xs text-secondary transition-colors hover:text-primary hover:underline"
                   >
                     {other.from.name} to {other.to.name}
                   </Link>
-                </li>
+                </Stack>
               ))}
               {SEO_PAGES.map((page) => (
-                <li key={page.slug}>
+                <Stack as="li" key={page.slug}>
                   <Link
                     href={`/${page.slug}`}
-                    className="text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+                    className="text-xs text-secondary transition-colors hover:text-primary hover:underline"
                   >
                     {page.label}
                   </Link>
-                </li>
+                </Stack>
               ))}
-            </ul>
-          </section>
-        </div>
-      </main>
-    </div>
+            </Stack>
+          </Stack>
+        </Stack>
+      </Stack>
+    </Stack>
   );
 }

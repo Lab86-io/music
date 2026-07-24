@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { IconLoader2 } from "@tabler/icons-react";
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Button } from "@astryxdesign/core/Button";
+import { Stack } from "@astryxdesign/core/Stack";
+import { StatusDot as AstryxStatusDot } from "@astryxdesign/core/StatusDot";
+import { Text } from "@astryxdesign/core/Text";
 import {
   SpotifyLogo,
   AppleLogo,
@@ -12,7 +15,7 @@ import {
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { DeezerConnectDialog } from "@/components/deezer-connect-dialog";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface SpotifySession {
   user: {
@@ -343,17 +346,11 @@ export function ServiceConnect({ onConnectionChange }: ServiceConnectProps) {
 
 function StatusDot({ connected }: { connected: boolean }) {
   return (
-    <span className="relative inline-flex h-2 w-2">
-      {connected && (
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60 [animation-duration:2.5s]" />
-      )}
-      <span
-        className={cn(
-          "relative inline-flex h-2 w-2 rounded-full",
-          connected ? "bg-primary" : "bg-muted-foreground/30"
-        )}
-      />
-    </span>
+    <AstryxStatusDot
+      variant={connected ? "success" : "neutral"}
+      label={connected ? "Connected" : "Not connected"}
+      isPulsing={connected}
+    />
   );
 }
 
@@ -367,23 +364,23 @@ interface RowProps {
 
 function ConnectionRow({ logo, tileClass, name, status, action }: RowProps) {
   return (
-    <div className="flex items-center gap-3.5 px-4 py-3.5 sm:px-5">
-      <div
+    <Stack className="flex items-center gap-3.5 px-4 py-3.5 sm:px-5">
+      <Stack
         className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm",
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-on-dark shadow-sm",
           tileClass
         )}
       >
         {logo}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-tight">{name}</p>
-        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+      </Stack>
+      <Stack className="min-w-0 flex-1">
+        <Text as="p" className="text-sm font-semibold leading-tight">{name}</Text>
+        <Stack className="mt-0.5 flex items-center gap-1.5 text-xs text-secondary">
           {status}
-        </div>
-      </div>
+        </Stack>
+      </Stack>
       {action}
-    </div>
+    </Stack>
   );
 }
 
@@ -427,122 +424,117 @@ interface ConnectionPanelProps {
 
 function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionPanelProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/60 divide-y divide-border/60">
+    <Stack className="overflow-hidden rounded-xl border border-border/70 bg-card/60 divide-y divide-border/60">
       <ConnectionRow
         logo={<SpotifyLogo className="h-5.5 w-5.5" />}
-        tileClass="bg-[#1DB954]"
+        tileClass="bg-green-ring"
         name="Spotify"
         status={
           <>
             <StatusDot connected={spotify.connected} />
             {spotify.connected ? (
-              <span className="truncate">
+              <Text className="truncate">
                 Connected{spotify.userName ? ` as ${spotify.userName}` : ""}
-              </span>
+              </Text>
             ) : (
-              <span>Browse your library and convert playlists</span>
+              <Text>Browse your library and convert playlists</Text>
             )}
           </>
         }
         action={
           spotify.connected ? (
-            <div className="flex items-center gap-2.5">
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={spotify.userImage || undefined} alt={spotify.userName || "User"} />
-                <AvatarFallback className="text-[10px]">{spotify.userInitials}</AvatarFallback>
-              </Avatar>
-              <button
+            <Stack className="flex items-center gap-2.5">
+              <Avatar
+                size="sm"
+                src={spotify.userImage || undefined}
+                name={spotify.userName || spotify.userInitials || "User"}
+              />
+              <Button
+                label="Disconnect Spotify"
                 onClick={spotify.onDisconnect}
-                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                Disconnect
-              </button>
-            </div>
+                variant="ghost"
+                size="sm"
+              />
+            </Stack>
           ) : (
-            <button
+            <Button
+              label="Connect Spotify"
+              icon={<SpotifyLogo className="h-4 w-4" />}
               onClick={spotify.onConnect}
-              disabled={spotify.loading}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#1DB954] px-4 text-sm font-medium text-[#07210f] shadow-sm transition-colors hover:bg-[#22cc60] disabled:opacity-50"
-            >
-              {spotify.loading ? (
-                <IconLoader2 size={15} className="animate-spin" />
-              ) : (
-                <SpotifyLogo className="h-4 w-4" />
-              )}
-              Connect
-            </button>
+              isDisabled={spotify.loading}
+              isLoading={spotify.loading}
+              variant="primary"
+              size="lg"
+            />
           )
         }
       />
       <ConnectionRow
         logo={<AppleLogo className="h-5.5 w-5.5" />}
-        tileClass="bg-[#FC3C44]"
+        tileClass="bg-red-ring"
         name="Apple Music"
         status={
           <>
             <StatusDot connected={apple.connected} />
             {apple.connected ? (
-              <span>Connected</span>
+              <Text>Connected</Text>
             ) : (
-              <span>Import shared playlists into your library</span>
+              <Text>Import shared playlists into your library</Text>
             )}
           </>
         }
         action={
           apple.connected ? (
-            <button
+            <Button
+              label="Disconnect Apple Music"
               onClick={apple.onDisconnect}
-              className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              Disconnect
-            </button>
+              variant="ghost"
+              size="sm"
+            />
           ) : (
-            <button
+            <Button
+              label={!apple.ready ? "Loading Apple Music…" : "Connect Apple Music"}
+              icon={<AppleLogo className="h-4 w-4" />}
               onClick={apple.onConnect}
-              disabled={apple.loading || !apple.ready}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FC3C44] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#ff4f56] disabled:opacity-50"
-            >
-              {apple.loading ? (
-                <IconLoader2 size={15} className="animate-spin" />
-              ) : (
-                <AppleLogo className="h-4 w-4" />
-              )}
-              {!apple.ready ? "Loading…" : "Connect"}
-            </button>
+              isDisabled={apple.loading || !apple.ready}
+              isLoading={apple.loading}
+              variant="primary"
+              size="lg"
+            />
           )
         }
       />
       {tidal?.configured && (
         <ConnectionRow
           logo={<TidalLogo className="h-5.5 w-5.5" />}
-          tileClass="bg-neutral-950 ring-1 ring-white/15"
+          tileClass="bg-gray-ring ring-1 ring-border"
           name="TIDAL"
           status={
             <>
               <StatusDot connected={tidal.connected} />
               {tidal.connected ? (
-                <span>Connected · ISRC-exact playlist import</span>
+                <Text>Connected · ISRC-exact playlist import</Text>
               ) : (
-                <span>Official sign-in for private playlist imports</span>
+                <Text>Official sign-in for private playlist imports</Text>
               )}
             </>
           }
           action={
             tidal.connected ? (
-              <button
+              <Button
+                label="Disconnect TIDAL"
                 onClick={tidal.onDisconnect}
-                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                Disconnect
-              </button>
+                variant="ghost"
+                size="sm"
+              />
             ) : (
-              <button
+              <Button
+                label="Connect TIDAL"
+                icon={<TidalLogo className="h-4 w-4" />}
                 onClick={tidal.onConnect}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-neutral-950 px-4 text-sm font-medium text-white shadow-sm ring-1 ring-white/15 transition-colors hover:bg-neutral-800"
-              >
-                <TidalLogo className="h-4 w-4" />
-                Connect
-              </button>
+                variant="primary"
+                size="lg"
+              />
             )
           }
         />
@@ -550,34 +542,34 @@ function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionP
       {youtube?.configured && (
         <ConnectionRow
           logo={<YouTubeMusicLogo className="h-5.5 w-5.5" />}
-          tileClass="bg-[#FF0000]"
+          tileClass="bg-red-ring"
           name="YouTube Music"
           status={
             <>
               <StatusDot connected={youtube.connected} />
               {youtube.connected ? (
-                <span>Connected</span>
+                <Text>Connected</Text>
               ) : (
-                <span>Import shared playlists into YouTube</span>
+                <Text>Import shared playlists into YouTube</Text>
               )}
             </>
           }
           action={
             youtube.connected ? (
-              <button
+              <Button
+                label="Disconnect YouTube Music"
                 onClick={youtube.onDisconnect}
-                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                Disconnect
-              </button>
+                variant="ghost"
+                size="sm"
+              />
             ) : (
-              <button
+              <Button
+                label="Connect YouTube Music"
+                icon={<YouTubeMusicLogo className="h-4 w-4" />}
                 onClick={youtube.onConnect}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FF0000] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#ff2222]"
-              >
-                <YouTubeMusicLogo className="h-4 w-4" />
-                Connect
-              </button>
+                variant="primary"
+                size="lg"
+              />
             )
           }
         />
@@ -585,40 +577,40 @@ function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionP
       {deezer?.configured && (
         <ConnectionRow
           logo={<DeezerLogo className="h-5.5 w-5.5" />}
-          tileClass="bg-[#A238FF]"
+          tileClass="bg-purple-ring"
           name="Deezer · Advanced"
           status={
             <>
               <StatusDot connected={deezer.connected} />
               {deezer.connected ? (
-                <span className="truncate">
+                <Text className="truncate">
                   Connected{deezer.userName ? ` as ${deezer.userName}` : ""} · unofficial
-                </span>
+                </Text>
               ) : (
-                <span>Opt-in import using your browser session</span>
+                <Text>Opt-in import using your browser session</Text>
               )}
             </>
           }
           action={
             deezer.connected ? (
-              <button
+              <Button
+                label="Disconnect Deezer"
                 onClick={deezer.onDisconnect}
-                className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                Disconnect
-              </button>
+                variant="ghost"
+                size="sm"
+              />
             ) : (
-              <button
+              <Button
+                label="Connect Deezer"
+                icon={<DeezerLogo className="h-4 w-4" />}
                 onClick={deezer.onConnect}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#A238FF] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#8f2bea]"
-              >
-                <DeezerLogo className="h-4 w-4" />
-                Connect
-              </button>
+                variant="primary"
+                size="lg"
+              />
             )
           }
         />
       )}
-    </div>
+    </Stack>
   );
 }

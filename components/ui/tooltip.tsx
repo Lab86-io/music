@@ -1,70 +1,70 @@
-"use client"
+"use client";
 
-import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
+import * as React from "react";
+import { Button } from "@astryxdesign/core/Button";
+import { Tooltip as AstryxTooltip } from "@astryxdesign/core/Tooltip";
 
-import { cn } from "@/lib/utils"
-
-function TooltipProvider({
-  delay = 0,
-  ...props
-}: TooltipPrimitive.Provider.Props) {
-  return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delay={delay}
-      {...props}
-    />
-  )
+interface TooltipTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  render?: React.ReactElement;
 }
 
-function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
-  return (
-    <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TooltipProvider>
-  )
+interface TooltipContentProps {
+  children: React.ReactNode;
 }
 
-function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
-
-function TooltipContent({
-  className,
-  side = "top",
-  sideOffset = 4,
-  align = "center",
-  alignOffset = 0,
+function TooltipTrigger({
+  render,
   children,
+  disabled,
+  "aria-label": ariaLabel,
   ...props
-}: TooltipPrimitive.Popup.Props &
-  Pick<
-    TooltipPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
-  >) {
+}: TooltipTriggerProps) {
+  if (render) {
+    return React.cloneElement(render, props, children);
+  }
+  const label =
+    ariaLabel ||
+    (typeof children === "string" || typeof children === "number"
+      ? String(children)
+      : "Action");
   return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Positioner
-        align={align}
-        alignOffset={alignOffset}
-        side={side}
-        sideOffset={sideOffset}
-        className="isolate z-50"
-      >
-        <TooltipPrimitive.Popup
-          data-slot="tooltip-content"
-          className={cn(
-            "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 rounded-2xl px-3 py-1.5 text-xs **:data-[slot=kbd]:rounded-4xl bg-foreground text-background z-50 w-fit max-w-xs origin-(--transform-origin)",
-            className
-          )}
-          {...props}
-        >
-          {children}
-          <TooltipPrimitive.Arrow className="size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground z-50 data-[side=bottom]:top-1 data-[side=left]:top-1/2! data-[side=left]:-right-1 data-[side=left]:-translate-y-1/2 data-[side=right]:top-1/2! data-[side=right]:-left-1 data-[side=right]:-translate-y-1/2 data-[side=top]:-bottom-2.5" />
-        </TooltipPrimitive.Popup>
-      </TooltipPrimitive.Positioner>
-    </TooltipPrimitive.Portal>
-  )
+    <Button
+      {...props}
+      label={label}
+      variant="ghost"
+      isDisabled={disabled}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </Button>
+  );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+function TooltipContent({ children }: TooltipContentProps) {
+  return <>{children}</>;
+}
+
+function Tooltip({ children }: { children: React.ReactNode }) {
+  let trigger: React.ReactElement | null = null;
+  let content: React.ReactNode = null;
+
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return;
+    if (child.type === TooltipTrigger) {
+      const props = child.props as TooltipTriggerProps;
+      trigger = <TooltipTrigger {...props} />;
+    }
+    if (child.type === TooltipContent) {
+      content = (child.props as TooltipContentProps).children;
+    }
+  });
+
+  if (!trigger) return null;
+  return <AstryxTooltip content={content}>{trigger}</AstryxTooltip>;
+}
+
+function TooltipProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
