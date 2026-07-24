@@ -60,11 +60,11 @@ export default function HomePage() {
 
         <Stack className="relative mx-auto w-full px-4">
           {/* Hero */}
-          <Stack as="section" className="mx-auto max-w-3xl pb-2 pt-14 text-center sm:pt-20">
+          <Stack as="section" className="mx-auto w-full max-w-3xl pb-2 pt-14 text-center sm:pt-20">
             <Stack
               direction="horizontal"
               wrap="wrap"
-              className="mb-7 inline-flex items-center justify-center gap-2.5 rounded-full border border-border/70 bg-body/70 px-3.5 py-1.5 text-xs font-medium text-secondary backdrop-blur"
+              className="mx-auto mb-7 inline-flex items-center justify-center gap-2.5 rounded-full border border-border/70 bg-body/70 px-3.5 py-1.5 text-xs font-medium text-secondary backdrop-blur"
             >
               <SpotifyLogo className="h-3.5 w-3.5 text-green-vivid" />
               <AppleLogo className="h-3.5 w-3.5 text-red-vivid" />
@@ -86,12 +86,12 @@ export default function HomePage() {
           </Stack>
 
           {/* The one input */}
-          <Stack as="section" className="mx-auto max-w-6xl pb-4 pt-8">
+          <Stack as="section" className="mx-auto w-full max-w-6xl pb-4 pt-8">
             <LinkConverter />
           </Stack>
 
           {/* Sign-in, demoted below the tool */}
-          <Stack as="section" className="mx-auto max-w-4xl pb-16 pt-14">
+          <Stack as="section" className="mx-auto w-full max-w-4xl pb-16 pt-14">
             <Stack direction="horizontal" className="mb-6 flex items-center gap-4">
               <Stack className="h-px flex-1 bg-border/70" />
               <Text type="supporting" color="secondary" weight="semibold" className="uppercase">

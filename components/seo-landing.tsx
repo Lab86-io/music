@@ -47,20 +47,20 @@ export function SeoLanding({
       <Stack className="relative">
         <Stack aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-72" />
         <Stack className="relative mx-auto w-full px-4">
-          <Stack as="section" className="mx-auto max-w-3xl pt-12 text-center sm:pt-16">
+          <Stack as="section" className="mx-auto w-full max-w-3xl pt-12 text-center sm:pt-16">
             <Heading level={1} className="font-display text-balance text-3xl font-bold tracking-tight sm:text-4xl">
               {h1}
             </Heading>
             <Text as="p" className="mx-auto mt-3 max-w-md text-balance text-secondary">{sub}</Text>
           </Stack>
 
-          <Stack as="section" className="mx-auto max-w-6xl pb-10 pt-8">
+          <Stack as="section" className="mx-auto w-full max-w-6xl pb-10 pt-8">
             <LinkConverter showHistory={false} />
           </Stack>
 
           {children}
 
-          <Stack as="section" className="mx-auto max-w-2xl pb-10">
+          <Stack as="section" className="mx-auto w-full max-w-2xl pb-10">
             <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Common questions
             </Heading>
@@ -76,7 +76,7 @@ export function SeoLanding({
             </dl>
           </Stack>
 
-          <Stack as="section" className="mx-auto max-w-2xl pb-16">
+          <Stack as="section" className="mx-auto w-full max-w-2xl pb-16">
             <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Every direction
             </Heading>
@@ -117,7 +117,7 @@ export function SeoSection({
   children: React.ReactNode;
 }) {
   return (
-    <Stack as="section" className="mx-auto max-w-2xl pb-10">
+    <Stack as="section" className="mx-auto w-full max-w-2xl pb-10">
       <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
         {heading}
       </Heading>
