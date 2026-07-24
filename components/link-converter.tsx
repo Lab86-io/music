@@ -519,12 +519,16 @@ function HistoryRow({ item }: { item: HistoryItem }) {
   const brand = BRAND[primary.service];
 
   return (
-    <Stack as="li">
+    <Stack
+      as="li"
+      className="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md"
+    >
       <Stack
         direction="horizontal"
         align="center"
         role="button"
         tabIndex={0}
+        aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -532,22 +536,22 @@ function HistoryRow({ item }: { item: HistoryItem }) {
             setExpanded((v) => !v);
           }
         }}
-        className="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-bg"
+        className="group flex w-full cursor-pointer items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-bg"
       >
         {meta.artworkUrl ? (
           <Image
             src={meta.artworkUrl}
             alt=""
-            width={40}
-            height={40}
+            width={48}
+            height={48}
             className={cn(
-              "h-10 w-10 shrink-0 object-cover",
+              "h-12 w-12 shrink-0 object-cover shadow-sm",
               result.type === "artist" ? "rounded-full" : "rounded-md"
             )}
           />
         ) : (
-          <Stack direction="horizontal" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-            <ServiceLogo service={primary.service} className="h-4 w-4 opacity-60" />
+          <Stack direction="horizontal" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-muted">
+            <ServiceLogo service={primary.service} className="h-5 w-5 opacity-60" />
           </Stack>
         )}
         <Stack className="min-w-0 flex-1">
@@ -585,14 +589,16 @@ function HistoryRow({ item }: { item: HistoryItem }) {
       </Stack>
 
       {expanded && (
-        <Stack className="animate-rise-in mb-2 ml-12 mr-2 space-y-2 rounded-lg bg-muted/40 px-3 py-2.5 text-xs text-secondary">
-          {result.type === "track" && meta.album && <Text as="p">Album · {meta.album}</Text>}
-          {meta.releaseDate && (
-            <Text as="p">Released · {new Date(meta.releaseDate).toLocaleDateString()}</Text>
-          )}
-          {meta.duration && <Text as="p">Duration · {formatDuration(meta.duration)}</Text>}
-          {meta.genres && <Text as="p">Genres · {meta.genres.slice(0, 4).join(", ")}</Text>}
-          <Stack direction="horizontal" wrap="wrap" className="gap-1.5 pt-0.5">
+        <Stack className="animate-rise-in space-y-2.5 border-t border-border/50 bg-muted/30 px-4 py-3 text-xs text-secondary">
+          <Stack direction="horizontal" wrap="wrap" className="gap-x-4 gap-y-1">
+            {result.type === "track" && meta.album && <Text>Album · {meta.album}</Text>}
+            {meta.releaseDate && (
+              <Text>Released · {new Date(meta.releaseDate).toLocaleDateString()}</Text>
+            )}
+            {meta.duration && <Text>Duration · {formatDuration(meta.duration)}</Text>}
+            {meta.genres && <Text>Genres · {meta.genres.slice(0, 4).join(", ")}</Text>}
+          </Stack>
+          <Stack direction="horizontal" wrap="wrap" className="gap-1.5">
             {result.links.map((link) => (
               <ServicePill key={link.service} link={link} />
             ))}
@@ -731,8 +737,18 @@ export function LinkConverter({
 
   return (
     <Stack className="w-full">
-      {/* The hero object: one input for everything */}
-      <HStack gap={compact ? 1 : 2} vAlign="center" width="100%">
+      {/* The hero object: one big pill with the actions living inside it */}
+      <HStack
+        gap={compact ? 1 : 1.5}
+        vAlign="center"
+        width="100%"
+        className={cn(
+          "rounded-full border border-border/70 bg-surface transition-all focus-within:border-accent focus-within:ring-2 focus-within:ring-accent-muted",
+          compact
+            ? "p-1 pl-1.5 shadow-sm"
+            : "p-1.5 pl-2 shadow-lg focus-within:shadow-xl sm:p-2 sm:pl-3"
+        )}
+      >
         <StackItem size="fill">
           <TextInput
             label="Music link or song search"
@@ -741,10 +757,14 @@ export function LinkConverter({
             onChange={setUrl}
             onEnter={handleConvert}
             isDisabled={isConverting}
-            placeholder={compact ? "Convert a music link…" : "Convert or search"}
+            placeholder={compact ? "Convert a music link…" : "Paste a link or type a song name"}
             startIcon={<IconLink size={compact ? 15 : 18} />}
             size={compact ? "sm" : "lg"}
             width="100%"
+            className={cn(
+              "border-0 bg-transparent shadow-none",
+              compact ? "h-8" : "h-11 sm:h-12 [&_input]:sm:text-lg"
+            )}
           />
         </StackItem>
         {!url.trim() && !isConverting && (
@@ -754,7 +774,7 @@ export function LinkConverter({
               label="Paste"
               icon={<IconClipboard size={compact ? 13 : 14} />}
               onClick={pasteFromClipboard}
-              variant="secondary"
+              variant="ghost"
               size="sm"
               isIconOnly
               tooltip="Paste from clipboard"
@@ -765,7 +785,7 @@ export function LinkConverter({
                 label="Paste"
                 icon={<IconClipboard size={14} />}
                 onClick={pasteFromClipboard}
-                variant="secondary"
+                variant="ghost"
                 size="md"
                 tooltip="Paste from clipboard"
               />
@@ -863,11 +883,16 @@ export function LinkConverter({
       </Stack>
 
       {error && (
-        <Banner status="error" title="Could not convert that" description={error} />
+        <Banner
+          className="mt-4"
+          status="error"
+          title="Could not convert that"
+          description={error}
+        />
       )}
 
       {candidates && (
-          <List header="Pick the right song" density="compact" hasDividers>
+          <List className="mt-4" header="Pick the right song" density="compact" hasDividers>
             {candidates.map((candidate) => (
               <Item
                   key={candidate.url}
@@ -903,23 +928,21 @@ export function LinkConverter({
       {result?.kind === "playlist" && <PlaylistResult result={result} />}
 
       {showHistory && history.length > 0 && (
-        <Stack as="section" className="mt-12">
-          <Stack direction="horizontal" align="end" justify="between" className="px-2">
+        <Stack as="section" className="mt-10">
+          <Stack direction="horizontal" align="center" justify="between" className="px-1">
             <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Recent conversions
             </Heading>
-            <Tooltip>
-              <TooltipTrigger
-                onClick={clearHistory}
-                className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-secondary/70 transition-colors hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-bg"
-              >
-                <IconTrash size={12} />
-                Clear
-              </TooltipTrigger>
-              <TooltipContent>Stored only in this browser</TooltipContent>
-            </Tooltip>
+            <Button
+              label="Clear"
+              icon={<IconTrash size={13} />}
+              onClick={clearHistory}
+              variant="ghost"
+              size="sm"
+              tooltip="Stored only in this browser"
+            />
           </Stack>
-          <Stack as="ul" className="mt-2 divide-y divide-border/50">
+          <Stack as="ul" className="mt-3 flex flex-col gap-2.5">
             {history.map((item) => (
               <HistoryRow key={item.timestamp} item={item} />
             ))}
