@@ -121,12 +121,8 @@ export default async function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider>
           <SessionProvider session={session}>
-            <AppShell
-              topNav={<Header />}
-              height="auto"
-              variant="surface"
-              contentPadding={0}
-            >
+            <AppShell height="auto" variant="surface" contentPadding={0}>
+              <Header />
               {children}
             </AppShell>
           </SessionProvider>

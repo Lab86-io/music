@@ -60,7 +60,7 @@ export default function HomePage() {
 
         <Stack className="container relative mx-auto px-4">
           {/* Hero */}
-          <Stack as="section" className="mx-auto max-w-2xl pb-2 pt-14 text-center sm:pt-20">
+          <Stack as="section" className="mx-auto max-w-3xl pb-2 pt-14 text-center sm:pt-20">
             <Stack
               direction="horizontal"
               wrap="wrap"
@@ -86,12 +86,12 @@ export default function HomePage() {
           </Stack>
 
           {/* The one input */}
-          <Stack as="section" className="mx-auto max-w-2xl pb-4 pt-8">
+          <Stack as="section" className="mx-auto max-w-4xl pb-4 pt-8">
             <LinkConverter />
           </Stack>
 
           {/* Sign-in, demoted below the tool */}
-          <Stack as="section" className="mx-auto max-w-2xl pb-16 pt-14">
+          <Stack as="section" className="mx-auto max-w-4xl pb-16 pt-14">
             <Stack direction="horizontal" className="mb-6 flex items-center gap-4">
               <Stack className="h-px flex-1 bg-border/70" />
               <Text type="supporting" color="secondary" weight="semibold" className="uppercase">

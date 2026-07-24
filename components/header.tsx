@@ -1,45 +1,41 @@
 "use client";
 
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { TopNav, TopNavHeading, TopNavItem } from "@astryxdesign/core/TopNav";
-import { HStack } from "@astryxdesign/core/Stack";
+import Link from "next/link";
+import { HStack, Stack } from "@astryxdesign/core/Stack";
+import { Text } from "@astryxdesign/core/Text";
 import { ThemeToggle } from "@/components/theme-toggle";
 
+/**
+ * Minimal floating brand strip — the app is a single tool, so there is no
+ * navigation. Just the wordmark (home link) and the theme toggle.
+ */
 export function Header() {
-  const pathname = usePathname();
-
   return (
-    <TopNav
-      label="Music navigation"
-      heading={
-        <TopNavHeading
-          heading="Music"
-          headingHref="/"
-          logo={
-          <Image
-            src="/logo.png"
-                alt=""
-            width={28}
-            height={28}
-                className="rounded-sm"
-          />
-          }
+    <HStack
+      as="header"
+      justify="between"
+      align="center"
+      className="bg-body px-4 py-3 sm:px-6"
+    >
+      <Link
+        href="/"
+        className="inline-flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-bg"
+      >
+        <Image
+          src="/logo.png"
+          alt=""
+          width={28}
+          height={28}
+          className="rounded-sm"
         />
-      }
-      startContent={
-        <HStack gap={1}>
-          <TopNavItem label="Convert" href="/convert" isSelected={pathname === "/convert"} />
-          <TopNavItem
-            label="Playlists"
-            href="/dashboard"
-            isSelected={pathname.startsWith("/dashboard")}
-          />
-        </HStack>
-      }
-      endContent={
-          <ThemeToggle />
-      }
-    />
+        <Text weight="semibold" className="font-display text-lg">
+          Music
+        </Text>
+      </Link>
+      <Stack>
+        <ThemeToggle />
+      </Stack>
+    </HStack>
   );
 }
