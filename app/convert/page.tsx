@@ -37,7 +37,7 @@ export default async function ConvertPage({
               One link in, five services out. Playlists become 48-hour share links.
             </Text>
           </Stack>
-          <Stack as="section" className="mx-auto max-w-4xl pb-16 pt-8">
+          <Stack as="section" className="mx-auto max-w-6xl pb-16 pt-8">
             <LinkConverter initialUrl={sharedUrl} />
           </Stack>
         </Stack>

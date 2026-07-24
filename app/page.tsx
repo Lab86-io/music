@@ -86,7 +86,7 @@ export default function HomePage() {
           </Stack>
 
           {/* The one input */}
-          <Stack as="section" className="mx-auto max-w-4xl pb-4 pt-8">
+          <Stack as="section" className="mx-auto max-w-6xl pb-4 pt-8">
             <LinkConverter />
           </Stack>
 

@@ -54,7 +54,7 @@ export function SeoLanding({
             <Text as="p" className="mx-auto mt-3 max-w-md text-balance text-secondary">{sub}</Text>
           </Stack>
 
-          <Stack as="section" className="mx-auto max-w-4xl pb-10 pt-8">
+          <Stack as="section" className="mx-auto max-w-6xl pb-10 pt-8">
             <LinkConverter showHistory={false} />
           </Stack>
 
