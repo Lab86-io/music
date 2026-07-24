@@ -67,7 +67,11 @@ export function ServiceRow({
   const brand = BRAND[service];
 
   return (
-    <Stack className="group flex items-center gap-3 rounded-xl border border-border/70 bg-body/70 py-2.5 pl-4 pr-2 backdrop-blur transition-colors hover:border-border hover:bg-body/90">
+    <Stack
+      direction="horizontal"
+      align="center"
+      className="group gap-3 rounded-lg border border-border/70 bg-body/70 py-2.5 pl-4 pr-2 backdrop-blur transition-colors hover:border-border hover:bg-body/90"
+    >
       <Logo service={service} className="h-6 w-6 shrink-0" />
       <Stack className="min-w-0 flex-1">
         <Text as="p" className="text-sm font-medium leading-tight">{brand.name}</Text>
@@ -124,7 +128,7 @@ export function CopyPageUrlButton({ className }: { className?: string }) {
 
   return (
     <Stack className={cn("flex flex-col items-center gap-4", className)}>
-      <Stack className="flex items-center gap-2">
+      <Stack direction="horizontal" align="center" className="gap-2">
         <Button
           label={copied ? "Copied!" : "Copy this page's link"}
           icon={copied ? <IconCheck size={15} /> : <IconLink size={15} />}
@@ -151,7 +155,7 @@ export function CopyPageUrlButton({ className }: { className?: string }) {
             alt="QR code for this page"
             width={176}
             height={176}
-            className="h-44 w-44 rounded-xl border border-border bg-on-dark p-2 shadow-lg"
+            className="h-44 w-44 rounded-lg border border-border bg-on-dark p-2 shadow-lg"
           />
           <Text as="p" className="text-xs text-secondary">Scan to open on your phone</Text>
         </Stack>

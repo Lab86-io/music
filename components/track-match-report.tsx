@@ -199,8 +199,14 @@ export function TrackMatchReport({
   ];
 
   return (
-    <Stack as="section" className="rounded-xl border border-border/70 bg-card/60">
-      <Stack className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+    <Stack as="section" className="rounded-lg border border-border/70 bg-card/60">
+      <Stack
+        direction="horizontal"
+        wrap="wrap"
+        align="center"
+        justify="between"
+        className="gap-3 border-b border-border/60 px-4 py-3"
+      >
         <Stack>
           <Heading level={3} className="text-sm font-semibold leading-tight">Track matching</Heading>
           <Text as="p" className="mt-0.5 text-xs text-secondary">
@@ -262,7 +268,7 @@ export function TrackMatchReport({
 
                   {/* Track Info */}
                   <Stack className="flex-1 min-w-0">
-                    <Stack className="flex items-center gap-2">
+                    <Stack direction="horizontal" align="center" className="gap-2">
                       <Text className="font-medium truncate">{match.sourceTrack.name}</Text>
                       {match.targetTrack && (
                         <Badge variant="outline" className="shrink-0 text-xs">
@@ -281,7 +287,7 @@ export function TrackMatchReport({
                   </Stack>
 
                   {/* Confidence / Actions */}
-                  <Stack className="flex items-center gap-2 shrink-0">
+                  <Stack direction="horizontal" align="center" className="shrink-0 gap-2">
                     {match.targetTrack && (
                       <Stack className="text-right">
                         <Text className={`font-bold ${getConfidenceColor(match.matchConfidence)}`}>
@@ -315,7 +321,7 @@ export function TrackMatchReport({
                 {/* Search Panel */}
                 {isSearching && (
                   <Stack className="mt-2 ml-0 sm:ml-11 p-3 rounded-lg border bg-muted/30 space-y-3 max-h-96 overflow-y-auto">
-                    <Stack className="flex gap-2">
+                    <Stack direction="horizontal" className="gap-2">
                       <Input
                         placeholder="Search for track..."
                         value={searchQuery}
@@ -344,7 +350,7 @@ export function TrackMatchReport({
                                 className="rounded object-cover shrink-0"
                               />
                             ) : (
-                              <Stack className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                              <Stack direction="horizontal" className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">
                                 <IconMusic size={16} className="text-secondary" />
                               </Stack>
                             )}

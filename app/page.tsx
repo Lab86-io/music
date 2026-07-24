@@ -45,7 +45,7 @@ export default function HomePage() {
   if (isLoading) {
     return (
       <Stack className="min-h-screen bg-body">
-        <Stack className="flex items-center justify-center py-20">
+        <Stack direction="horizontal" className="flex items-center justify-center py-20">
           <IconLoader2 className="h-8 w-8 animate-spin text-accent" />
         </Stack>
       </Stack>
@@ -61,7 +61,11 @@ export default function HomePage() {
         <Stack className="container relative mx-auto px-4">
           {/* Hero */}
           <Stack as="section" className="mx-auto max-w-2xl pb-2 pt-14 text-center sm:pt-20">
-            <Stack className="mb-7 inline-flex items-center gap-2.5 rounded-full border border-border/70 bg-body/70 px-3.5 py-1.5 text-xs font-medium text-secondary backdrop-blur">
+            <Stack
+              direction="horizontal"
+              wrap="wrap"
+              className="mb-7 inline-flex items-center justify-center gap-2.5 rounded-full border border-border/70 bg-body/70 px-3.5 py-1.5 text-xs font-medium text-secondary backdrop-blur"
+            >
               <SpotifyLogo className="h-3.5 w-3.5 text-green-vivid" />
               <AppleLogo className="h-3.5 w-3.5 text-red-vivid" />
               <Equalizer className="h-3 text-accent" />
@@ -88,7 +92,7 @@ export default function HomePage() {
 
           {/* Sign-in, demoted below the tool */}
           <Stack as="section" className="mx-auto max-w-2xl pb-16 pt-14">
-            <Stack className="mb-6 flex items-center gap-4">
+            <Stack direction="horizontal" className="mb-6 flex items-center gap-4">
               <Stack className="h-px flex-1 bg-border/70" />
               <Text type="supporting" color="secondary" weight="semibold" className="uppercase">
                 Or sign in to convert full playlists

@@ -216,7 +216,7 @@ export default async function ConversionPairPage({ params }: PageProps) {
             </Heading>
             <Stack as="ol" className="mt-2 space-y-2">
               {steps.map((step, index) => (
-                <Stack as="li" key={step} className="flex gap-3 text-sm leading-relaxed text-secondary">
+                <Stack as="li" direction="horizontal" key={step} className="gap-3 text-sm leading-relaxed text-secondary">
                   <Text className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-muted text-xs font-semibold text-accent">
                     {index + 1}
                   </Text>
@@ -255,7 +255,7 @@ export default async function ConversionPairPage({ params }: PageProps) {
             <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Other directions
             </Heading>
-            <Stack as="ul" className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+            <Stack as="ul" direction="horizontal" wrap="wrap" className="mt-2 gap-x-4 gap-y-1.5">
               {others.map((other) => (
                 <Stack as="li" key={other.slug}>
                   <Link

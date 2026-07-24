@@ -134,7 +134,7 @@ export default async function UniversalLinkPage({
                 className={
                   type === "artist"
                     ? "h-56 w-56 rounded-full object-cover shadow-2xl"
-                    : "h-56 w-56 rounded-xl object-cover shadow-2xl"
+                    : "h-56 w-56 rounded-lg object-cover shadow-2xl"
                 }
               />
             )}

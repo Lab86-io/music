@@ -314,8 +314,8 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
 
   if (!primary) {
     return (
-      <Stack className="animate-rise-in mt-6 space-y-3 rounded-xl border border-border/70 bg-muted/40 px-4 py-3.5">
-        <Stack className="flex items-start gap-3">
+      <Stack className="animate-rise-in mt-6 space-y-3 rounded-lg border border-border/70 bg-muted/40 px-4 py-3.5">
+        <Stack direction="horizontal" align="start" className="gap-3">
           <IconAlertTriangle size={18} className="mt-0.5 shrink-0 text-warning" />
           <Text as="p" className="text-sm leading-relaxed">
             Found <Text className="font-medium">{result.source.title}</Text>
@@ -324,7 +324,7 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
           </Text>
         </Stack>
         {secondary.length > 0 && (
-          <Stack className="flex flex-wrap items-center gap-2 pl-8">
+          <Stack direction="horizontal" wrap="wrap" align="center" className="gap-2 pl-8">
             {secondary.map((link) => (
               <ServicePill key={link.service} link={link} />
             ))}
@@ -337,7 +337,7 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
   const brand = BRAND[primary.service];
 
   return (
-    <Stack className="animate-rise-in relative mt-6 overflow-hidden rounded-xl border border-border/70 shadow-lg">
+    <Stack className="animate-rise-in relative mt-6 overflow-hidden rounded-lg border border-border/70 shadow-lg">
       {/* Artwork-derived backdrop, TIDAL-style */}
       {meta.artworkUrl && (
         <Image
@@ -363,13 +363,13 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
               )}
             />
           ) : (
-            <Stack className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <Stack direction="horizontal" className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-muted">
               <ServiceLogo service={primary.service} className="h-9 w-9 opacity-60" />
             </Stack>
           )}
 
           <Stack className="min-w-0 flex-1">
-            <Stack className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-secondary">
+            <Stack direction="horizontal" align="center" className="gap-1.5 text-xs font-medium uppercase tracking-wide text-secondary">
               <ServiceLogo service={primary.service} className="h-3.5 w-3.5" />
               {result.type} on {brand.name}
             </Stack>
@@ -389,7 +389,7 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
               )
             )}
 
-            <Stack className="mt-3 flex flex-wrap items-center gap-2.5">
+            <Stack direction="horizontal" wrap="wrap" align="center" className="mt-3 gap-2.5">
               <Button
                 label={`Open in ${brand.name}`}
                 endContent={<IconExternalLink size={14} />}
@@ -427,7 +427,7 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
         </Stack>
 
         {secondary.length > 0 && (
-          <Stack className="flex flex-wrap items-center gap-2 border-t border-border/50 pt-3.5">
+          <Stack direction="horizontal" wrap="wrap" align="center" className="gap-2 border-t border-border/50 pt-3.5">
             <Text className="mr-1 text-xs font-medium uppercase tracking-wide text-secondary">
               Also on
             </Text>
@@ -443,7 +443,7 @@ function ConversionResult({ result }: { result: ConversionResponse }) {
 
 function PlaylistResult({ result }: { result: PlaylistShareResponse }) {
   return (
-    <Stack className="animate-rise-in relative mt-6 overflow-hidden rounded-xl border border-border/70 shadow-lg">
+    <Stack className="animate-rise-in relative mt-6 overflow-hidden rounded-lg border border-border/70 shadow-lg">
       {result.image && (
         <Image
           src={result.image}
@@ -464,7 +464,7 @@ function PlaylistResult({ result }: { result: PlaylistShareResponse }) {
             className="h-24 w-24 shrink-0 rounded-lg object-cover shadow-lg"
           />
         ) : (
-          <Stack className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <Stack direction="horizontal" className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-muted">
             <IconLink size={28} className="opacity-50" />
           </Stack>
         )}
@@ -478,7 +478,7 @@ function PlaylistResult({ result }: { result: PlaylistShareResponse }) {
           <Text as="p" className="text-sm text-secondary">
             {result.trackCount} tracks · from {result.service}
           </Text>
-          <Stack className="mt-3 flex flex-wrap items-center gap-2.5">
+          <Stack direction="horizontal" wrap="wrap" align="center" className="mt-3 gap-2.5">
             <code className="min-w-0 flex-1 truncate rounded-full border border-border/70 bg-body/70 px-3.5 py-2 text-xs">
               {result.shareUrl}
             </code>
@@ -521,6 +521,8 @@ function HistoryRow({ item }: { item: HistoryItem }) {
   return (
     <Stack as="li">
       <Stack
+        direction="horizontal"
+        align="center"
         role="button"
         tabIndex={0}
         onClick={() => setExpanded((v) => !v)}
@@ -544,7 +546,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
             )}
           />
         ) : (
-          <Stack className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+          <Stack direction="horizontal" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
             <ServiceLogo service={primary.service} className="h-4 w-4 opacity-60" />
           </Stack>
         )}
@@ -590,7 +592,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
           )}
           {meta.duration && <Text as="p">Duration · {formatDuration(meta.duration)}</Text>}
           {meta.genres && <Text as="p">Genres · {meta.genres.slice(0, 4).join(", ")}</Text>}
-          <Stack className="flex flex-wrap gap-1.5 pt-0.5">
+          <Stack direction="horizontal" wrap="wrap" className="gap-1.5 pt-0.5">
             {result.links.map((link) => (
               <ServicePill key={link.service} link={link} />
             ))}
@@ -730,7 +732,7 @@ export function LinkConverter({
   return (
     <Stack className="w-full">
       {/* The hero object: one input for everything */}
-      <HStack gap={2} vAlign="center" width="100%">
+      <HStack gap={compact ? 1 : 2} vAlign="center" width="100%">
         <StackItem size="fill">
           <TextInput
             label="Music link or song search"
@@ -746,37 +748,73 @@ export function LinkConverter({
           />
         </StackItem>
         {!url.trim() && !isConverting && (
-          <Button
-            label="Paste"
-            icon={<IconClipboard size={compact ? 13 : 14} />}
-            onClick={pasteFromClipboard}
-            variant="secondary"
-            size={compact ? "sm" : "md"}
-            tooltip="Paste from clipboard"
-          />
+          <>
+            <Button
+              className={compact ? undefined : "sm:hidden"}
+              label="Paste"
+              icon={<IconClipboard size={compact ? 13 : 14} />}
+              onClick={pasteFromClipboard}
+              variant="secondary"
+              size="sm"
+              isIconOnly
+              tooltip="Paste from clipboard"
+            />
+            {!compact && (
+              <Button
+                className="hidden sm:inline-flex"
+                label="Paste"
+                icon={<IconClipboard size={14} />}
+                onClick={pasteFromClipboard}
+                variant="secondary"
+                size="md"
+                tooltip="Paste from clipboard"
+              />
+            )}
+          </>
         )}
         <Button
+          className={compact ? undefined : "sm:hidden"}
           label={isConverting ? "Matching…" : isSearchMode ? "Search" : "Convert"}
           icon={
             isSearchMode ? (
-              <IconSearch size={compact ? 15 : 17} />
+              <IconSearch size={15} />
             ) : (
-              <IconArrowRight size={compact ? 15 : 17} />
+              <IconArrowRight size={15} />
             )
           }
           onClick={handleConvert}
           isDisabled={!url.trim() || isConverting}
           isLoading={isConverting}
-          isIconOnly={compact}
+          isIconOnly
           variant="primary"
-          size={compact ? "sm" : "lg"}
+          size="sm"
         />
+        {!compact && (
+          <Button
+            className="hidden sm:inline-flex"
+            label={isConverting ? "Matching…" : isSearchMode ? "Search" : "Convert"}
+            icon={
+              isSearchMode ? (
+                <IconSearch size={17} />
+              ) : (
+                <IconArrowRight size={17} />
+              )
+            }
+            onClick={handleConvert}
+            isDisabled={!url.trim() || isConverting}
+            isLoading={isConverting}
+            variant="primary"
+            size="lg"
+          />
+        )}
       </HStack>
 
       {/* Live detection line */}
       <Stack
+        direction="horizontal"
+        justify="center"
+        align="center"
         className={cn(
-          "flex items-center",
           compact
             ? url.trim()
               ? "mt-1.5 justify-start pl-2"
@@ -866,7 +904,7 @@ export function LinkConverter({
 
       {showHistory && history.length > 0 && (
         <Stack as="section" className="mt-12">
-          <Stack className="flex items-baseline justify-between px-2">
+          <Stack direction="horizontal" align="end" justify="between" className="px-2">
             <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Recent conversions
             </Heading>

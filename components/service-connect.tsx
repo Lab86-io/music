@@ -364,7 +364,11 @@ interface RowProps {
 
 function ConnectionRow({ logo, tileClass, name, status, action }: RowProps) {
   return (
-    <Stack className="flex items-center gap-3.5 px-4 py-3.5 sm:px-5">
+    <Stack
+      direction="horizontal"
+      align="center"
+      className="gap-3.5 px-4 py-3.5 sm:px-5"
+    >
       <Stack
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-on-dark shadow-sm",
@@ -375,7 +379,7 @@ function ConnectionRow({ logo, tileClass, name, status, action }: RowProps) {
       </Stack>
       <Stack className="min-w-0 flex-1">
         <Text as="p" className="text-sm font-semibold leading-tight">{name}</Text>
-        <Stack className="mt-0.5 flex items-center gap-1.5 text-xs text-secondary">
+        <Stack direction="horizontal" align="center" className="mt-0.5 gap-1.5 text-xs text-secondary">
           {status}
         </Stack>
       </Stack>
@@ -424,7 +428,7 @@ interface ConnectionPanelProps {
 
 function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionPanelProps) {
   return (
-    <Stack className="overflow-hidden rounded-xl border border-border/70 bg-card/60 divide-y divide-border/60">
+    <Stack className="overflow-hidden rounded-lg border border-border/70 bg-card/60 divide-y divide-border/60">
       <ConnectionRow
         logo={<SpotifyLogo className="h-5.5 w-5.5" />}
         tileClass="bg-green-ring"
@@ -443,7 +447,7 @@ function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionP
         }
         action={
           spotify.connected ? (
-            <Stack className="flex items-center gap-2.5">
+            <Stack direction="horizontal" align="center" className="gap-2.5">
               <Avatar
                 size="sm"
                 src={spotify.userImage || undefined}
@@ -458,13 +462,14 @@ function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionP
             </Stack>
           ) : (
             <Button
-              label="Connect Spotify"
+              label="Connect"
               icon={<SpotifyLogo className="h-4 w-4" />}
               onClick={spotify.onConnect}
               isDisabled={spotify.loading}
               isLoading={spotify.loading}
               variant="primary"
               size="lg"
+              tooltip="Connect Spotify"
             />
           )
         }
@@ -493,13 +498,14 @@ function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionP
             />
           ) : (
             <Button
-              label={!apple.ready ? "Loading Apple Music…" : "Connect Apple Music"}
+              label={!apple.ready ? "Loading…" : "Connect"}
               icon={<AppleLogo className="h-4 w-4" />}
               onClick={apple.onConnect}
               isDisabled={apple.loading || !apple.ready}
               isLoading={apple.loading}
               variant="primary"
               size="lg"
+              tooltip={!apple.ready ? "Loading Apple Music" : "Connect Apple Music"}
             />
           )
         }
@@ -529,11 +535,12 @@ function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionP
               />
             ) : (
               <Button
-                label="Connect TIDAL"
+                label="Connect"
                 icon={<TidalLogo className="h-4 w-4" />}
                 onClick={tidal.onConnect}
                 variant="primary"
                 size="lg"
+                tooltip="Connect TIDAL"
               />
             )
           }
@@ -564,11 +571,12 @@ function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionP
               />
             ) : (
               <Button
-                label="Connect YouTube Music"
+                label="Connect"
                 icon={<YouTubeMusicLogo className="h-4 w-4" />}
                 onClick={youtube.onConnect}
                 variant="primary"
                 size="lg"
+                tooltip="Connect YouTube Music"
               />
             )
           }
@@ -601,11 +609,12 @@ function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionP
               />
             ) : (
               <Button
-                label="Connect Deezer"
+                label="Connect"
                 icon={<DeezerLogo className="h-4 w-4" />}
                 onClick={deezer.onConnect}
                 variant="primary"
                 size="lg"
+                tooltip="Connect Deezer"
               />
             )
           }

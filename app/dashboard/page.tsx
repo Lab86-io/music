@@ -528,7 +528,7 @@ export default function DashboardPage() {
 
   if (sessionLoading) {
     return (
-      <Stack className="flex min-h-screen items-center justify-center">
+      <Stack direction="horizontal" className="flex min-h-screen items-center justify-center">
         <IconLoader2 className="h-8 w-8 animate-spin text-accent" />
       </Stack>
     );
@@ -538,7 +538,7 @@ export default function DashboardPage() {
     <TooltipProvider>
       <Stack className="min-h-screen bg-body">
         <Stack className="container mx-auto px-4 py-4 pb-12">
-          <Stack className="hidden sm:flex items-center gap-2">
+          <Stack direction="horizontal" align="center" className="hidden gap-2 sm:flex">
             {spotifyConnected && (
               <Badge variant="outline" className="gap-1.5 border-green-ring bg-green-subtle px-3 py-1.5">
                 <SpotifyLogo className="h-3.5 w-3.5 text-green-vivid" />
@@ -590,7 +590,7 @@ export default function DashboardPage() {
           {/* Conversion Progress/Result */}
           {(isConverting || conversionResult) && conversionPlaylist && (
             <Stack as="section" className="mb-6">
-              <Stack className="mb-1.5 flex items-center justify-between">
+              <Stack direction="horizontal" align="center" justify="between" className="mb-1.5">
                 <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
                   {isConverting ? "Converting playlist" : "Conversion complete"}
                 </Heading>
@@ -634,7 +634,12 @@ export default function DashboardPage() {
           {(spotifyConnected || appleConnected) && (
             <VStack gap={3}>
               <Heading level={1} className="font-display text-xl font-semibold tracking-tight">Your library</Heading>
-              <Stack className="sticky top-14 z-20 mt-1 -mx-1 flex items-center justify-between gap-2 border-b border-border bg-body/90 px-1 backdrop-blur">
+              <Stack
+                direction="horizontal"
+                align="center"
+                justify="between"
+                className="sticky top-14 z-20 mt-1 -mx-1 gap-2 border-b border-border bg-body/90 px-1 backdrop-blur"
+              >
                 <TabList
                   value={activeTab}
                   onChange={(value) => setActiveTab(value as "spotify" | "apple")}
@@ -658,7 +663,7 @@ export default function DashboardPage() {
                     />
                   )}
                 </TabList>
-                <Stack className="flex items-center gap-1.5">
+                <Stack direction="horizontal" align="center" className="gap-1.5">
                   <Tooltip>
                     <TooltipTrigger
                       onClick={() => activeTab === "spotify" ? loadSpotifyPlaylists() : loadApplePlaylists()}

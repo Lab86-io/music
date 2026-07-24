@@ -80,7 +80,7 @@ export function SeoLanding({
             <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Every direction
             </Heading>
-            <Stack as="ul" className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+            <Stack as="ul" direction="horizontal" wrap="wrap" className="mt-2 gap-x-4 gap-y-1.5">
               {CONVERSION_PAIRS.map((pair) => (
                 <Stack as="li" key={pair.slug}>
                   <Link

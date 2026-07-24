@@ -104,8 +104,8 @@ export function ConversionProgress({
   return (
     <Card>
       <CardHeader className="pb-4">
-        <Stack className="flex items-center gap-3">
-          <Stack className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+        <Stack direction="horizontal" align="center" className="gap-3">
+          <Stack direction="horizontal" className={`flex h-10 w-10 items-center justify-center rounded-lg ${
             sourceService === "spotify"
               ? "bg-green-ring"
               : sourceService === "deezer"
@@ -119,7 +119,7 @@ export function ConversionProgress({
             <SourceIcon className="h-5 w-5" />
           </Stack>
           <IconArrowRight className="text-secondary" size={20} />
-          <Stack className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+          <Stack direction="horizontal" className={`flex h-10 w-10 items-center justify-center rounded-lg ${
             targetService === "spotify"
               ? "bg-green-ring"
               : targetService === "tidal"
@@ -155,7 +155,7 @@ export function ConversionProgress({
             {/* Current track being processed */}
             {currentTrack && (
               <Stack className={`rounded-lg border p-3 ${getStatusBg(currentTrack.status)}`}>
-                <Stack className="flex items-start gap-3">
+                <Stack direction="horizontal" align="start" className="gap-3">
                   <Stack className="mt-0.5">
                     {getStatusIcon(currentTrack.status)}
                   </Stack>
@@ -188,7 +188,7 @@ export function ConversionProgress({
             {recentTracks.length > 0 && (
               <Stack className="space-y-1.5 max-h-48 overflow-y-auto">
                 {recentTracks.slice(0, 5).map((track, i) => (
-                  <Stack key={i} className="flex items-center gap-2 text-sm py-1 px-2 rounded bg-muted/30">
+                  <Stack key={i} direction="horizontal" align="center" className="gap-2 rounded bg-muted/30 px-2 py-1 text-sm">
                     {getStatusIcon(track.status)}
                     <Text className="truncate flex-1">{track.name}</Text>
                     {track.confidence !== undefined && (
@@ -207,10 +207,10 @@ export function ConversionProgress({
 
         {result && (
           <Stack className="space-y-4">
-            <Stack className="flex items-center gap-3">
+            <Stack direction="horizontal" align="center" className="gap-3">
               {result.success ? (
                 <>
-                  <Stack className="flex h-10 w-10 items-center justify-center rounded-full bg-success-muted">
+                  <Stack direction="horizontal" className="flex h-10 w-10 items-center justify-center rounded-full bg-success-muted">
                     <IconCheck className="text-success" size={24} />
                   </Stack>
                   <Stack>
@@ -224,7 +224,7 @@ export function ConversionProgress({
                 </>
               ) : (
                 <>
-                  <Stack className="flex h-10 w-10 items-center justify-center rounded-full bg-error-muted">
+                  <Stack direction="horizontal" className="flex h-10 w-10 items-center justify-center rounded-full bg-error-muted">
                     <IconX className="text-error" size={24} />
                   </Stack>
                   <Stack>
@@ -262,7 +262,7 @@ export function ConversionProgress({
                   </Stack>
                 </Stack>
 
-                <Stack className="flex flex-wrap gap-2">
+                <Stack direction="horizontal" wrap="wrap" className="gap-2">
                   <Badge variant="outline" className="text-xs">
                     <IconCheck size={12} className="mr-1 text-success" />
                     {result.stats.isrcMatches} exact (ISRC)

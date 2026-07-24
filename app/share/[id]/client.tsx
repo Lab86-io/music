@@ -407,7 +407,7 @@ export default function SharePageClient() {
 
   if (loading) {
     return (
-      <Stack className="min-h-screen flex items-center justify-center bg-body">
+      <Stack direction="horizontal" className="min-h-screen flex items-center justify-center bg-body">
         <IconLoader2 className="h-8 w-8 animate-spin text-accent" />
       </Stack>
     );
@@ -415,7 +415,7 @@ export default function SharePageClient() {
 
   if (notFound || !sharedPlaylist) {
     return (
-      <Stack className="min-h-screen flex items-center justify-center bg-body">
+      <Stack direction="horizontal" className="min-h-screen flex items-center justify-center bg-body">
         <Card className="max-w-md w-full mx-4">
           <CardContent className="flex flex-col items-center py-12">
             <IconX className="h-12 w-12 text-error mb-4" />
@@ -459,7 +459,7 @@ export default function SharePageClient() {
           )}
           
           {conversionResult?.success && (
-            <Stack className="flex justify-center">
+            <Stack direction="horizontal" justify="center">
               <Button onClick={() => router.push("/dashboard")}>
                 Go to Dashboard
               </Button>
@@ -478,7 +478,7 @@ export default function SharePageClient() {
         {/* Shared Playlist Card */}
         <Card className="mb-6">
           <CardHeader className="pb-4">
-            <Stack className="flex items-start gap-4">
+            <Stack direction="horizontal" align="start" className="gap-4">
               {sharedPlaylist.playlistImage ? (
                 <Image
                   src={sharedPlaylist.playlistImage} 
@@ -489,17 +489,17 @@ export default function SharePageClient() {
                   className="h-16 w-16 rounded-lg object-cover shrink-0"
                 />
               ) : (
-                <Stack className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Stack direction="horizontal" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted">
                   <IconMusic className="h-8 w-8 text-secondary" />
                 </Stack>
               )}
               <Stack className="flex-1 min-w-0">
-                <Stack className="flex items-center gap-2 mb-1">
+                <Stack direction="horizontal" align="center" className="mb-1 gap-2">
                   <IconShare className="h-4 w-4 text-secondary" />
                   <Text className="text-sm text-secondary">Shared Playlist</Text>
                 </Stack>
                 <CardTitle className="text-xl truncate">{sharedPlaylist.playlistName}</CardTitle>
-                <Stack className="flex items-center gap-2 mt-2">
+                <Stack direction="horizontal" align="center" className="mt-2 gap-2">
                   <Badge variant="secondary" className="gap-1">
                     {sharedPlaylist.sourceService === "spotify" ? (
                       <SpotifyLogo className="h-3 w-3" />
@@ -558,7 +558,7 @@ export default function SharePageClient() {
                         className="h-10 w-10 rounded object-cover"
                       />
                     ) : (
-                      <Stack className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                      <Stack direction="horizontal" className="flex h-10 w-10 items-center justify-center rounded bg-muted">
                         <IconMusic className="h-5 w-5 text-secondary" />
                       </Stack>
                     )}
@@ -587,7 +587,7 @@ export default function SharePageClient() {
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Spotify Button */}
-            <Stack className="flex items-center gap-3">
+            <Stack direction="horizontal" align="center" className="gap-3">
               {spotifyLoading ? (
                 <Button disabled className="flex-1 gap-2">
                   <IconLoader2 className="h-4 w-4 animate-spin" />
@@ -621,7 +621,7 @@ export default function SharePageClient() {
             </Stack>
 
             {/* Apple Music Button */}
-            <Stack className="flex items-center gap-3">
+            <Stack direction="horizontal" align="center" className="gap-3">
               {appleLoading ? (
                 <Button disabled className="flex-1 gap-2">
                   <IconLoader2 className="h-4 w-4 animate-spin" />
@@ -656,7 +656,7 @@ export default function SharePageClient() {
 
             {/* TIDAL Button (official OAuth) */}
             {tidal.configured && (
-              <Stack className="flex items-center gap-3">
+              <Stack direction="horizontal" align="center" className="gap-3">
                 {tidal.connected ? (
                   <Button
                     onClick={() => handleExternalImport("tidal")}
@@ -688,7 +688,7 @@ export default function SharePageClient() {
 
             {/* YouTube Music Button (shown when OAuth is configured) */}
             {youtube.configured && (
-              <Stack className="flex items-center gap-3">
+              <Stack direction="horizontal" align="center" className="gap-3">
                 {youtube.connected ? (
                   <Button
                     onClick={() => handleExternalImport("youtube")}
@@ -720,7 +720,7 @@ export default function SharePageClient() {
 
             {/* Deezer Button (advanced ARL connection) */}
             {deezer.configured && (
-              <Stack className="flex items-center gap-3">
+              <Stack direction="horizontal" align="center" className="gap-3">
                 {deezer.connected ? (
                   <Button
                     onClick={() => handleExternalImport("deezer")}
