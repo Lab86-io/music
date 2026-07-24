@@ -30,7 +30,7 @@ export default async function ConvertPage({
     <Stack className="min-h-screen bg-body">
       <Stack className="relative">
         <Stack aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-72" />
-        <Stack className="container relative mx-auto px-4">
+        <Stack className="relative mx-auto w-full px-4">
           <Stack as="section" className="mx-auto max-w-3xl pt-12 text-center sm:pt-16">
             <Heading level={1} className="font-display text-3xl font-bold tracking-tight">Convert a link</Heading>
             <Text as="p" className="mx-auto mt-3 max-w-md text-balance text-secondary">

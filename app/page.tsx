@@ -58,7 +58,7 @@ export default function HomePage() {
         {/* Faint staff-line texture behind the hero */}
         <Stack aria-hidden className="hero-staff pointer-events-none absolute inset-x-0 top-0 h-96" />
 
-        <Stack className="container relative mx-auto px-4">
+        <Stack className="relative mx-auto w-full px-4">
           {/* Hero */}
           <Stack as="section" className="mx-auto max-w-3xl pb-2 pt-14 text-center sm:pt-20">
             <Stack
