@@ -364,26 +364,28 @@ interface RowProps {
 
 function ConnectionRow({ logo, tileClass, name, status, action }: RowProps) {
   return (
-    <Stack
-      direction="horizontal"
-      align="center"
-      className="gap-3.5 px-4 py-3.5 sm:px-5"
-    >
-      <Stack
-        className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-on-dark shadow-sm",
-          tileClass
-        )}
-      >
-        {logo}
-      </Stack>
-      <Stack className="min-w-0 flex-1">
-        <Text as="p" className="text-sm font-semibold leading-tight">{name}</Text>
-        <Stack direction="horizontal" align="center" className="mt-0.5 gap-1.5 text-xs text-secondary">
-          {status}
+    <Stack className="flex flex-col rounded-lg border border-border/70 bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+      <Stack direction="horizontal" align="center" className="gap-3">
+        <Stack
+          className={cn(
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-on-dark shadow-sm",
+            tileClass
+          )}
+        >
+          {logo}
         </Stack>
+        <Text as="p" className="min-w-0 flex-1 text-sm font-semibold leading-tight">{name}</Text>
       </Stack>
-      {action}
+      <Stack
+        direction="horizontal"
+        align="center"
+        className="mt-3.5 min-h-8 flex-1 gap-1.5 text-xs leading-relaxed text-secondary"
+      >
+        {status}
+      </Stack>
+      <Stack direction="horizontal" align="center" className="mt-auto pt-3.5">
+        {action}
+      </Stack>
     </Stack>
   );
 }
@@ -428,7 +430,7 @@ interface ConnectionPanelProps {
 
 function ConnectionPanel({ spotify, apple, youtube, tidal, deezer }: ConnectionPanelProps) {
   return (
-    <Stack className="overflow-hidden rounded-lg border border-border/70 bg-card/60 divide-y divide-border/60">
+    <Stack className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <ConnectionRow
         logo={<SpotifyLogo className="h-5.5 w-5.5" />}
         tileClass="bg-green-ring"

@@ -521,7 +521,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
   return (
     <Stack
       as="li"
-      className="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md"
+      className="self-start overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md"
     >
       <Stack
         direction="horizontal"
@@ -746,7 +746,7 @@ export function LinkConverter({
           "rounded-full border border-border/70 bg-surface transition-all focus-within:border-accent focus-within:ring-2 focus-within:ring-accent-muted",
           compact
             ? "p-1 pl-1.5 shadow-sm"
-            : "p-1.5 pl-2 shadow-lg focus-within:shadow-xl sm:p-2 sm:pl-3"
+            : "mx-auto w-full max-w-4xl p-1.5 pl-2 shadow-lg focus-within:shadow-xl sm:p-2.5 sm:pl-4"
         )}
       >
         <StackItem size="fill">
@@ -758,12 +758,12 @@ export function LinkConverter({
             onEnter={handleConvert}
             isDisabled={isConverting}
             placeholder={compact ? "Convert a music link…" : "Paste a link or type a song name"}
-            startIcon={<IconLink size={compact ? 15 : 18} />}
+            startIcon={<IconLink size={compact ? 15 : 20} />}
             size={compact ? "sm" : "lg"}
             width="100%"
             className={cn(
               "border-0 bg-transparent shadow-none",
-              compact ? "h-8" : "h-11 sm:h-12 [&_input]:sm:text-lg"
+              compact ? "h-8" : "h-12 sm:h-14 [&_input]:sm:text-lg"
             )}
           />
         </StackItem>
@@ -783,10 +783,10 @@ export function LinkConverter({
               <Button
                 className="hidden sm:inline-flex"
                 label="Paste"
-                icon={<IconClipboard size={14} />}
+                icon={<IconClipboard size={15} />}
                 onClick={pasteFromClipboard}
                 variant="ghost"
-                size="md"
+                size="lg"
                 tooltip="Paste from clipboard"
               />
             )}
@@ -884,7 +884,7 @@ export function LinkConverter({
 
       {error && (
         <Banner
-          className="mt-4"
+          className={cn("mt-4", !compact && "mx-auto w-full max-w-4xl")}
           status="error"
           title="Could not convert that"
           description={error}
@@ -892,7 +892,12 @@ export function LinkConverter({
       )}
 
       {candidates && (
-          <List className="mt-4" header="Pick the right song" density="compact" hasDividers>
+          <List
+            className={cn("mt-4", !compact && "mx-auto w-full max-w-4xl")}
+            header="Pick the right song"
+            density="compact"
+            hasDividers
+          >
             {candidates.map((candidate) => (
               <Item
                   key={candidate.url}
@@ -924,11 +929,19 @@ export function LinkConverter({
         </Text>
       )}
 
-      {result?.kind === "conversion" && <ConversionResult result={result} />}
-      {result?.kind === "playlist" && <PlaylistResult result={result} />}
+      {result?.kind === "conversion" && (
+        <Stack className={cn(!compact && "mx-auto w-full max-w-4xl")}>
+          <ConversionResult result={result} />
+        </Stack>
+      )}
+      {result?.kind === "playlist" && (
+        <Stack className={cn(!compact && "mx-auto w-full max-w-4xl")}>
+          <PlaylistResult result={result} />
+        </Stack>
+      )}
 
       {showHistory && history.length > 0 && (
-        <Stack as="section" className="mt-10">
+        <Stack as="section" className="mt-12">
           <Stack direction="horizontal" align="center" justify="between" className="px-1">
             <Heading level={2} className="text-xs font-semibold uppercase tracking-wide text-secondary">
               Recent conversions
@@ -942,7 +955,7 @@ export function LinkConverter({
               tooltip="Stored only in this browser"
             />
           </Stack>
-          <Stack as="ul" className="mt-3 flex flex-col gap-2.5">
+          <Stack as="ul" className="mt-4 grid gap-3 sm:grid-cols-2">
             {history.map((item) => (
               <HistoryRow key={item.timestamp} item={item} />
             ))}
