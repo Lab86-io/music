@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.5.2",
   "astryx": {
-    "theme": "matcha"
+    "theme": "music"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -21,6 +21,7 @@
     "test:run": "vitest run",
     "eval:jev": "tsx --env-file-if-exists=.env.local scripts/eval-jev.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test:run && pnpm build",
+    "theme:build": "astryx theme build lib/theme/musicTheme.ts -o lib/theme/music-theme.css",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

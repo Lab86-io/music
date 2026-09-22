@@ -32,3 +32,19 @@ MORE CLI:
   swizzle <Name>     eject component source for deep customization
   upgrade --apply    run after any @astryxdesign/core bump
 <!-- ASTRYX:END -->
+
+## Theme
+
+The app uses a project theme named `music`. The source is `lib/theme/musicTheme.ts`.
+It extends the Astryx `matcha` theme and sets a 4px spacing unit and a 12 / 14 / 16 px
+text scale. The Tailwind bridge maps every Tailwind spacing and text utility to these
+tokens, so the scale must stay in step with the Tailwind defaults the classes assume.
+
+After you edit the source, rebuild the CSS and JS:
+
+```bash
+pnpm theme:build
+```
+
+Commit `lib/theme/music-theme.css`, `lib/theme/music.js`, and `lib/theme/music.d.ts`
+with the source. Do not edit the generated files.

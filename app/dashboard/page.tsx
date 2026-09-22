@@ -12,6 +12,7 @@ import { ShareDialog } from "@/components/share-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Badge as AstryxBadge } from "@astryxdesign/core/Badge";
+import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { Heading } from "@astryxdesign/core/Heading";
 import { Tab, TabList } from "@astryxdesign/core/TabList";
 import { Stack, VStack } from "@astryxdesign/core/Stack";
@@ -534,6 +535,14 @@ export default function DashboardPage() {
     );
   }
 
+  const libraryReady = spotifyConnected || appleConnected;
+  const hasUnconnectedService =
+    !spotifyConnected ||
+    !appleConnected ||
+    (youtube.configured && !youtube.connected) ||
+    (tidal.configured && !tidal.connected) ||
+    (deezer.configured && !deezer.connected);
+
   return (
     <TooltipProvider>
       <Stack className="min-h-screen bg-body">
@@ -576,14 +585,20 @@ export default function DashboardPage() {
             <LinkConverter showHistory={false} compact />
           </Stack>
 
-          {/* Connection Cards (collapsed state) */}
-          {(!spotifyConnected ||
-            !appleConnected ||
-            (youtube.configured && !youtube.connected) ||
-            (tidal.configured && !tidal.connected) ||
-            (deezer.configured && !deezer.connected)) && (
+          {/* Connection panel. Open until a library service is connected,
+              then folded behind a trigger so the library gets the space. */}
+          {hasUnconnectedService && (
             <Stack className="mb-4">
-              <ServiceConnect onConnectionChange={handleConnectionChange} />
+              {libraryReady ? (
+                <Collapsible
+                  trigger={<Text weight="medium">Connect more services</Text>}
+                  defaultIsOpen={false}
+                >
+                  <ServiceConnect onConnectionChange={handleConnectionChange} />
+                </Collapsible>
+              ) : (
+                <ServiceConnect onConnectionChange={handleConnectionChange} />
+              )}
             </Stack>
           )}
 

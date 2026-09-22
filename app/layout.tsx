@@ -77,7 +77,7 @@ export default async function RootLayout({
     <html
       lang="en"
       data-theme="system"
-      data-astryx-theme="matcha"
+      data-astryx-theme="music"
       className={averia.variable}
       suppressHydrationWarning
     >
@@ -92,7 +92,7 @@ export default async function RootLayout({
                     ? stored
                     : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                   document.documentElement.dataset.theme = theme;
-                  document.documentElement.dataset.astryxTheme = 'matcha';
+                  document.documentElement.dataset.astryxTheme = 'music';
                 } catch (e) {}
               })();
             `,

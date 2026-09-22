@@ -76,11 +76,11 @@ export default function HomePage() {
 
         <Stack className="relative mx-auto w-full px-4">
           {/* Hero */}
-          <Stack as="section" className="mx-auto w-full max-w-4xl pb-2 pt-16 text-center sm:pt-24">
+          <Stack as="section" className="mx-auto w-full max-w-4xl pb-2 pt-10 text-center sm:pt-14">
             <Stack
               direction="horizontal"
               wrap="wrap"
-              className="mx-auto mb-8 inline-flex items-center justify-center gap-2.5 rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-medium text-secondary shadow-md"
+              className="mx-auto mb-6 inline-flex items-center justify-center gap-2.5 rounded-full border border-border/70 bg-card px-4 py-2 text-xs font-medium text-secondary shadow-md"
             >
               {/* The logo sequence is the same as the service list in the
                   tagline below. Amazon Music is last because it is search-only. */}
@@ -97,24 +97,24 @@ export default function HomePage() {
               level={1}
               type="display-1"
               textWrap="balance"
-              className="font-display text-4xl sm:text-6xl"
+              className="font-display text-5xl sm:text-6xl"
             >
               I made a music converter.{" "}
               <DancingLetters text="I use it myself" className="text-green-vivid" />.
             </Heading>
-            <Text as="p" className="mx-auto mt-5 max-w-2xl text-balance text-lg text-secondary sm:text-xl">
+            <Text as="p" className="mx-auto mt-4 max-w-2xl text-balance text-lg text-secondary sm:text-xl">
               Paste a link or type a song name. Get matches on Spotify, Apple Music,
               Deezer, TIDAL, YouTube Music, and Amazon Music. No account needed.
             </Text>
           </Stack>
 
           {/* The one input */}
-          <Stack as="section" className="mx-auto w-full max-w-6xl pb-4 pt-10">
+          <Stack as="section" className="mx-auto w-full max-w-6xl pb-4 pt-8">
             <LinkConverter />
           </Stack>
 
           {/* Sign-in, directly below the tool */}
-          <Stack as="section" className="mx-auto w-full max-w-6xl pb-2 pt-12">
+          <Stack as="section" className="mx-auto w-full max-w-6xl pb-2 pt-10">
             <Stack direction="horizontal" className="mb-6 flex items-center gap-4">
               <Stack className="h-px flex-1 bg-border/70" />
               <Text type="supporting" color="secondary" weight="semibold" className="uppercase">
@@ -126,7 +126,7 @@ export default function HomePage() {
           </Stack>
 
           {/* Why it exists, in three beats */}
-          <Stack as="section" className="mx-auto w-full max-w-6xl pb-20 pt-14">
+          <Stack as="section" className="mx-auto w-full max-w-6xl pb-16 pt-12">
             <Stack className="grid gap-4 sm:grid-cols-3">
               <FeatureCard icon={<IconArrowsExchange size={19} />} title="Every direction">
                 One link becomes six. Tracks, albums, and artists matched across

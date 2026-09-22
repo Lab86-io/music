@@ -7,7 +7,7 @@ import { LinkProvider } from "@astryxdesign/core/Link";
 import { InternationalizationProvider } from "@astryxdesign/core/i18n";
 import { LayerProvider } from "@astryxdesign/core/Layer";
 import { ToastViewport, useToast } from "@astryxdesign/core/Toast";
-import { matchaTheme } from "@astryxdesign/theme-matcha/built";
+import { musicTheme } from "@/lib/theme/music";
 import { MUSIC_TOAST_EVENT, type MusicToastDetail } from "@/lib/toast";
 
 type Theme = "light" | "dark" | "system";
@@ -71,7 +71,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AstryxTheme theme={matchaTheme} mode={theme}>
+    <AstryxTheme theme={musicTheme} mode={theme}>
       <InternationalizationProvider locale="en-US">
         <LinkProvider component={NextLink}>
           <LayerProvider toast={{ position: "bottomEnd", maxVisible: 4 }}>
