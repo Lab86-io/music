@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
+    "eval:jev": "tsx --env-file-if-exists=.env.local scripts/eval-jev.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test:run && pnpm build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -60,6 +61,7 @@
     "eslint-config-next": "16.1.1",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^4.1.8"
   }

@@ -61,14 +61,14 @@ export function parseYouTubeTitle(info: YouTubeVideoInfo): { title: string; arti
 }
 
 /**
- * Search YouTube (music category) for the best matching video.
- * Returns null when no API key is configured or nothing is found.
+ * Search YouTube (music category) for up to five candidate videos.
+ * Returns an empty list when no API key is configured or nothing is found.
  */
-export async function searchYouTubeMusic(
+export async function searchYouTubeMusicCandidates(
   query: string
-): Promise<{ videoId: string; title: string; channel: string } | null> {
+): Promise<YouTubeVideoInfo[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) return [];
   try {
     const params = new URLSearchParams({
       part: "snippet",
@@ -79,18 +79,22 @@ export async function searchYouTubeMusic(
       key: apiKey,
     });
     const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
-    if (!response.ok) return null;
+    if (!response.ok) return [];
     const data = await response.json();
-    const item = data?.items?.[0];
-    if (!item?.id?.videoId) return null;
-    return {
-      videoId: item.id.videoId,
-      title: item.snippet?.title ?? "",
-      channel: item.snippet?.channelTitle ?? "",
-    };
+    return (data?.items ?? []).filter((item: { id?: { videoId?: string } }) => item?.id?.videoId)
+      .map((item: { id: { videoId: string }; snippet?: { title?: string; channelTitle?: string } }) => ({
+        videoId: item.id.videoId,
+        title: item.snippet?.title ?? "",
+        channel: item.snippet?.channelTitle ?? "",
+      }));
   } catch {
-    return null;
+    return [];
   }
+}
+
+/** Compatibility helper for callers that only need the first result. */
+export async function searchYouTubeMusic(query: string): Promise<YouTubeVideoInfo | null> {
+  return (await searchYouTubeMusicCandidates(query))[0] ?? null;
 }
 
 /**

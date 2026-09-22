@@ -1,3 +1,4 @@
+import { selectTrackCandidate } from "@/lib/jev";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import * as stringSimilarity from "string-similarity";
@@ -42,12 +43,14 @@ async function matchDeezerTrack(track: ImportTrack): Promise<DeezerMatch | null>
     if (hit && !track.artist) return { id: String(hit.id), method: "isrc" };
   }
   const candidates = await searchDeezerTracks(`${track.name} ${track.artist}`, 5);
-  for (const candidate of candidates) {
-    const score =
-      sim(track.name, candidate.title) * 0.6 + sim(track.artist, candidate.artist?.name ?? "") * 0.4;
-    if (score >= 0.5) return { id: String(candidate.id), method: "fuzzy" };
-  }
-  return null;
+  const score = (candidate: (typeof candidates)[number]) =>
+    sim(track.name, candidate.title) * 0.6 + sim(track.artist, candidate.artist?.name ?? "") * 0.4;
+  const fallback = candidates.find(candidate => score(candidate) >= 0.5) ?? null;
+  const selected = await selectTrackCandidate(
+    { title: track.name, artist: track.artist, isrc: track.isrc }, candidates,
+    candidate => ({ title: candidate.title, artist: candidate.artist?.name ?? "" }), fallback,
+  );
+  return selected && score(selected) >= 0.5 ? { id: String(selected.id), method: "fuzzy" } : null;
 }
 
 async function fetchSourceTracks(

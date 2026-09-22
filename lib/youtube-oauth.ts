@@ -1,3 +1,4 @@
+import { selectTrackCandidate, type TrackEvidence } from "./jev";
 /**
  * YouTube (Google) OAuth for playlist import. Requires a Google OAuth web
  * client — set YOUTUBE_OAUTH_CLIENT_ID / YOUTUBE_OAUTH_CLIENT_SECRET and add
@@ -150,20 +151,27 @@ export async function createYouTubePlaylist(
 
 export async function searchYouTubeVideoId(
   session: YouTubeSession,
-  query: string
+  query: string,
+  source?: TrackEvidence
 ): Promise<{ videoId: string | null; quotaExceeded: boolean }> {
   const params = new URLSearchParams({
     part: "snippet",
     type: "video",
     videoCategoryId: "10",
-    maxResults: "1",
+    maxResults: source ? "5" : "1",
     q: query,
   });
   const { ok, status, data } = await ytFetch(session, `/search?${params}`);
   if (!ok) {
     return { videoId: null, quotaExceeded: status === 403 };
   }
-  return { videoId: data?.items?.[0]?.id?.videoId ?? null, quotaExceeded: false };
+  type SearchHit = { id?: { videoId?: string }; snippet?: { title?: string; channelTitle?: string } };
+  const candidates: SearchHit[] = (data?.items ?? []).filter((item: SearchHit) => item.id?.videoId);
+  const fallback = candidates[0] ?? null;
+  const selected = source ? await selectTrackCandidate(source, candidates, candidate => ({
+    title: candidate.snippet?.title ?? "", artist: candidate.snippet?.channelTitle ?? "",
+  }), fallback) : fallback;
+  return { videoId: selected?.id?.videoId ?? null, quotaExceeded: false };
 }
 
 export async function addVideoToPlaylist(

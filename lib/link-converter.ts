@@ -1,4 +1,5 @@
 import * as stringSimilarity from "string-similarity";
+import { selectTrackCandidate, isJevEnabled, isExactTrackEvidence } from "./jev";
 import type { ParsedMusicUrl, MusicService } from "./url-parser";
 import {
   getSpotifyTrackById,
@@ -38,7 +39,7 @@ import {
 import {
   getYouTubeVideoInfo,
   parseYouTubeTitle,
-  searchYouTubeMusic,
+  searchYouTubeMusicCandidates,
   searchYouTubeChannel,
   searchYouTubeAlbumPlaylist,
   youtubeMusicWatchUrl,
@@ -397,6 +398,18 @@ function pickBest(
   return best;
 }
 
+async function reviewFuzzyMatch(source: LinkMetadata, candidates: LinkMetadata[], best: DirectMatch | null): Promise<DirectMatch | null> {
+  const fallback = best && best.score >= MIN_ACCEPT_SCORE ? best : null;
+  if (source.type !== "track") return fallback;
+  const unique = [...new Map(candidates.map(candidate => [candidate.url, candidate])).values()];
+  unique.sort((a, b) => scoreCandidate(source, b) - scoreCandidate(source, a));
+  const selected = await selectTrackCandidate(source, unique, candidate => candidate, fallback?.metadata ?? null);
+  if (!selected) return null;
+  const score = scoreCandidate(source, selected);
+  // Jev can veto or rerank; it does not replace the existing similarity cutoff.
+  return score >= MIN_ACCEPT_SCORE ? { metadata: selected, score: Math.min(score, 1), method: "fuzzy" } : null;
+}
+
 async function findSpotifyMatch(source: LinkMetadata): Promise<DirectMatch | null> {
   if (source.type === "track" && source.isrc) {
     const hits = (await searchSpotifyCatalog(`isrc:${source.isrc}`, "track", 5)) as any[];
@@ -416,12 +429,16 @@ async function findSpotifyMatch(source: LinkMetadata): Promise<DirectMatch | nul
         : mapSpotifyArtistMeta;
 
   let best: DirectMatch | null = null;
+  const pool: LinkMetadata[] = [];
   for (const query of buildSpotifyQueries(source)) {
     const items = (await searchSpotifyCatalog(query, source.type, 10)) as any[];
-    best = pickBest(source, items.filter(Boolean).map(mapper), best);
-    if (best && best.score >= EARLY_EXIT_SCORE) break;
+    const candidates = items.filter(Boolean).map(mapper);
+    pool.push(...candidates);
+    best = pickBest(source, candidates, best);
+    if (best && best.score >= EARLY_EXIT_SCORE &&
+      (source.type !== "track" || !isJevEnabled() || isExactTrackEvidence(source, best.metadata))) break;
   }
-  return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
+  return reviewFuzzyMatch(source, pool, best);
 }
 
 async function findAppleMatch(source: LinkMetadata): Promise<DirectMatch | null> {
@@ -447,12 +464,16 @@ async function findAppleMatch(source: LinkMetadata): Promise<DirectMatch | null>
         : mapAppleArtistMeta;
 
   let best: DirectMatch | null = null;
+  const pool: LinkMetadata[] = [];
   for (const query of buildPlainQueries(source)) {
     const items = await searchAppleMusicCatalog(devToken, query, searchType, 10);
-    best = pickBest(source, items.filter(Boolean).map(mapper), best);
-    if (best && best.score >= EARLY_EXIT_SCORE) break;
+    const candidates = items.filter(Boolean).map(mapper);
+    pool.push(...candidates);
+    best = pickBest(source, candidates, best);
+    if (best && best.score >= EARLY_EXIT_SCORE &&
+      (source.type !== "track" || !isJevEnabled() || isExactTrackEvidence(source, best.metadata))) break;
   }
-  return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
+  return reviewFuzzyMatch(source, pool, best);
 }
 
 async function findDeezerMatch(source: LinkMetadata): Promise<DirectMatch | null> {
@@ -467,6 +488,7 @@ async function findDeezerMatch(source: LinkMetadata): Promise<DirectMatch | null
   }
 
   let best: DirectMatch | null = null;
+  const pool: LinkMetadata[] = [];
   for (const query of buildPlainQueries(source)) {
     let candidates: LinkMetadata[] = [];
     if (source.type === "track") {
@@ -476,10 +498,12 @@ async function findDeezerMatch(source: LinkMetadata): Promise<DirectMatch | null
     } else {
       candidates = (await searchDeezerArtists(query, 10)).map(mapDeezerArtistMeta);
     }
+    pool.push(...candidates);
     best = pickBest(source, candidates, best);
-    if (best && best.score >= EARLY_EXIT_SCORE) break;
+    if (best && best.score >= EARLY_EXIT_SCORE &&
+      (source.type !== "track" || !isJevEnabled() || isExactTrackEvidence(source, best.metadata))) break;
   }
-  return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
+  return reviewFuzzyMatch(source, pool, best);
 }
 
 async function findTidalMatch(source: LinkMetadata): Promise<DirectMatch | null> {
@@ -496,12 +520,16 @@ async function findTidalMatch(source: LinkMetadata): Promise<DirectMatch | null>
   }
 
   let best: DirectMatch | null = null;
+  const pool: LinkMetadata[] = [];
   for (const query of buildPlainQueries(source)) {
     const items = await searchTidal(query, source.type as "track" | "album" | "artist");
-    best = pickBest(source, items.map(mapTidalMeta), best);
-    if (best && best.score >= EARLY_EXIT_SCORE) break;
+    const candidates = items.map(mapTidalMeta);
+    pool.push(...candidates);
+    best = pickBest(source, candidates, best);
+    if (best && best.score >= EARLY_EXIT_SCORE &&
+      (source.type !== "track" || !isJevEnabled() || isExactTrackEvidence(source, best.metadata))) break;
   }
-  return best && best.score >= MIN_ACCEPT_SCORE ? { ...best, score: Math.min(best.score, 1) } : null;
+  return reviewFuzzyMatch(source, pool, best);
 }
 
 /**
@@ -569,31 +597,29 @@ async function findYouTubeLink(source: LinkMetadata): Promise<ServiceLink> {
     };
   }
 
-  const hit = await searchYouTubeMusic(query);
-  if (!hit) return searchLink;
-
-  const parsed = parseYouTubeTitle({ videoId: hit.videoId, title: hit.title, channel: hit.channel });
-  const score =
-    titleSimilarity(source.title, parsed.title) * 0.6 +
-    Math.max(
-      artistSimilarity(source.artist, parsed.artist),
-      artistSimilarity(source.artist, hit.channel)
-    ) *
-      0.4;
-  if (score < 0.35) return searchLink;
-
+  const hits = await searchYouTubeMusicCandidates(query);
+  const candidates = hits.map(hit => {
+    const parsed = parseYouTubeTitle(hit);
+    const score = titleSimilarity(source.title, parsed.title) * 0.6 +
+      Math.max(artistSimilarity(source.artist, parsed.artist), artistSimilarity(source.artist, hit.channel)) * 0.4;
+    return {
+      score,
+      metadata: { type: "track" as const, title: parsed.title, artist: parsed.artist, url: youtubeMusicWatchUrl(hit.videoId) },
+      // Keep the raw title/channel available to Jev when parsing is ambiguous.
+      evidence: { title: hit.title, artist: hit.channel },
+    };
+  });
+  const first = candidates[0];
+  const fallback = first && first.score >= 0.35 ? first : null;
+  const selected = await selectTrackCandidate(source, candidates, candidate => candidate.evidence, fallback);
+  if (!selected || selected.score < 0.35) return searchLink;
   return {
     service: "youtube",
-    url: youtubeMusicWatchUrl(hit.videoId),
+    url: selected.metadata.url,
     kind: "direct",
-    confidence: Math.round(Math.min(score, 1) * 100),
+    confidence: Math.round(Math.min(selected.score, 1) * 100),
     matchMethod: "fuzzy",
-    metadata: {
-      type: "track",
-      title: parsed.title,
-      artist: parsed.artist,
-      url: youtubeMusicWatchUrl(hit.videoId),
-    },
+    metadata: selected.metadata,
   };
 }
 

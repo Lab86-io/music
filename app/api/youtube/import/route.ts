@@ -106,7 +106,7 @@ export async function POST(request: Request) {
   let quotaExceeded = false;
 
   for (const track of tracks) {
-    const search = await searchYouTubeVideoId(session, `${track.name} ${track.artist}`);
+    const search = await searchYouTubeVideoId(session, `${track.name} ${track.artist}`, { title: track.name, artist: track.artist });
     if (search.quotaExceeded) {
       quotaExceeded = true;
       break;

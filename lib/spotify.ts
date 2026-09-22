@@ -1,3 +1,5 @@
+import { selectTrackCandidate, type TrackEvidence } from "./jev";
+import { toTrackEvidence } from "./track-evidence";
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import type { SpotifyPlaylist, SpotifyTrack } from "@/types";
 
@@ -135,7 +137,8 @@ export async function addTracksToSpotifyPlaylist(
 export async function searchSpotifyTrack(
   accessToken: string,
   query: string,
-  isrc?: string
+  isrc?: string,
+  source?: TrackEvidence
 ): Promise<SpotifyTrack | null> {
   const spotify = createSpotifyClient(accessToken);
   
@@ -166,23 +169,18 @@ export async function searchSpotifyTrack(
   
   // Fallback to text search
   try {
-    const result = await spotify.search(query, ["track"], undefined, 1);
-    if (result.tracks.items.length > 0) {
-      const track = result.tracks.items[0];
-      return {
-        id: track.id,
-        name: track.name,
-        artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
-        album: {
-          id: track.album.id,
-          name: track.album.name,
-          images: track.album.images,
-        },
-        duration_ms: track.duration_ms,
-        external_ids: track.external_ids,
-        uri: track.uri,
-      };
-    }
+    const result = await spotify.search(query, ["track"], undefined, source ? 5 : 1);
+    const candidates: SpotifyTrack[] = result.tracks.items.map(track => ({
+      id: track.id,
+      name: track.name,
+      artists: track.artists.map(artist => ({ id: artist.id, name: artist.name })),
+      album: { id: track.album.id, name: track.album.name, images: track.album.images },
+      duration_ms: track.duration_ms,
+      external_ids: track.external_ids,
+      uri: track.uri,
+    }));
+    const fallback = candidates[0] ?? null;
+    return source ? await selectTrackCandidate(source, candidates, toTrackEvidence, fallback) : fallback;
   } catch {
     return null;
   }

@@ -227,8 +227,8 @@ export async function POST(
 
                 // Try ISRC first with artist verification
                 if (track.isrc) {
-                  const isrcResult = await searchSpotifyTrack(session!.accessToken, query, track.isrc);
-                  if (isrcResult) {
+                  const isrcResult = await searchSpotifyTrack(session!.accessToken, query, track.isrc, { title: track.name, artist: track.artist, isrc: track.isrc });
+                  if (isrcResult && isrcResult.external_ids?.isrc === track.isrc) {
                     const artistSimilarity = calculateArtistSimilarity(
                       { name: track.name, artist: track.artist },
                       { name: isrcResult.name, artist: isrcResult.artists[0]?.name || "" }
@@ -244,7 +244,7 @@ export async function POST(
 
                 // Fallback to fuzzy search
                 if (!found) {
-                  const fuzzyResult = await searchSpotifyTrack(session!.accessToken, query);
+                  const fuzzyResult = await searchSpotifyTrack(session!.accessToken, query, undefined, { title: track.name, artist: track.artist, isrc: track.isrc });
                   if (fuzzyResult) {
                     matchConfidence = calculateMatchConfidence(
                       track,
@@ -315,8 +315,8 @@ export async function POST(
 
                 // Try ISRC first with artist verification
                 if (track.isrc) {
-                  const isrcResult = await searchAppleMusicTrack(appleDevToken, query, track.isrc);
-                  if (isrcResult) {
+                  const isrcResult = await searchAppleMusicTrack(appleDevToken, query, track.isrc, "us", { title: track.name, artist: track.artist, isrc: track.isrc });
+                  if (isrcResult && isrcResult.attributes.isrc === track.isrc) {
                     const artistSimilarity = calculateArtistSimilarity(
                       { name: track.name, artist: track.artist },
                       { name: isrcResult.attributes.name, artist: isrcResult.attributes.artistName }
@@ -332,7 +332,7 @@ export async function POST(
 
                 // Fallback to fuzzy search
                 if (!found) {
-                  const fuzzyResult = await searchAppleMusicTrack(appleDevToken, query);
+                  const fuzzyResult = await searchAppleMusicTrack(appleDevToken, query, undefined, "us", { title: track.name, artist: track.artist, isrc: track.isrc });
                   if (fuzzyResult) {
                     matchConfidence = calculateMatchConfidence(
                       track,
@@ -439,7 +439,7 @@ export async function POST(
 
       for (const track of tracks) {
         const query = `${track.name} ${track.artist}`;
-        const found = await searchSpotifyTrack(session!.accessToken, query, track.isrc);
+        const found = await searchSpotifyTrack(session!.accessToken, query, track.isrc, { title: track.name, artist: track.artist, isrc: track.isrc });
         
         if (found) {
           const confidence = calculateMatchConfidence(track, found.name, found.artists[0]?.name || "");
@@ -450,7 +450,7 @@ export async function POST(
               sourceTrack: { name: track.name, artist: track.artist },
               targetTrack: { name: found.name, artist: found.artists[0]?.name || "" },
               matchConfidence: confidence,
-              matchMethod: track.isrc ? "isrc" : "fuzzy",
+              matchMethod: track.isrc && found.external_ids?.isrc === track.isrc ? "isrc" : "fuzzy",
             });
           }
         }
@@ -474,7 +474,7 @@ export async function POST(
 
       for (const track of tracks) {
         const query = `${track.name} ${track.artist}`;
-        const found = await searchAppleMusicTrack(appleDevToken, query, track.isrc);
+        const found = await searchAppleMusicTrack(appleDevToken, query, track.isrc, "us", { title: track.name, artist: track.artist, isrc: track.isrc });
         
         if (found) {
           const confidence = calculateMatchConfidence(track, found.attributes.name, found.attributes.artistName);
@@ -485,7 +485,7 @@ export async function POST(
               sourceTrack: { name: track.name, artist: track.artist },
               targetTrack: { name: found.attributes.name, artist: found.attributes.artistName },
               matchConfidence: confidence,
-              matchMethod: track.isrc ? "isrc" : "fuzzy",
+              matchMethod: track.isrc && found.attributes.isrc === track.isrc ? "isrc" : "fuzzy",
             });
           }
         }

@@ -193,7 +193,30 @@ APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
 # Auth
 AUTH_SECRET=generate_with_openssl_rand_base64_32
 AUTH_URL=https://your-domain.com
+
+# Optional Jev recording review through OpenRouter (server-side only)
+OPENROUTER_API_KEY=your_openrouter_key
+# Set false to turn off Jev and use the existing fuzzy matcher
+JEV_MATCHING_ENABLED=true
 ```
+
+When an OpenRouter key is configured, Jev reviews ambiguous track candidates in
+link conversion and playlist imports. ISRC matches and exact title/artist matches
+keep their fast path. Jev can rerank candidates or reject a different recording
+(live, remix, acoustic, cover, or edit). Album and artist matching is unchanged.
+The existing similarity scores and import cutoffs remain in place; displayed
+percentages are not Jev confidence estimates.
+
+Only bounded track metadata is sent to OpenRouter/TypeSafe, without music-service
+tokens, account identifiers, or playlist names. Automatic selection requires
+model confidence of at least 0.90 and candidate probability of at least 0.95.
+These are conservative starting thresholds, not measured accuracy guarantees.
+Uncertain or rejected decisions become unmatched/search results. Missing keys,
+timeouts (1.5 seconds), or API errors use the existing heuristic fallback.
+Decisions are cached for one hour (up to 500 entries per process), with at most
+six concurrent requests and a 30-second cooldown following provider failures.
+Set the key in the application's runtime environment to enable the feature on
+your server; a key in a developer shell does not configure a hosted deployment.
 
 Register `{origin}/api/tidal/callback` and `{origin}/api/youtube/callback/` with
 their respective OAuth applications. Deezer does not require an application key:
@@ -227,6 +250,7 @@ pnpm start
 | `pnpm start` | Start production server |
 | `pnpm test` | Run tests in watch mode |
 | `pnpm test:run` | Run tests once (CI) |
+| `pnpm eval:jev` | Run the opt-in [Jev matching experiment](evals/jev/README.md) using OpenRouter |
 | `pnpm db:push` | Push schema to database |
 | `pnpm db:studio` | Open Drizzle Studio |
 

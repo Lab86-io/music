@@ -1,3 +1,5 @@
+import { selectTrackCandidate, type TrackEvidence } from "./jev";
+import { toTrackEvidence } from "./track-evidence";
 import * as jose from "jose";
 import type { AppleMusicPlaylist, AppleMusicTrack } from "@/types";
 
@@ -211,7 +213,8 @@ export async function searchAppleMusicTrack(
   developerToken: string,
   query: string,
   isrc?: string,
-  storefront: string = "us"
+  storefront: string = "us",
+  source?: TrackEvidence
 ): Promise<AppleMusicTrack | null> {
   // First try ISRC search if available
   if (isrc) {
@@ -233,13 +236,13 @@ export async function searchAppleMusicTrack(
   try {
     const encodedQuery = encodeURIComponent(query);
     const response = await appleMusicFetch(
-      `/catalog/${storefront}/search?term=${encodedQuery}&types=songs&limit=1`,
+      `/catalog/${storefront}/search?term=${encodedQuery}&types=songs&limit=${source ? 5 : 1}`,
       developerToken
     );
     const data = await response.json();
-    if (data.results?.songs?.data?.length > 0) {
-      return data.results.songs.data[0];
-    }
+    const candidates: AppleMusicTrack[] = data.results?.songs?.data ?? [];
+    const fallback = candidates[0] ?? null;
+    return source ? await selectTrackCandidate(source, candidates, toTrackEvidence, fallback) : fallback;
   } catch {
     return null;
   }

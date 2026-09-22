@@ -1,3 +1,4 @@
+import { toTrackEvidence } from "./track-evidence";
 import * as stringSimilarity from "string-similarity";
 import type { SpotifyTrack, AppleMusicTrack, TrackMatch } from "@/types";
 import { searchSpotifyTrack } from "./spotify";
@@ -135,8 +136,8 @@ export async function convertSpotifyToAppleMusic(
 
     // Try ISRC first
     if (isrc) {
-      const isrcResult = await searchAppleMusicTrack(appleMusicDevToken, query, isrc);
-      if (isrcResult) {
+      const isrcResult = await searchAppleMusicTrack(appleMusicDevToken, query, isrc, "us", toTrackEvidence(track));
+      if (isrcResult && isrcResult.attributes.isrc === isrc) {
         // Verify artist matches to avoid cover → original mismatches
         const artistSimilarity = calculateArtistSimilarityInternal(track, isrcResult);
         if (artistSimilarity >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
@@ -151,7 +152,7 @@ export async function convertSpotifyToAppleMusic(
 
     // Fallback to fuzzy search
     if (!targetTrack) {
-      targetTrack = await searchAppleMusicTrack(appleMusicDevToken, query);
+      targetTrack = await searchAppleMusicTrack(appleMusicDevToken, query, undefined, "us", toTrackEvidence(track));
       if (targetTrack) {
         matchMethod = "fuzzy";
         matchConfidence = calculateMatchConfidence(track, targetTrack);
@@ -199,8 +200,8 @@ export async function convertAppleMusicToSpotify(
 
     // Try ISRC first
     if (isrc) {
-      const isrcResult = await searchSpotifyTrack(spotifyAccessToken, query, isrc);
-      if (isrcResult) {
+      const isrcResult = await searchSpotifyTrack(spotifyAccessToken, query, isrc, toTrackEvidence(track));
+      if (isrcResult && isrcResult.external_ids?.isrc === isrc) {
         // Verify artist matches to avoid cover → original mismatches
         const artistSimilarity = calculateArtistSimilarityInternal(track, isrcResult);
         if (artistSimilarity >= MIN_ARTIST_SIMILARITY_FOR_ISRC) {
@@ -215,7 +216,7 @@ export async function convertAppleMusicToSpotify(
 
     // Fallback to fuzzy search
     if (!targetTrack) {
-      targetTrack = await searchSpotifyTrack(spotifyAccessToken, query);
+      targetTrack = await searchSpotifyTrack(spotifyAccessToken, query, undefined, toTrackEvidence(track));
       if (targetTrack) {
         matchMethod = "fuzzy";
         matchConfidence = calculateMatchConfidence(track, targetTrack);
