@@ -211,13 +211,16 @@ export default function PrivacyPage() {
                     playlists, videos, or channel data. We do not get your name
                     or email address from Google. We keep the Google access
                     token and refresh token in the <Code>youtube_session</Code>{" "}
-                    cookie. We do not keep YouTube data or Google tokens in our
-                    database.
+                    cookie. We do not keep Google tokens or data from your
+                    YouTube account in our database.
                   </LegalParagraph>
                   <LegalParagraph>
                     When you share a public YouTube playlist, we read it with
                     our own API key. We do not use your Google account for that
-                    task.
+                    task. We keep a copy of that public playlist with the same
+                    rules as other shared playlists. When you convert a YouTube
+                    link, we keep the public record that the section above
+                    tells you about.
                   </LegalParagraph>
                 </>
               ),
@@ -449,6 +452,8 @@ export default function PrivacyPage() {
               <ContactEmail />. Tell us the share link or the data. We delete it
               and send you a reply.
             </>,
+            "We delete only the data that Lab86 Music keeps. We do not delete data in your music service accounts.",
+            "A playlist that we make for you in YouTube, Spotify, Apple Music, TIDAL, or Deezer stays in that account. To delete it, delete it in that service. For YouTube, go to YouTube or YouTube Music.",
           ]}
         />
       </LegalSection>
