@@ -1,4 +1,5 @@
 import NextLink from "next/link";
+import { Stack } from "@astryxdesign/core/Stack";
 import { SEO_PAGES } from "@/lib/seo-pages";
 
 /**
@@ -19,6 +20,11 @@ const TOOL_LINKS = [
   { href: "/", label: "Link converter" },
   { href: "/convert", label: "Convert a link" },
   { href: "/playlist-converter", label: "Playlist converter" },
+] as const;
+
+const LEGAL_LINKS = [
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
 ] as const;
 
 function FooterColumn({
@@ -70,17 +76,33 @@ export function Footer() {
             }))}
           />
         </div>
-        <p className="mt-10 text-xs text-secondary/80">
-          Lab86 Music converts songs, albums, artists, and playlists between six
-          music services. Made by{" "}
-          <a
-            href="https://jakoblangtry.com"
-            className="underline decoration-border underline-offset-2 transition-colors hover:text-primary"
-          >
-            Jakob Langtry
-          </a>
-          .
-        </p>
+        <Stack className="mt-10 gap-3 sm:flex-row sm:items-baseline sm:justify-between">
+          <p className="text-xs text-secondary/80">
+            Lab86 Music converts songs, albums, artists, and playlists between
+            six music services. Made by{" "}
+            <a
+              href="https://jakoblangtry.com"
+              className="underline decoration-border underline-offset-2 transition-colors hover:text-primary"
+            >
+              Jakob Langtry
+            </a>
+            .
+          </p>
+          <nav aria-label="Legal">
+            <ul className="flex gap-4 text-xs text-secondary/80">
+              {LEGAL_LINKS.map((link) => (
+                <li key={link.href}>
+                  <NextLink
+                    href={link.href}
+                    className="transition-colors hover:text-primary"
+                  >
+                    {link.label}
+                  </NextLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </Stack>
       </div>
     </footer>
   );
